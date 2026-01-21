@@ -1,16 +1,19 @@
-const User = require('../models/User');
-const { generateTokenPair, verifyRefreshToken, generateOTP, hashOTP, verifyOTP, generateTempToken, verifyTempToken } = require('../utils/jwt');
-const logger = require('../utils/logger');
+import User from '../models/User.js';
+import { generateTokenPair, verifyRefreshToken, generateOTP, hashOTP, verifyOTP, generateTempToken, verifyTempToken } from '../utils/jwt.js';
+import { logger } from '../utils/logger.js';
 
 // Store OTPs temporarily (In production, use Redis)
 const otpStore = new Map();
+
+// Export for use in other controllers
+export { otpStore };
 
 /**
  * @desc    Initiate user registration (send OTP)
  * @route   POST /api/auth/register/initiate
  * @access  Public
  */
-exports.initiateRegistration = async (req, res) => {
+export const initiateRegistration = async (req, res) => {
   try {
     const { phoneNumber, countryCode, email } = req.body;
     
@@ -80,7 +83,7 @@ exports.initiateRegistration = async (req, res) => {
  * @route   POST /api/auth/register/complete
  * @access  Public
  */
-exports.completeRegistration = async (req, res) => {
+export const completeRegistration = async (req, res) => {
   try {
     const { sessionId, otp, role, personalInfo, password } = req.body;
     
@@ -186,7 +189,7 @@ exports.completeRegistration = async (req, res) => {
  * @route   POST /api/auth/login
  * @access  Public
  */
-exports.login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { phoneOrEmail, password } = req.body;
     
@@ -291,7 +294,7 @@ exports.login = async (req, res) => {
  * @route   POST /api/auth/refresh-token
  * @access  Public
  */
-exports.refreshToken = async (req, res) => {
+export const refreshToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
     
@@ -370,7 +373,7 @@ exports.refreshToken = async (req, res) => {
  * @route   POST /api/auth/logout
  * @access  Private
  */
-exports.logout = async (req, res) => {
+export const logout = async (req, res) => {
   try {
     const { refreshToken } = req.body;
     const user = await User.findById(req.user.userId);
@@ -401,7 +404,7 @@ exports.logout = async (req, res) => {
  * @route   POST /api/auth/logout-all
  * @access  Private
  */
-exports.logoutAll = async (req, res) => {
+export const logoutAll = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     
@@ -431,7 +434,7 @@ exports.logoutAll = async (req, res) => {
  * @route   GET /api/auth/me
  * @access  Private
  */
-exports.getCurrentUser = async (req, res) => {
+export const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     
@@ -462,7 +465,7 @@ exports.getCurrentUser = async (req, res) => {
  * @route   POST /api/auth/forgot-password
  * @access  Public
  */
-exports.forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res) => {
   try {
     const { phoneOrEmail } = req.body;
     
@@ -526,7 +529,7 @@ exports.forgotPassword = async (req, res) => {
  * @route   POST /api/auth/reset-password
  * @access  Public
  */
-exports.resetPassword = async (req, res) => {
+export const resetPassword = async (req, res) => {
   try {
     const { sessionId, otp, newPassword } = req.body;
     

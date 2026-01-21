@@ -1,10 +1,13 @@
-const express = require('express');
+import express from 'express';
+import * as authController from '../controllers/authController.js';
+import { verifyOtpOnly } from '../controllers/verifyOtpController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const authController = require('../controllers/authController');
-const { protect } = require('../middleware/authMiddleware');
 
 // Public routes
 router.post('/register/initiate', authController.initiateRegistration);
+router.post('/verify-otp', verifyOtpOnly);
 router.post('/register/complete', authController.completeRegistration);
 router.post('/login', authController.login);
 router.post('/refresh-token', authController.refreshToken);
@@ -17,4 +20,4 @@ router.get('/me', authController.getCurrentUser);
 router.post('/logout', authController.logout);
 router.post('/logout-all', authController.logoutAll);
 
-module.exports = router;
+export default router;

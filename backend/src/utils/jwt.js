@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 /**
  * Generate Access Token (15 minutes expiry)
@@ -221,7 +221,7 @@ const verifyOTP = (plainOTP, hashedOTP) => {
   return hash === hashedOTP;
 };
 
-module.exports = {
+export {
   generateAccessToken,
   generateRefreshToken,
   generateTokenPair,

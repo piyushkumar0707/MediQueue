@@ -1,11 +1,11 @@
-const { verifyAccessToken, extractTokenFromHeader } = require('../utils/jwt');
-const User = require('../models/User');
-const logger = require('../utils/logger');
+import { verifyAccessToken, extractTokenFromHeader } from '../utils/jwt.js';
+import User from '../models/User.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Middleware to protect routes - requires valid access token
  */
-exports.protect = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   try {
     // Extract token from Authorization header
     const token = extractTokenFromHeader(req.headers.authorization);
@@ -76,7 +76,7 @@ exports.protect = async (req, res, next) => {
  * Middleware to authorize specific roles
  * @param  {...String} roles - Allowed roles (patient, doctor, admin)
  */
-exports.authorize = (...roles) => {
+export const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
@@ -102,7 +102,7 @@ exports.authorize = (...roles) => {
  * Middleware to check specific permissions
  * @param  {...String} permissions - Required permissions
  */
-exports.requirePermissions = (...permissions) => {
+export const requirePermissions = (...permissions) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({
@@ -128,7 +128,7 @@ exports.requirePermissions = (...permissions) => {
 /**
  * Optional authentication - doesn't fail if no token, but decodes if present
  */
-exports.optionalAuth = async (req, res, next) => {
+export const optionalAuth = async (req, res, next) => {
   try {
     const token = extractTokenFromHeader(req.headers.authorization);
     

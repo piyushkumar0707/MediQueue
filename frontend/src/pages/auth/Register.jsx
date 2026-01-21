@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
 
@@ -79,17 +79,27 @@ const Register = () => {
     if (!validatePhoneEmail()) return;
     
     try {
+      console.log('Attempting registration with:', { phoneNumber: formData.phoneNumber, email: formData.email });
       const response = await initiateRegistration(
         formData.phoneNumber,
         formData.email,
         formData.countryCode
       );
       
-      setSessionId(response.sessionId);
-      if (response.otp) setDevOTP(response.otp); // Development only
-      setCurrentStep(STEPS.OTP_VERIFICATION);
+      console.log('Registration response:', response);
+      
+      // Response structure: { success, message, sessionId, otpSent, otp? }
+      if (response && response.sessionId) {
+        setSessionId(response.sessionId);
+        if (response.otp) setDevOTP(response.otp); // Development only
+        setCurrentStep(STEPS.OTP_VERIFICATION);
+      } else {
+        console.error('Invalid response structure:', response);
+        throw new Error('Invalid response from server');
+      }
     } catch (err) {
       console.error('Initiation failed:', err);
+      console.error('Error details:', err.message, err.response);
     }
   };
 
@@ -105,10 +115,31 @@ const Register = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleOTPSubmit = (e) => {
+  const handleOTPSubmit = async (e) => {
     e.preventDefault();
     if (!validateOTP()) return;
-    setCurrentStep(STEPS.ROLE_SELECTION);
+    
+    try {
+      // Verify OTP with backend
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, otp: formData.otp })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'OTP verification failed');
+      }
+      
+      // OTP verified successfully, proceed to role selection
+      clearError();
+      setCurrentStep(STEPS.ROLE_SELECTION);
+    } catch (err) {
+      console.error('OTP verification failed:', err);
+      setValidationErrors({ otp: err.message || 'Invalid OTP. Please try again.' });
+    }
   };
 
   // Step 3: Role Selection
@@ -190,6 +221,24 @@ const Register = () => {
     }
   };
 
+  // Resend OTP
+  const handleResendOTP = async () => {
+    try {
+      const response = await initiateRegistration(
+        formData.phoneNumber,
+        formData.email,
+        formData.countryCode
+      );
+      
+      if (response && response.sessionId) {
+        setSessionId(response.sessionId);
+        if (response.otp) setDevOTP(response.otp);
+      }
+    } catch (err) {
+      console.error('Resend OTP failed:', err);
+    }
+  };
+
   // Step Renderer
   const renderStep = () => {
     switch (currentStep) {
@@ -197,7 +246,7 @@ const Register = () => {
         return <PhoneEmailStep formData={formData} handleChange={handleChange} handleSubmit={handlePhoneEmailSubmit} validationErrors={validationErrors} isLoading={isLoading} error={error} />;
       
       case STEPS.OTP_VERIFICATION:
-        return <OTPStep formData={formData} handleChange={handleChange} handleSubmit={handleOTPSubmit} validationErrors={validationErrors} isLoading={isLoading} error={error} devOTP={devOTP} />;
+        return <OTPStep formData={formData} handleChange={handleChange} handleSubmit={handleOTPSubmit} validationErrors={validationErrors} isLoading={isLoading} error={error} devOTP={devOTP} onResend={handleResendOTP} />;
       
       case STEPS.ROLE_SELECTION:
         return <RoleSelectionStep handleRoleSelect={handleRoleSelect} />;
@@ -324,26 +373,41 @@ const PhoneEmailStep = ({ formData, handleChange, handleSubmit, validationErrors
   </div>
 );
 
-const OTPStep = ({ formData, handleChange, handleSubmit, validationErrors, devOTP }) => (
-  <div className="bg-white rounded-2xl shadow-xl p-8">
-    <div className="text-center mb-6">
-      <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
-        <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      </div>
-      <h2 className="text-2xl font-bold text-gray-900">Verify OTP</h2>
-      <p className="text-gray-600 mt-2">Enter the 6-digit code sent to your phone</p>
-      {devOTP && (
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            <strong>Dev Mode:</strong> Your OTP is <strong className="font-mono text-lg">{devOTP}</strong>
-          </p>
+const OTPStep = ({ formData, handleChange, handleSubmit, validationErrors, devOTP, onResend }) => {
+  const [resendCountdown, setResendCountdown] = useState(0);
+  
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCountdown]);
+  
+  const handleResend = async () => {
+    setResendCountdown(60);
+    await onResend();
+  };
+  
+  return (
+    <div className="bg-white rounded-2xl shadow-xl p-8">
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
+          <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
         </div>
-      )}
-    </div>
+        <h2 className="text-2xl font-bold text-gray-900">Verify OTP</h2>
+        <p className="text-gray-600 mt-2">Enter the 6-digit code sent to your phone</p>
+        {devOTP && (
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              <strong>Dev Mode:</strong> Your OTP is <strong className="font-mono text-lg">{devOTP}</strong>
+            </p>
+          </div>
+        )}
+      </div>
 
-    <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <input
           type="text"
@@ -370,13 +434,16 @@ const OTPStep = ({ formData, handleChange, handleSubmit, validationErrors, devOT
 
       <button
         type="button"
-        className="w-full text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+        onClick={handleResend}
+        disabled={resendCountdown > 0}
+        className="w-full text-indigo-600 hover:text-indigo-700 text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed"
       >
-        Resend OTP
+        {resendCountdown > 0 ? `Resend OTP in ${resendCountdown}s` : 'Resend OTP'}
       </button>
     </form>
   </div>
-);
+  );
+};
 
 const RoleSelectionStep = ({ handleRoleSelect }) => (
   <div className="bg-white rounded-2xl shadow-xl p-8">

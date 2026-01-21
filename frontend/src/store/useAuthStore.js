@@ -27,10 +27,17 @@ const useAuthStore = create(
             countryCode
           });
           
+          console.log('API response (full):', response);
+          console.log('API response.data:', response.data);
+          
+          // Handle both wrapped and unwrapped responses
+          const data = response.data || response;
+          
           set({ isLoading: false });
-          return response.data;
+          return data;
         } catch (error) {
-          const errorMsg = error.response?.data?.message || 'Registration failed';
+          console.error('API call error:', error);
+          const errorMsg = error.response?.data?.message || error.message || 'Registration failed';
           set({ isLoading: false, error: errorMsg });
           throw new Error(errorMsg);
         }
@@ -50,7 +57,8 @@ const useAuthStore = create(
             password
           });
           
-          const { user, accessToken, refreshToken } = response.data.data;
+          const data = response.data || response;
+          const { user, accessToken, refreshToken } = data.data || data;
           
           set({
             user,
@@ -80,7 +88,8 @@ const useAuthStore = create(
             password
           });
           
-          const { user, accessToken, refreshToken } = response.data.data;
+          const data = response.data || response;
+          const { user, accessToken, refreshToken } = data.data || data;
           
           set({
             user,
@@ -178,7 +187,8 @@ const useAuthStore = create(
         set({ isLoading: true });
         try {
           const response = await api.get('/auth/me');
-          const { user } = response.data.data;
+          const data = response.data || response;
+          const { user } = data.data || data;
           
           set({
             user,

@@ -56,11 +56,11 @@ const Login = () => {
       const user = useAuthStore.getState().user;
       
       if (user.role === 'patient') {
-        navigate('/patient/dashboard');
+        navigate('/patient');
       } else if (user.role === 'doctor') {
-        navigate('/doctor/dashboard');
+        navigate('/doctor');
       } else if (user.role === 'admin') {
-        navigate('/admin/dashboard');
+        navigate('/admin');
       }
     } catch (err) {
       // Error is already set in store
@@ -229,47 +229,6 @@ const Login = () => {
           <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>
         </p>
       </div>
-    </div>
-  );
-};
-
-export default Login;
-          </label>
-          <input
-            type="text"
-            className="input"
-            placeholder="Enter email or phone"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Password
-          </label>
-          <input
-            type="password"
-            className="input"
-            placeholder="Enter password"
-          />
-        </div>
-        
-        <div className="text-right">
-          <a href="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
-            Forgot Password?
-          </a>
-        </div>
-        
-        <button type="submit" className="btn btn-primary w-full">
-          Sign In
-        </button>
-      </form>
-      
-      <p className="text-center text-sm text-gray-600 mt-6">
-        Don't have an account?{' '}
-        <a href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
-          Sign Up
-        </a>
-      </p>
     </div>
   );
 };

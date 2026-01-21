@@ -11,7 +11,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './utils/logger.js';
 
 // Import routes
-import authRoutes from './routes/auth.routes.js';
+import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/user.routes.js';
 import appointmentRoutes from './routes/appointment.routes.js';
 import queueRoutes from './routes/queue.routes.js';
