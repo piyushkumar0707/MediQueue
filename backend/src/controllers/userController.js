@@ -59,7 +59,7 @@ export const getDoctorById = asyncHandler(async (req, res) => {
 // @route   GET /api/users/profile
 // @access  Private
 export const getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id)
+  const user = await User.findById(req.user.userId)
     .select('-password');
 
   if (!user) {

@@ -12,6 +12,10 @@ export const protect = asyncHandler(async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
   }
 
+  console.log('=== AUTH MIDDLEWARE DEBUG ===');
+  console.log('Token present:', !!token);
+  console.log('Token (first 20 chars):', token?.substring(0, 20));
+
   if (!token) {
     res.status(401);
     throw new Error('Not authorized, no token');
@@ -19,9 +23,11 @@ export const protect = asyncHandler(async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    console.log('Decoded token:', decoded);
     req.user = decoded;
     next();
   } catch (error) {
+    console.log('JWT verification error:', error.message);
     res.status(401);
     throw new Error('Not authorized, token failed');
   }

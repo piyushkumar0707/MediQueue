@@ -16,6 +16,33 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     type
   } = req.body;
 
+  // Validate appointment is not in the past
+  const appointmentDateTime = new Date(appointmentDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (appointmentDateTime < today) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cannot book appointments in the past'
+    });
+  }
+  
+  // If appointment is today, check if time slot is not in the past
+  if (appointmentDateTime.toDateString() === new Date().toDateString()) {
+    const [slotHour, slotMinute] = timeSlot.startTime.split(':').map(Number);
+    const now = new Date();
+    const slotTime = new Date();
+    slotTime.setHours(slotHour, slotMinute, 0, 0);
+    
+    if (slotTime <= now) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot book appointments in past time slots'
+      });
+    }
+  }
+
   // Validate doctor exists
   const doctor = await User.findById(doctorId);
   if (!doctor || doctor.role !== 'doctor') {
@@ -42,7 +69,7 @@ export const bookAppointment = asyncHandler(async (req, res) => {
 
   // Create appointment
   const appointment = await Appointment.create({
-    patient: req.user._id,
+    patient: req.user.userId,
     doctor: doctorId,
     appointmentDate: new Date(appointmentDate),
     timeSlot,
@@ -71,7 +98,7 @@ export const bookAppointment = asyncHandler(async (req, res) => {
 export const getMyAppointments = asyncHandler(async (req, res) => {
   const { status, upcoming } = req.query;
 
-  const query = { patient: req.user._id };
+  const query = { patient: req.user.userId };
   
   if (status) {
     query.status = status;

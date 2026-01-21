@@ -21,7 +21,7 @@ export const joinQueue = asyncHandler(async (req, res) => {
 
   // Check if patient already in queue for this doctor
   const existingQueue = await Queue.findOne({
-    patient: req.user._id,
+    patient: req.user.userId,
     doctor: doctorId,
     status: { $in: ['waiting', 'in-progress'] }
   });
@@ -41,7 +41,7 @@ export const joinQueue = asyncHandler(async (req, res) => {
 
   // Create queue entry
   const queueEntry = await Queue.create({
-    patient: req.user._id,
+    patient: req.user.userId,
     doctor: doctorId,
     appointment: appointmentId || null,
     queueNumber: queueCount + 1,
@@ -78,7 +78,7 @@ export const joinQueue = asyncHandler(async (req, res) => {
 // @access  Private (Patient)
 export const getMyQueueStatus = asyncHandler(async (req, res) => {
   const queueEntry = await Queue.findOne({
-    patient: req.user._id,
+    patient: req.user.userId,
     status: { $in: ['waiting', 'in-progress'] }
   }).populate([
     { path: 'doctor', select: 'personalInfo professionalInfo' },
@@ -112,7 +112,7 @@ export const getMyQueueHistory = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
 
   const queueHistory = await Queue.find({
-    patient: req.user._id
+    patient: req.user.userId
   })
     .populate('doctor', 'personalInfo professionalInfo')
     .populate('appointment')
@@ -120,7 +120,7 @@ export const getMyQueueHistory = asyncHandler(async (req, res) => {
     .limit(limit * 1)
     .skip((page - 1) * limit);
 
-  const count = await Queue.countDocuments({ patient: req.user._id });
+  const count = await Queue.countDocuments({ patient: req.user.userId });
 
   res.json({
     success: true,
@@ -140,7 +140,7 @@ export const getDoctorQueue = asyncHandler(async (req, res) => {
   const { status = 'waiting', date } = req.query;
 
   const query = {
-    doctor: req.user._id,
+    doctor: req.user.userId,
     status: status === 'all' ? { $in: ['waiting', 'in-progress', 'completed'] } : status
   };
 
@@ -189,13 +189,13 @@ export const callNextPatient = asyncHandler(async (req, res) => {
 
   // Complete any in-progress consultation
   await Queue.updateMany(
-    { doctor: req.user._id, status: 'in-progress' },
+    { doctor: req.user.userId, status: 'in-progress' },
     { status: 'completed', completedTime: new Date() }
   );
 
   // Get next patient (priority: emergency > urgent > normal, then by check-in time)
   const nextPatient = await Queue.findOne({
-    doctor: req.user._id,
+    doctor: req.user.userId,
     status: 'waiting'
   })
     .sort({ priority: -1, checkInTime: 1 })
@@ -249,7 +249,7 @@ export const updateQueueStatus = asyncHandler(async (req, res) => {
   }
 
   // Verify doctor owns this queue entry
-  if (queueEntry.doctor.toString() !== req.user._id.toString()) {
+  if (queueEntry.doctor.toString() !== req.user.userId.toString()) {
     return res.status(403).json({
       success: false,
       message: 'Not authorized to update this queue entry'
@@ -288,8 +288,8 @@ export const cancelQueueEntry = asyncHandler(async (req, res) => {
   }
 
   // Check authorization
-  const isPatient = queueEntry.patient.toString() === req.user._id.toString();
-  const isDoctor = queueEntry.doctor.toString() === req.user._id.toString();
+  const isPatient = queueEntry.patient.toString() === req.user.userId.toString();
+  const isDoctor = queueEntry.doctor.toString() === req.user.userId.toString();
 
   if (!isPatient && !isDoctor) {
     return res.status(403).json({
@@ -326,7 +326,7 @@ export const getQueueStats = asyncHandler(async (req, res) => {
   const stats = await Queue.aggregate([
     {
       $match: {
-        doctor: req.user._id,
+        doctor: req.user.userId,
         checkInTime: { $gte: today }
       }
     },
@@ -357,3 +357,4 @@ export const getQueueStats = asyncHandler(async (req, res) => {
     data: stats
   });
 });
+

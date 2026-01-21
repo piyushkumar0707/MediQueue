@@ -19,8 +19,8 @@ router.get('/my-appointments', protect, authorize('patient'), getMyAppointments)
 // Doctor routes
 router.get('/doctor-appointments', protect, authorize('doctor'), getDoctorAppointments);
 
-// Shared routes
-router.get('/available-slots/:doctorId', protect, getAvailableSlots);
+// Shared routes (public slot checking, protected others)
+router.get('/available-slots/:doctorId', getAvailableSlots);
 router.get('/:id', protect, getAppointmentById);
 router.patch('/:id/status', protect, updateAppointmentStatus);
 router.delete('/:id', protect, cancelAppointment);
