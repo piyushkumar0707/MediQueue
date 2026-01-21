@@ -1,0 +1,614 @@
+{
+  "info": {
+    "name": "CareQueue API",
+    "description": "Complete API collection for CareQueue Healthcare Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doctorId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "appointmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "queueId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Initiate Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('sessionId', response.data.sessionId);",
+                  "    console.log('SessionId:', response.data.sessionId);",
+                  "    console.log('Dev OTP:', response.data.devOTP);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"9876543210\",\n  \"email\": \"patient@example.com\",\n  \"countryCode\": \"+91\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/initiate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "initiate"]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"otp\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-otp"]
+            }
+          }
+        },
+        {
+          "name": "Complete Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+                  "    pm.collectionVariables.set('userId', response.data.user._id);",
+                  "    console.log('User registered successfully');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"role\": \"patient\",\n  \"personalInfo\": {\n    \"fullName\": \"John Doe\",\n    \"dateOfBirth\": \"1990-01-01\",\n    \"gender\": \"male\",\n    \"address\": {\n      \"street\": \"123 Main St\",\n      \"city\": \"Mumbai\",\n      \"state\": \"Maharashtra\",\n      \"zipCode\": \"400001\",\n      \"country\": \"India\"\n    }\n  },\n  \"password\": \"SecurePass123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "complete"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+                  "    pm.collectionVariables.set('userId', response.data.user._id);",
+                  "    if (response.data.user.role === 'doctor') {",
+                  "        pm.collectionVariables.set('doctorId', response.data.user._id);",
+                  "    }",
+                  "    console.log('Login successful');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneOrEmail\": \"patient@example.com\",\n  \"password\": \"SecurePass123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    console.log('Token refreshed');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Queue Management",
+      "item": [
+        {
+          "name": "Patient - Join Queue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('queueId', response.data._id);",
+                  "    console.log('Joined queue:', response.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"reasonForVisit\": \"Regular checkup\",\n  \"priority\": \"normal\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/queue/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "join"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get My Queue Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/my-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "my-status"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get My Queue History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/my-history?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "my-history"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get Queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/doctor-queue?status=waiting",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "doctor-queue"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "waiting",
+                  "description": "Options: waiting, in-progress, completed, all"
+                },
+                {
+                  "key": "date",
+                  "value": "2026-01-21",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Call Next Patient",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultationRoom\": \"Room 1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/queue/call-next",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "call-next"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Update Queue Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\",\n  \"notes\": \"Consultation completed successfully\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/queue/{{queueId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "{{queueId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get Queue Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Queue Entry",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/{{queueId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "{{queueId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "Patient - Book Appointment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('appointmentId', response.data._id);",
+                  "    console.log('Appointment booked:', response.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"appointmentDate\": \"2026-01-25\",\n  \"timeSlot\": {\n    \"startTime\": \"10:00\",\n    \"endTime\": \"10:30\"\n  },\n  \"reasonForVisit\": \"Annual checkup\",\n  \"symptoms\": [\"cough\", \"fever\"],\n  \"type\": \"consultation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get My Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/my-appointments?upcoming=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "my-appointments"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "scheduled",
+                  "disabled": true
+                },
+                {
+                  "key": "upcoming",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get My Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/doctor-appointments?date=2026-01-25",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "doctor-appointments"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-01-25",
+                  "description": "YYYY-MM-DD format"
+                },
+                {
+                  "key": "status",
+                  "value": "scheduled",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Available Slots",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/available-slots/{{doctorId}}?date=2026-01-25",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "available-slots", "{{doctorId}}"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-01-25",
+                  "description": "YYYY-MM-DD format (required)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Appointment By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "{{appointmentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments/{{appointmentId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "{{appointmentId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancelReason\": \"Unable to attend\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "{{appointmentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Server Health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
