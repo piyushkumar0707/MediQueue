@@ -18,6 +18,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 // Patient Pages
 import PatientDashboard from './pages/patient/Dashboard';
 import QueueTracking from './pages/patient/QueueTracking';
+import JoinQueue from './pages/patient/JoinQueue';
 import BookAppointment from './pages/patient/BookAppointment';
 import HealthVault from './pages/patient/HealthVault';
 import ConsentManagement from './pages/patient/ConsentManagement';
@@ -75,6 +76,7 @@ function App() {
         >
           <Route index element={<PatientDashboard />} />
           <Route path="queue" element={<QueueTracking />} />
+          <Route path="queue/join" element={<JoinQueue />} />
           <Route path="appointments/book" element={<BookAppointment />} />
           <Route path="records" element={<HealthVault />} />
           <Route path="consent" element={<ConsentManagement />} />

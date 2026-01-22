@@ -24,7 +24,7 @@ export const getDoctors = asyncHandler(async (req, res) => {
 
   const doctors = await User.find(query)
     .select('personalInfo professionalInfo email phoneNumber')
-    .sort({ 'personalInfo.fullName': 1 });
+    .sort({ 'personalInfo.firstName': 1 });
 
   res.json({
     success: true,

@@ -261,6 +261,23 @@ const PatientDashboard = () => {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link 
+          to="/patient/queue/join" 
+          className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition">
+              <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Join Queue</h3>
+              <p className="text-sm text-gray-600">Join a doctor's queue</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link 
           to="/patient/appointments/book" 
           className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
         >
@@ -276,7 +293,10 @@ const PatientDashboard = () => {
             </div>
           </div>
         </Link>
+      </div>
 
+      {/* Health Records Quick Action */}
+      <div className="grid grid-cols-1 gap-6">
         <Link 
           to="/patient/records" 
           className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
