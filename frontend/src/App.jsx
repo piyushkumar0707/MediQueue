@@ -22,12 +22,14 @@ import JoinQueue from './pages/patient/JoinQueue';
 import BookAppointment from './pages/patient/BookAppointment';
 import HealthVault from './pages/patient/HealthVault';
 import ConsentManagement from './pages/patient/ConsentManagement';
+import PatientPrescriptions from './pages/patient/Prescriptions';
 
 // Doctor Pages
 import DoctorDashboard from './pages/doctor/Dashboard';
 import QueueManagement from './pages/doctor/QueueManagement';
 import PatientRecords from './pages/doctor/PatientRecords';
-import Prescriptions from './pages/doctor/Prescriptions';
+import DoctorPrescriptions from './pages/doctor/PrescriptionsList';
+import CreatePrescription from './pages/doctor/CreatePrescription';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -80,6 +82,7 @@ function App() {
           <Route path="appointments/book" element={<BookAppointment />} />
           <Route path="records" element={<HealthVault />} />
           <Route path="consent" element={<ConsentManagement />} />
+          <Route path="prescriptions" element={<PatientPrescriptions />} />
         </Route>
 
         {/* Doctor Routes */}
@@ -94,7 +97,8 @@ function App() {
           <Route index element={<DoctorDashboard />} />
           <Route path="queue" element={<QueueManagement />} />
           <Route path="patients/:patientId/records" element={<PatientRecords />} />
-          <Route path="prescriptions" element={<Prescriptions />} />
+          <Route path="prescriptions" element={<DoctorPrescriptions />} />
+          <Route path="prescriptions/create" element={<CreatePrescription />} />
         </Route>
 
         {/* Admin Routes */}

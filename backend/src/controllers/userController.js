@@ -108,3 +108,25 @@ export const updateProfile = asyncHandler(async (req, res) => {
     data: user
   });
 });
+
+// @desc    Get patient by ID (for doctors)
+// @route   GET /api/users/patients/:id
+// @access  Private (Doctor)
+export const getPatientById = asyncHandler(async (req, res) => {
+  const patient = await User.findOne({
+    _id: req.params.id,
+    role: 'patient'
+  }).select('personalInfo medicalInfo email phoneNumber');
+
+  if (!patient) {
+    return res.status(404).json({
+      success: false,
+      message: 'Patient not found'
+    });
+  }
+
+  res.json({
+    success: true,
+    data: patient
+  });
+});

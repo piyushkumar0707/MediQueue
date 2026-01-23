@@ -272,11 +272,10 @@ userSchema.pre('save', async function(next) {
 
 // Method to compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch (error) {
-    throw new Error('Password comparison failed');
+  if (!this.password) {
+    throw new Error('User password not found');
   }
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Method to check if password was changed after JWT was issued

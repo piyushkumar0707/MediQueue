@@ -75,7 +75,24 @@ const PatientDashboard = () => {
   };
 
   const formatTime = (timeString) => {
+    if (!timeString) return 'N/A';
     return timeString;
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'scheduled':
+      case 'confirmed':
+        return 'bg-blue-100 text-blue-800';
+      case 'checked-in':
+        return 'bg-green-100 text-green-800';
+      case 'completed':
+        return 'bg-gray-100 text-gray-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const getPriorityColor = (priority) => {
@@ -99,7 +116,7 @@ const PatientDashboard = () => {
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-8 text-white">
         <h1 className="text-3xl font-bold mb-2">
-          Welcome back, {user?.personalInfo?.fullName?.split(' ')[0]}!
+          Welcome back, {user?.personalInfo?.firstName || 'Patient'}!
         </h1>
         <p className="text-indigo-100">
           {new Date().toLocaleDateString('en-US', { 
@@ -118,7 +135,7 @@ const PatientDashboard = () => {
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-1">You're in Queue</h2>
               <p className="text-sm text-gray-600">
-                Dr. {queueStatus.doctor.personalInfo.fullName}
+                Dr. {queueStatus.doctor?.personalInfo?.firstName} {queueStatus.doctor?.personalInfo?.lastName}
               </p>
             </div>
             <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getPriorityColor(queueStatus.priority)}`}>
@@ -199,12 +216,20 @@ const PatientDashboard = () => {
       <div className="bg-white rounded-xl shadow-md p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Upcoming Appointments</h2>
-          <Link 
-            to="/patient/appointments/book" 
-            className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
-          >
-            Book New →
-          </Link>
+          <div className="flex gap-3">
+            <Link 
+              to="/patient/appointments" 
+              className="text-gray-600 hover:text-gray-900 font-medium text-sm"
+            >
+              View All
+            </Link>
+            <Link 
+              to="/patient/appointments/book" 
+              className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+            >
+              Book New →
+            </Link>
+          </div>
         </div>
 
         {upcomingAppointments.length > 0 ? (
@@ -214,18 +239,18 @@ const PatientDashboard = () => {
                 key={appointment._id} 
                 className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-indigo-300 transition"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-indigo-100 rounded-lg">
-                    <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      Dr. {appointment.doctor.personalInfo.fullName}
+                      Dr. {appointment.doctor?.personalInfo?.firstName} {appointment.doctor?.personalInfo?.lastName}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {appointment.doctor.professionalInfo?.specialization || 'General Physician'}
+                      {appointment.doctor?.professionalInfo?.specialty || 'General Physician'}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {appointment.reasonForVisit}
@@ -234,8 +259,8 @@ const PatientDashboard = () => {
                 </div>
                 <div className="text-right">
                   <p className="font-medium text-gray-900">{formatDate(appointment.appointmentDate)}</p>
-                  <p className="text-sm text-gray-600">{formatTime(appointment.timeSlot.startTime)}</p>
-                  <span className="inline-block mt-2 px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
+                  <p className="text-sm text-gray-600">{formatTime(appointment.timeSlot?.startTime)}</p>
+                  <span className={`inline-block mt-2 px-2 py-1 text-xs font-medium rounded ${getStatusColor(appointment.status)}`}>
                     {appointment.status}
                   </span>
                 </div>
@@ -295,8 +320,9 @@ const PatientDashboard = () => {
         </Link>
       </div>
 
-      {/* Health Records Quick Action */}
-      <div className="grid grid-cols-1 gap-6">
+      {/* Quick Action Cards */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Health Records Quick Action */}
         <Link 
           to="/patient/records" 
           className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
@@ -310,6 +336,24 @@ const PatientDashboard = () => {
             <div>
               <h3 className="font-semibold text-gray-900">Health Records</h3>
               <p className="text-sm text-gray-600">View your medical history</p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Prescriptions Quick Action */}
+        <Link 
+          to="/patient/prescriptions" 
+          className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition">
+              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">My Prescriptions</h3>
+              <p className="text-sm text-gray-600">View all prescriptions</p>
             </div>
           </div>
         </Link>

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const QueueManagement = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [queueData, setQueueData] = useState([]);
   const [stats, setStats] = useState({
@@ -264,13 +266,21 @@ const QueueManagement = () => {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleComplete(patient._id)}
-                    disabled={completingPatient === patient._id}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
-                  >
-                    {completingPatient === patient._id ? 'Completing...' : 'Mark Complete'}
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => navigate(`/doctor/prescriptions/create?patientId=${patient.patient._id}&queueEntryId=${patient._id}`)}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                    >
+                      Create Prescription
+                    </button>
+                    <button
+                      onClick={() => handleComplete(patient._id)}
+                      disabled={completingPatient === patient._id}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+                    >
+                      {completingPatient === patient._id ? 'Completing...' : 'Mark Complete'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
