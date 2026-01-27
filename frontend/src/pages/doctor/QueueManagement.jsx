@@ -30,7 +30,7 @@ const QueueManagement = () => {
 
   const fetchQueue = async () => {
     try {
-      const response = await api.get('/queue/doctor-queue');
+      const response = await api.get('/queue/doctor-queue?status=all');
       if (response.success) {
         setQueueData(response.data);
       }

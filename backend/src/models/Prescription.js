@@ -54,8 +54,7 @@ const prescriptionSchema = new mongoose.Schema({
   },
   prescriptionNumber: {
     type: String,
-    unique: true,
-    required: true
+    unique: true
   },
   diagnosis: {
     type: String,
