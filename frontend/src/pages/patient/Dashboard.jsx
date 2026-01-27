@@ -38,21 +38,25 @@ const PatientDashboard = () => {
 
       // Fetch upcoming appointments
       const appointmentsRes = await api.get('/appointments/my-appointments?upcoming=true');
-      if (appointmentsRes.data.success) {
-        setUpcomingAppointments(appointmentsRes.data.data.slice(0, 3));
+      console.log('Upcoming appointments response:', appointmentsRes);
+      if (appointmentsRes.success) {
+        const upcomingData = appointmentsRes.data || [];
+        setUpcomingAppointments(upcomingData.slice(0, 3));
         setStats(prev => ({
           ...prev,
-          upcomingCount: appointmentsRes.data.data.length
+          upcomingCount: upcomingData.length
         }));
       }
 
       // Fetch all appointments for stats
       const allAppointmentsRes = await api.get('/appointments/my-appointments');
-      if (allAppointmentsRes.data.success) {
-        const completed = allAppointmentsRes.data.data.filter(apt => apt.status === 'completed').length;
+      console.log('All appointments response:', allAppointmentsRes);
+      if (allAppointmentsRes.success) {
+        const allData = allAppointmentsRes.data || [];
+        const completed = allData.filter(apt => apt.status === 'completed').length;
         setStats(prev => ({
           ...prev,
-          totalAppointments: allAppointmentsRes.data.data.length,
+          totalAppointments: allData.length,
           completedVisits: completed
         }));
       }
