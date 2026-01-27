@@ -17,6 +17,9 @@ const PatientDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    // Auto-refresh every 30 seconds to update queue status
+    const interval = setInterval(fetchDashboardData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchDashboardData = async () => {
@@ -26,14 +29,22 @@ const PatientDashboard = () => {
       // Fetch current queue status
       try {
         const queueRes = await api.get('/queue/my-status');
-        if (queueRes.data.success) {
-          setQueueStatus(queueRes.data.data);
+        console.log('Queue status response:', queueRes);
+        if (queueRes.success) {
+          // Only show queue status if it's active (not completed/cancelled)
+          const queueData = queueRes.data;
+          if (queueData && !['completed', 'cancelled'].includes(queueData.status)) {
+            setQueueStatus(queueData);
+          } else {
+            setQueueStatus(null);
+          }
         }
       } catch (err) {
-        // No queue status is okay
+        // No queue status is okay (404 means not in queue)
         if (err.response?.status !== 404) {
           console.error('Error fetching queue status:', err);
         }
+        setQueueStatus(null);
       }
 
       // Fetch upcoming appointments

@@ -30,22 +30,32 @@ const DoctorDashboard = () => {
 
       // Fetch today's queue
       const queueRes = await api.get('/queue/doctor-queue?status=all');
-      if (queueRes.data.success) {
-        setQueue(queueRes.data.data);
-        setStats(queueRes.data.summary);
+      console.log('Queue response:', queueRes);
+      if (queueRes.success) {
+        const queueData = queueRes.data || [];
+        const summary = queueRes.summary || {};
+        setQueue(queueData);
+        setStats({
+          waiting: summary.waiting || queueData.filter(q => q.status === 'waiting').length,
+          inProgress: summary.inProgress || queueData.filter(q => q.status === 'in-progress').length,
+          completed: summary.completed || queueData.filter(q => q.status === 'completed').length,
+          todayTotal: 0
+        });
         
         // Find current patient
-        const current = queueRes.data.data.find(q => q.status === 'in-progress');
+        const current = queueData.find(q => q.status === 'in-progress');
         setCurrentPatient(current || null);
       }
 
       // Fetch today's appointments
       const appointmentsRes = await api.get('/appointments/doctor-appointments');
-      if (appointmentsRes.data.success) {
-        setTodayAppointments(appointmentsRes.data.data);
+      console.log('Appointments response:', appointmentsRes);
+      if (appointmentsRes.success) {
+        const appointmentsData = appointmentsRes.data || [];
+        setTodayAppointments(appointmentsData);
         setStats(prev => ({
           ...prev,
-          todayTotal: appointmentsRes.data.data.length
+          todayTotal: appointmentsData.length
         }));
       }
 
@@ -63,12 +73,14 @@ const DoctorDashboard = () => {
         consultationRoom: 'Room 1'
       });
       
-      if (res.data.success) {
-        toast.success(`Calling ${res.data.data.patient.personalInfo.fullName}`);
+      if (res.success) {
+        const patientData = res.data || {};
+        const patientName = patientData.patient?.personalInfo?.fullName || 'Next patient';
+        toast.success(`Calling ${patientName}`);
         fetchDashboardData();
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to call next patient';
+      const message = error.message || 'Failed to call next patient';
       toast.error(message);
     }
   };

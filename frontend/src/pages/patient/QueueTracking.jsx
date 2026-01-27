@@ -239,15 +239,21 @@ const QueueTracking = () => {
           </div>
 
           {/* Action Buttons */}
-          {status === 'waiting' && (
+          {(status === 'waiting' || status === 'in-progress') && (
             <div className="mt-6 pt-6 border-t">
               <button
                 onClick={handleCancelQueue}
                 disabled={cancelling}
-                className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
               >
-                {cancelling ? 'Leaving Queue...' : 'Leave Queue'}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>{cancelling ? 'Leaving Queue...' : 'Leave Queue'}</span>
               </button>
+              <p className="mt-2 text-sm text-gray-500 text-center">
+                You can leave the queue anytime before consultation
+              </p>
             </div>
           )}
         </div>
