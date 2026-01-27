@@ -1,4 +1,9 @@
+import { Link } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
+
 const PatientNavbar = () => {
+  const { user } = useAuthStore();
+  
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -7,12 +12,15 @@ const PatientNavbar = () => {
             <h1 className="text-xl font-bold text-primary-600">CareQueue</h1>
           </div>
           <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-600">
+              {user?.personalInfo?.fullName || user?.email}
+            </span>
             <button className="text-gray-600 hover:text-gray-900">
               Notifications
             </button>
-            <button className="text-gray-600 hover:text-gray-900">
+            <Link to="/patient/profile" className="text-gray-600 hover:text-gray-900">
               Profile
-            </button>
+            </Link>
           </div>
         </div>
       </div>

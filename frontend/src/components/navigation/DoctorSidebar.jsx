@@ -1,19 +1,28 @@
 import { NavLink } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const DoctorSidebar = () => {
+  const { user, logout } = useAuthStore();
+  
   const navItems = [
     { to: '/doctor', label: 'Dashboard', icon: '🏠' },
     { to: '/doctor/queue', label: 'Queue', icon: '⏱️' },
     { to: '/doctor/prescriptions', label: 'Prescriptions', icon: '💊' },
+    { to: '/doctor/profile', label: 'Profile', icon: '👤' },
   ];
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
+    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
       <div className="p-6">
         <h1 className="text-xl font-bold text-primary-600">CareQueue</h1>
         <p className="text-sm text-gray-600">Doctor Portal</p>
+        {user?.personalInfo?.fullName && (
+          <p className="text-xs text-gray-500 mt-2">
+            Dr. {user.personalInfo.fullName}
+          </p>
+        )}
       </div>
-      <nav className="mt-6">
+      <nav className="mt-6 flex-1">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -32,6 +41,15 @@ const DoctorSidebar = () => {
           </NavLink>
         ))}
       </nav>
+      <div className="p-6 border-t border-gray-200">
+        <button
+          onClick={logout}
+          className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+        >
+          <span className="mr-2">🚪</span>
+          Logout
+        </button>
+      </div>
     </aside>
   );
 };

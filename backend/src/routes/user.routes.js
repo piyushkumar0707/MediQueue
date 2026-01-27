@@ -5,6 +5,7 @@ import {
   getDoctorById,
   getProfile,
   updateProfile,
+  changePassword,
   getPatientById
 } from '../controllers/userController.js';
 
@@ -20,5 +21,6 @@ router.get('/patients/:id', protect, authorize('doctor'), getPatientById);
 // Protected routes
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
+router.put('/change-password', protect, changePassword);
 
 export default router;

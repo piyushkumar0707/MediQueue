@@ -38,6 +38,9 @@ import EmergencyReview from './pages/admin/EmergencyReview';
 import UserManagement from './pages/admin/UserManagement';
 import Analytics from './pages/admin/Analytics';
 
+// Shared Pages
+import Profile from './pages/Profile';
+
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
@@ -83,6 +86,7 @@ function App() {
           <Route path="records" element={<HealthVault />} />
           <Route path="consent" element={<ConsentManagement />} />
           <Route path="prescriptions" element={<PatientPrescriptions />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* Doctor Routes */}
@@ -99,6 +103,7 @@ function App() {
           <Route path="patients/:patientId/records" element={<PatientRecords />} />
           <Route path="prescriptions" element={<DoctorPrescriptions />} />
           <Route path="prescriptions/create" element={<CreatePrescription />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* Admin Routes */}
@@ -115,6 +120,7 @@ function App() {
           <Route path="emergency-review" element={<EmergencyReview />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* Default Redirect */}
