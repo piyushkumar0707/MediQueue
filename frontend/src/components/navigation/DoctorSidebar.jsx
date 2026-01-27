@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { useAuthStore } from '../../store/useAuthStore';
+import useAuthStore from '../../store/useAuthStore';
 
 const DoctorSidebar = () => {
   const { user, logout } = useAuthStore();

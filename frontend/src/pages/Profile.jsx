@@ -19,7 +19,11 @@ const Profile = () => {
     phoneNumber: '',
     dateOfBirth: '',
     gender: '',
-    address: '',
+    bloodGroup: '',
+    addressStreet: '',
+    addressCity: '',
+    addressState: '',
+    addressPincode: '',
     // Doctor specific
     specialty: '',
     licenseNumber: '',
@@ -54,7 +58,11 @@ const Profile = () => {
           dateOfBirth: response.data.personalInfo?.dateOfBirth ? 
             new Date(response.data.personalInfo.dateOfBirth).toISOString().split('T')[0] : '',
           gender: response.data.personalInfo?.gender || '',
-          address: response.data.personalInfo?.address || '',
+          bloodGroup: response.data.personalInfo?.bloodGroup || '',
+          addressStreet: response.data.personalInfo?.address?.street || '',
+          addressCity: response.data.personalInfo?.address?.city || '',
+          addressState: response.data.personalInfo?.address?.state || '',
+          addressPincode: response.data.personalInfo?.address?.pincode || '',
           specialty: response.data.professionalInfo?.specialty || '',
           licenseNumber: response.data.professionalInfo?.licenseNumber || '',
           department: response.data.professionalInfo?.department || '',
@@ -81,7 +89,14 @@ const Profile = () => {
           lastName: editForm.lastName,
           dateOfBirth: editForm.dateOfBirth,
           gender: editForm.gender,
-          address: editForm.address
+          bloodGroup: editForm.bloodGroup,
+          address: {
+            street: editForm.addressStreet,
+            city: editForm.addressCity,
+            state: editForm.addressState,
+            pincode: editForm.addressPincode,
+            country: 'India'
+          }
         },
         email: editForm.email,
         phoneNumber: editForm.phoneNumber
@@ -127,7 +142,7 @@ const Profile = () => {
     }
 
     try {
-      const response = await api.post('/auth/change-password', {
+      const response = await api.put('/users/change-password', {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
@@ -240,8 +255,16 @@ const Profile = () => {
               <p className="text-gray-900">{user.personalInfo?.gender || 'Not provided'}</p>
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Blood Group</label>
+              <p className="text-gray-900">{user.personalInfo?.bloodGroup || 'Not provided'}</p>
+            </div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-600 mb-1">Address</label>
-              <p className="text-gray-900">{user.personalInfo?.address || 'Not provided'}</p>
+              <p className="text-gray-900">
+                {user.personalInfo?.address ? 
+                  `${user.personalInfo.address.street || ''} ${user.personalInfo.address.city || ''} ${user.personalInfo.address.state || ''} ${user.personalInfo.address.pincode || ''}`.trim() || 'Not provided' 
+                  : 'Not provided'}
+              </p>
             </div>
           </div>
 
@@ -366,14 +389,56 @@ const Profile = () => {
                 <option value="other">Other</option>
               </select>
             </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Blood Group</label>
+              <select
+                value={editForm.bloodGroup}
+                onChange={(e) => setEditForm(prev => ({ ...prev, bloodGroup: e.target.value }))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="">Select Blood Group</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </select>
+            </div>
             <div className="md:col-span-2">
               <label className="block text-gray-700 font-medium mb-2">Address</label>
-              <textarea
-                value={editForm.address}
-                onChange={(e) => setEditForm(prev => ({ ...prev, address: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                rows={3}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Street"
+                  value={editForm.addressStreet}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, addressStreet: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="City"
+                  value={editForm.addressCity}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, addressCity: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="State"
+                  value={editForm.addressState}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, addressState: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+                <input
+                  type="text"
+                  placeholder="Pincode"
+                  value={editForm.addressPincode}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, addressPincode: e.target.value }))}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
             </div>
           </div>
 
