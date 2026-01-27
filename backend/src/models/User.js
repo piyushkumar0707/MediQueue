@@ -278,6 +278,11 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
+// Alias for comparePassword (for compatibility)
+userSchema.methods.matchPassword = async function(candidatePassword) {
+  return this.comparePassword(candidatePassword);
+};
+
 // Method to check if password was changed after JWT was issued
 userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
   if (this.passwordChangedAt) {

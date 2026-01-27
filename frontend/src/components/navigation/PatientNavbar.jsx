@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
+import NotificationsDropdown from '../common/NotificationsDropdown';
 
 const PatientNavbar = () => {
   const { user } = useAuthStore();
@@ -15,9 +16,10 @@ const PatientNavbar = () => {
             <span className="text-sm text-gray-600">
               {user?.personalInfo?.fullName || user?.email}
             </span>
-            <button className="text-gray-600 hover:text-gray-900">
-              Notifications
-            </button>
+            <NotificationsDropdown />
+            <Link to="/patient/help" className="text-gray-600 hover:text-gray-900">
+              Help
+            </Link>
             <Link to="/patient/profile" className="text-gray-600 hover:text-gray-900">
               Profile
             </Link>

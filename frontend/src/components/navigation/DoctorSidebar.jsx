@@ -9,6 +9,7 @@ const DoctorSidebar = () => {
     { to: '/doctor/queue', label: 'Queue', icon: '⏱️' },
     { to: '/doctor/prescriptions', label: 'Prescriptions', icon: '💊' },
     { to: '/doctor/profile', label: 'Profile', icon: '👤' },
+    { to: '/doctor/help', label: 'Help', icon: '❓' },
   ];
 
   return (

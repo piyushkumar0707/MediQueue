@@ -11,6 +11,7 @@ const AdminSidebar = () => {
     { to: '/admin/users', label: 'User Management', icon: '👥' },
     { to: '/admin/analytics', label: 'Analytics', icon: '📊' },
     { to: '/admin/profile', label: 'Profile', icon: '👤' },
+    { to: '/admin/help', label: 'Help', icon: '❓' },
   ];
 
   return (

@@ -19,6 +19,7 @@ import ResetPassword from './pages/auth/ResetPassword';
 import PatientDashboard from './pages/patient/Dashboard';
 import QueueTracking from './pages/patient/QueueTracking';
 import JoinQueue from './pages/patient/JoinQueue';
+import Appointments from './pages/patient/Appointments';
 import BookAppointment from './pages/patient/BookAppointment';
 import HealthVault from './pages/patient/HealthVault';
 import ConsentManagement from './pages/patient/ConsentManagement';
@@ -40,6 +41,7 @@ import Analytics from './pages/admin/Analytics';
 
 // Shared Pages
 import Profile from './pages/Profile';
+import Help from './pages/Help';
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -82,11 +84,13 @@ function App() {
           <Route index element={<PatientDashboard />} />
           <Route path="queue" element={<QueueTracking />} />
           <Route path="queue/join" element={<JoinQueue />} />
+          <Route path="appointments" element={<Appointments />} />
           <Route path="appointments/book" element={<BookAppointment />} />
           <Route path="records" element={<HealthVault />} />
           <Route path="consent" element={<ConsentManagement />} />
           <Route path="prescriptions" element={<PatientPrescriptions />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="help" element={<Help />} />
         </Route>
 
         {/* Doctor Routes */}
@@ -104,6 +108,7 @@ function App() {
           <Route path="prescriptions" element={<DoctorPrescriptions />} />
           <Route path="prescriptions/create" element={<CreatePrescription />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="help" element={<Help />} />
         </Route>
 
         {/* Admin Routes */}
@@ -121,6 +126,7 @@ function App() {
           <Route path="users" element={<UserManagement />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="help" element={<Help />} />
         </Route>
 
         {/* Default Redirect */}

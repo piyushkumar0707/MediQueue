@@ -129,7 +129,7 @@ export const changePassword = asyncHandler(async (req, res) => {
     });
   }
 
-  const user = await User.findById(req.user.userId);
+  const user = await User.findById(req.user.userId).select('+password');
 
   if (!user) {
     return res.status(404).json({

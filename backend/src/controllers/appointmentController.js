@@ -68,6 +68,11 @@ export const bookAppointment = asyncHandler(async (req, res) => {
   }
 
   // Create appointment
+  console.log('=== BOOK APPOINTMENT DEBUG ===');
+  console.log('Patient ID from token:', req.user.userId);
+  console.log('Doctor ID:', doctorId);
+  console.log('Appointment Date:', appointmentDate);
+  
   const appointment = await Appointment.create({
     patient: req.user.userId,
     doctor: doctorId,
@@ -77,6 +82,9 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     symptoms: symptoms || [],
     type: type || 'consultation'
   });
+
+  console.log('Created appointment ID:', appointment._id);
+  console.log('Appointment patient field:', appointment.patient);
 
   await appointment.populate([
     { path: 'patient', select: 'personalInfo phoneNumber email' },
@@ -98,6 +106,10 @@ export const bookAppointment = asyncHandler(async (req, res) => {
 export const getMyAppointments = asyncHandler(async (req, res) => {
   const { status, upcoming } = req.query;
 
+  console.log('=== GET MY APPOINTMENTS DEBUG ===');
+  console.log('User ID from token:', req.user.userId);
+  console.log('Query params:', { status, upcoming });
+
   const query = { patient: req.user.userId };
   
   if (status) {
@@ -109,13 +121,19 @@ export const getMyAppointments = asyncHandler(async (req, res) => {
     query.status = { $in: ['scheduled', 'confirmed'] };
   }
 
+  console.log('MongoDB query:', JSON.stringify(query));
+
   const appointments = await Appointment.find(query)
     .populate('doctor', 'personalInfo professionalInfo')
     .populate('queueEntry')
     .sort({ appointmentDate: -1 });
 
+  console.log('Found appointments count:', appointments.length);
+  console.log('Appointments:', JSON.stringify(appointments, null, 2));
+
   res.json({
     success: true,
+    count: appointments.length,
     data: appointments
   });
 });
@@ -248,8 +266,8 @@ export const updateAppointmentStatus = asyncHandler(async (req, res) => {
   }
 
   // Check authorization
-  const isPatient = appointment.patient.toString() === req.user._id.toString();
-  const isDoctor = appointment.doctor.toString() === req.user._id.toString();
+  const isPatient = appointment.patient.toString() === req.user.userId.toString();
+  const isDoctor = appointment.doctor.toString() === req.user.userId.toString();
 
   if (!isPatient && !isDoctor) {
     return res.status(403).json({
@@ -288,8 +306,8 @@ export const cancelAppointment = asyncHandler(async (req, res) => {
   }
 
   // Check authorization
-  const isPatient = appointment.patient.toString() === req.user._id.toString();
-  const isDoctor = appointment.doctor.toString() === req.user._id.toString();
+  const isPatient = appointment.patient.toString() === req.user.userId.toString();
+  const isDoctor = appointment.doctor.toString() === req.user.userId.toString();
 
   if (!isPatient && !isDoctor) {
     return res.status(403).json({
@@ -307,6 +325,84 @@ export const cancelAppointment = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: 'Appointment cancelled successfully'
+  });
+});
+
+// @desc    Reschedule appointment
+// @route   PATCH /api/appointments/:id/reschedule
+// @access  Private (Patient)
+export const rescheduleAppointment = asyncHandler(async (req, res) => {
+  const { appointmentDate, timeSlot } = req.body;
+
+  const appointment = await Appointment.findById(req.params.id);
+
+  if (!appointment) {
+    return res.status(404).json({
+      success: false,
+      message: 'Appointment not found'
+    });
+  }
+
+  // Check authorization - only patient can reschedule
+  if (appointment.patient.toString() !== req.user.userId) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not authorized to reschedule this appointment'
+    });
+  }
+
+  // Check if appointment is already cancelled or completed
+  if (['cancelled', 'completed'].includes(appointment.status)) {
+    return res.status(400).json({
+      success: false,
+      message: `Cannot reschedule ${appointment.status} appointment`
+    });
+  }
+
+  // Validate new appointment date is not in the past
+  const newAppointmentDate = new Date(appointmentDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (newAppointmentDate < today) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cannot reschedule to a past date'
+    });
+  }
+
+  // Check if the new time slot is available
+  const conflictingAppointment = await Appointment.findOne({
+    doctor: appointment.doctor,
+    appointmentDate: newAppointmentDate,
+    'timeSlot.startTime': timeSlot.startTime,
+    status: { $in: ['scheduled', 'confirmed', 'checked-in', 'in-progress'] },
+    _id: { $ne: appointment._id } // Exclude current appointment
+  });
+
+  if (conflictingAppointment) {
+    return res.status(400).json({
+      success: false,
+      message: 'This time slot is already booked. Please select another slot.'
+    });
+  }
+
+  // Update appointment
+  appointment.appointmentDate = newAppointmentDate;
+  appointment.timeSlot = timeSlot;
+  await appointment.save();
+
+  await appointment.populate([
+    { path: 'patient', select: 'personalInfo phoneNumber email' },
+    { path: 'doctor', select: 'personalInfo professionalInfo' }
+  ]);
+
+  logger.info(`Appointment ${appointment._id} rescheduled by patient ${req.user.userId}`);
+
+  res.json({
+    success: true,
+    message: 'Appointment rescheduled successfully',
+    data: appointment
   });
 });
 

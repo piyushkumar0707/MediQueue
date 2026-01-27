@@ -169,7 +169,7 @@ const PatientDashboard = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <Link to="/patient/appointments" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Upcoming</p>
@@ -181,9 +181,10 @@ const PatientDashboard = () => {
               </svg>
             </div>
           </div>
-        </div>
+          <p className="text-xs text-gray-500 mt-2">Click to view all →</p>
+        </Link>
 
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <Link to="/patient/appointments" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Total Visits</p>
@@ -195,9 +196,10 @@ const PatientDashboard = () => {
               </svg>
             </div>
           </div>
-        </div>
+          <p className="text-xs text-gray-500 mt-2">Completed visits</p>
+        </Link>
 
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <Link to="/patient/appointments" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition cursor-pointer">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Appointments</p>
@@ -209,7 +211,8 @@ const PatientDashboard = () => {
               </svg>
             </div>
           </div>
-        </div>
+          <p className="text-xs text-gray-500 mt-2">All appointments</p>
+        </Link>
       </div>
 
       {/* Upcoming Appointments */}

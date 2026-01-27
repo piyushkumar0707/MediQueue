@@ -7,7 +7,8 @@ import {
   getAvailableSlots,
   updateAppointmentStatus,
   cancelAppointment,
-  getAppointmentById
+  getAppointmentById,
+  rescheduleAppointment
 } from '../controllers/appointmentController.js';
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.get('/doctor-appointments', protect, authorize('doctor'), getDoctorAppoin
 router.get('/available-slots/:doctorId', getAvailableSlots);
 router.get('/:id', protect, getAppointmentById);
 router.patch('/:id/status', protect, updateAppointmentStatus);
+router.patch('/:id/reschedule', protect, authorize('patient'), rescheduleAppointment);
 router.delete('/:id', protect, cancelAppointment);
 
 export default router;
