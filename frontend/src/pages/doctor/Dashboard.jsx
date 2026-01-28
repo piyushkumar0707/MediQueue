@@ -121,6 +121,7 @@ const DoctorDashboard = () => {
       case 'checked-in':
         return 'bg-purple-100 text-purple-800';
       case 'in-progress':
+      case 'waiting':
         return 'bg-yellow-100 text-yellow-800';
       case 'completed':
         return 'bg-green-100 text-green-800';
@@ -130,15 +131,6 @@ const DoctorDashboard = () => {
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'waiting': return 'bg-yellow-100 text-yellow-800';
-      case 'in-progress': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -351,12 +343,9 @@ const DoctorDashboard = () => {
       <div className="bg-white rounded-xl shadow-md p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Today's Appointments</h2>
-          <Link 
-            to="/doctor/prescriptions" 
-            className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-          >
-            View All →
-          </Link>
+          <span className="text-gray-500 text-sm">
+            {todayAppointments.length} {todayAppointments.length === 1 ? 'appointment' : 'appointments'}
+          </span>
         </div>
         
         {todayAppointments.length > 0 ? (
@@ -404,7 +393,7 @@ const DoctorDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Link 
           to="/doctor/prescriptions/create" 
           className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
@@ -418,6 +407,23 @@ const DoctorDashboard = () => {
             <div>
               <h3 className="font-semibold text-gray-900">Create Prescription</h3>
               <p className="text-sm text-gray-600">Write new prescription</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link 
+          to="/doctor/appointments" 
+          className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">View Appointments</h3>
+              <p className="text-sm text-gray-600">All upcoming appointments</p>
             </div>
           </div>
         </Link>

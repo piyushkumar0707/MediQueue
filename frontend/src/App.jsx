@@ -31,6 +31,7 @@ import QueueManagement from './pages/doctor/QueueManagement';
 import PatientRecords from './pages/doctor/PatientRecords';
 import DoctorPrescriptions from './pages/doctor/PrescriptionsList';
 import CreatePrescription from './pages/doctor/CreatePrescription';
+import DoctorAppointments from './pages/doctor/Appointments';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -104,6 +105,7 @@ function App() {
         >
           <Route index element={<DoctorDashboard />} />
           <Route path="queue" element={<QueueManagement />} />
+          <Route path="appointments" element={<DoctorAppointments />} />
           <Route path="patients/:patientId/records" element={<PatientRecords />} />
           <Route path="prescriptions" element={<DoctorPrescriptions />} />
           <Route path="prescriptions/create" element={<CreatePrescription />} />
