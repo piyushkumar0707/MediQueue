@@ -114,6 +114,27 @@ const DoctorDashboard = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800';
+      case 'confirmed':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'checked-in':
+        return 'bg-purple-100 text-purple-800';
+      case 'in-progress':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'no-show':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
       case 'waiting': return 'bg-yellow-100 text-yellow-800';
       case 'in-progress': return 'bg-green-100 text-green-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
@@ -328,14 +349,22 @@ const DoctorDashboard = () => {
 
       {/* Today's Appointments */}
       <div className="bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Today's Appointments</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">Today's Appointments</h2>
+          <Link 
+            to="/doctor/prescriptions" 
+            className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+          >
+            View All →
+          </Link>
+        </div>
         
         {todayAppointments.length > 0 ? (
           <div className="space-y-3">
             {todayAppointments.map((appointment) => (
               <div 
                 key={appointment._id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-indigo-300 transition"
               >
                 <div className="flex items-center space-x-4">
                   <div className="p-2 bg-purple-100 rounded-lg">
@@ -345,14 +374,17 @@ const DoctorDashboard = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      {appointment.patient.personalInfo.fullName}
+                      {appointment.patient?.personalInfo?.firstName} {appointment.patient?.personalInfo?.lastName}
                     </p>
                     <p className="text-sm text-gray-600">{appointment.reasonForVisit}</p>
+                    {appointment.symptoms && appointment.symptoms.length > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">Symptoms: {appointment.symptoms.join(', ')}</p>
+                    )}
                   </div>
                 </div>
                 <div className="text-right flex items-center space-x-4">
                   <div>
-                    <p className="font-medium text-gray-900">{formatTime(appointment.timeSlot.startTime)}</p>
+                    <p className="font-medium text-gray-900">{formatTime(appointment.timeSlot?.startTime || 'N/A')}</p>
                     <span className={`inline-block mt-1 px-2 py-1 text-xs font-medium rounded ${getStatusColor(appointment.status)}`}>
                       {appointment.status}
                     </span>
@@ -363,7 +395,10 @@ const DoctorDashboard = () => {
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-600">No appointments scheduled for today</p>
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p className="mt-2 text-gray-600">No appointments scheduled for today</p>
           </div>
         )}
       </div>
