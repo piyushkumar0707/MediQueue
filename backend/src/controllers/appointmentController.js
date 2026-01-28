@@ -144,7 +144,11 @@ export const getMyAppointments = asyncHandler(async (req, res) => {
 export const getDoctorAppointments = asyncHandler(async (req, res) => {
   const { date, status } = req.query;
 
-  const query = { doctor: req.user._id };
+  console.log('=== GET DOCTOR APPOINTMENTS DEBUG ===');
+  console.log('User ID from token:', req.user.userId);
+  console.log('Query params:', { date, status });
+
+  const query = { doctor: req.user.userId };
 
   if (status) {
     query.status = status;
@@ -156,19 +160,17 @@ export const getDoctorAppointments = asyncHandler(async (req, res) => {
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
     query.appointmentDate = { $gte: startDate, $lte: endDate };
-  } else {
-    // Default to today's appointments
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    query.appointmentDate = { $gte: today, $lt: tomorrow };
   }
+  // Note: No date filter means get all appointments for this doctor
+
+  console.log('MongoDB query:', JSON.stringify(query));
 
   const appointments = await Appointment.find(query)
     .populate('patient', 'personalInfo phoneNumber email')
     .populate('queueEntry')
-    .sort({ 'timeSlot.startTime': 1 });
+    .sort({ appointmentDate: 1, 'timeSlot.startTime': 1 });
+
+  console.log('Found appointments count:', appointments.length);
 
   res.json({
     success: true,
