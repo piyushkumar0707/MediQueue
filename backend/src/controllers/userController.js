@@ -162,15 +162,13 @@ export const changePassword = asyncHandler(async (req, res) => {
 // @route   GET /api/users/patients/:id
 // @access  Private (Doctor)
 export const getPatientById = asyncHandler(async (req, res) => {
-  const patient = await User.findOne({
-    _id: req.params.id,
-    role: 'patient'
-  }).select('personalInfo medicalInfo email phoneNumber');
+  const patient = await User.findById(req.params.id)
+    .select('personalInfo professionalInfo medicalInfo email phoneNumber role');
 
   if (!patient) {
     return res.status(404).json({
       success: false,
-      message: 'Patient not found'
+      message: 'User not found'
     });
   }
 

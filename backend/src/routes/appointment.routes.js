@@ -8,7 +8,8 @@ import {
   updateAppointmentStatus,
   cancelAppointment,
   getAppointmentById,
-  rescheduleAppointment
+  rescheduleAppointment,
+  getPatientAppointments
 } from '../controllers/appointmentController.js';
 
 const router = express.Router();
@@ -19,6 +20,7 @@ router.get('/my-appointments', protect, authorize('patient'), getMyAppointments)
 
 // Doctor routes
 router.get('/doctor-appointments', protect, authorize('doctor'), getDoctorAppointments);
+router.get('/patient/:patientId', protect, authorize('doctor'), getPatientAppointments);
 
 // Shared routes (public slot checking, protected others)
 router.get('/available-slots/:doctorId', getAvailableSlots);

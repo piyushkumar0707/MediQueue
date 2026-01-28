@@ -438,3 +438,20 @@ export const getAppointmentById = asyncHandler(async (req, res) => {
     data: appointment
   });
 });
+
+// @desc    Get patient appointments (for doctors)
+// @route   GET /api/appointments/patient/:patientId
+// @access  Private (Doctor)
+export const getPatientAppointments = asyncHandler(async (req, res) => {
+  const { patientId } = req.params;
+  
+  const appointments = await Appointment.find({ patient: patientId })
+    .populate('doctor', 'personalInfo professionalInfo')
+    .populate('queueEntry')
+    .sort({ appointmentDate: -1 });
+
+  res.json({
+    success: true,
+    data: appointments
+  });
+});

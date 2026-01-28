@@ -17,6 +17,7 @@ const router = express.Router();
 router.post('/', protect, authorize('doctor'), createPrescription);
 router.get('/doctor-prescriptions', protect, authorize('doctor'), getDoctorPrescriptions);
 router.get('/patient/:patientId/history', protect, authorize('doctor'), getPatientPrescriptionHistory);
+router.get('/patient/:patientId', protect, authorize('doctor'), getPatientPrescriptionHistory);
 router.get('/stats', protect, authorize('doctor'), getPrescriptionStats);
 
 // Patient routes

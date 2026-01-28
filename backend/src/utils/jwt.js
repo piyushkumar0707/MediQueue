@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
 /**
- * Generate Access Token (15 minutes expiry)
+ * Generate Access Token (2 hours expiry - testing)
  * @param {Object} payload - User data to include in token
  * @returns {String} JWT access token
  */
@@ -18,7 +18,7 @@ const generateAccessToken = (payload) => {
     },
     process.env.JWT_ACCESS_SECRET,
     {
-      expiresIn: process.env.JWT_ACCESS_EXPIRY || '15m',
+      expiresIn: process.env.JWT_ACCESS_EXPIRY || '2h',
       issuer: 'carequeue-api',
       audience: 'carequeue-client'
     }
