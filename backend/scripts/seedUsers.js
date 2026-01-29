@@ -1,9 +1,8 @@
 import mongoose from 'mongoose';
 import User from '../src/models/User.js';
-import bcrypt from 'bcryptjs';
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/mediqueue');
+// Connect to MongoDB - USING CORRECT DATABASE NAME
+mongoose.connect('mongodb://localhost:27017/carequeue');
 
 const seedUsers = async () => {
   try {
@@ -12,21 +11,24 @@ const seedUsers = async () => {
     // Check if users already exist
     const existingDoctor = await User.findOne({ role: 'doctor' });
     const existingPatient = await User.findOne({ role: 'patient' });
+    const existingAdmin = await User.findOne({ role: 'admin' });
 
-    if (existingDoctor && existingPatient) {
+    if (existingDoctor && existingPatient && existingAdmin) {
       console.log('ℹ️  Users already exist:');
       console.log('   Doctor:', existingDoctor.email);
       console.log('   Patient:', existingPatient.email);
+      console.log('   Admin:', existingAdmin.email);
       process.exit(0);
     }
 
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    // Use plain password - the User model's pre-save hook will hash it
+    const plainPassword = 'Test@123';
 
     // Create Doctor
     if (!existingDoctor) {
       const doctor = await User.create({
         email: 'doctor@test.com',
-        password: hashedPassword,
+        password: plainPassword,
         role: 'doctor',
         phoneNumber: '1234567890',
         countryCode: '+1',
@@ -63,7 +65,7 @@ const seedUsers = async () => {
       });
       console.log('✅ Doctor created:');
       console.log('   Email:', doctor.email);
-      console.log('   Password: password123');
+      console.log('   Password: Test@123');
       console.log('   Name:', doctor.personalInfo.firstName, doctor.personalInfo.lastName);
     }
 
@@ -71,7 +73,7 @@ const seedUsers = async () => {
     if (!existingPatient) {
       const patient = await User.create({
         email: 'patient@test.com',
-        password: hashedPassword,
+        password: plainPassword,
         role: 'patient',
         phoneNumber: '9876543210',
         countryCode: '+1',
@@ -104,14 +106,46 @@ const seedUsers = async () => {
       });
       console.log('\n✅ Patient created:');
       console.log('   Email:', patient.email);
-      console.log('   Password: password123');
+      console.log('   Password: Test@123');
       console.log('   Name:', patient.personalInfo.firstName, patient.personalInfo.lastName);
+    }
+
+    // Create Admin
+    if (!existingAdmin) {
+      const admin = await User.create({
+        email: 'admin@test.com',
+        password: plainPassword,
+        role: 'admin',
+        phoneNumber: '5555555555',
+        countryCode: '+1',
+        personalInfo: {
+          firstName: 'Admin',
+          lastName: 'User',
+          dateOfBirth: new Date('1985-01-01'),
+          gender: 'male',
+          address: {
+            street: '789 Admin Blvd',
+            city: 'Healthcare City',
+            state: 'CA',
+            pincode: '90212',
+            country: 'USA'
+          }
+        },
+        isActive: true,
+        isEmailVerified: true,
+        isPhoneVerified: true
+      });
+      console.log('\n✅ Admin created:');
+      console.log('   Email:', admin.email);
+      console.log('   Password: Test@123');
+      console.log('   Name:', admin.personalInfo.firstName, admin.personalInfo.lastName);
     }
 
     console.log('\n✅ Seed completed successfully!');
     console.log('\n📝 Login credentials:');
-    console.log('   Doctor - Email: doctor@test.com, Password: password123');
-    console.log('   Patient - Email: patient@test.com, Password: password123');
+    console.log('   Doctor - Email: doctor@test.com, Password: Test@123');
+    console.log('   Patient - Email: patient@test.com, Password: Test@123');
+    console.log('   Admin - Email: admin@test.com, Password: Test@123');
     
     process.exit(0);
   } catch (error) {

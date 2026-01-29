@@ -193,6 +193,10 @@ export const login = async (req, res) => {
   try {
     const { phoneOrEmail, password } = req.body;
     
+    console.log('=== LOGIN ATTEMPT ===');
+    console.log('Phone/Email:', phoneOrEmail);
+    console.log('Password length:', password?.length);
+    
     // Validate input
     if (!phoneOrEmail || !password) {
       return res.status(400).json({
@@ -203,6 +207,14 @@ export const login = async (req, res) => {
     
     // Find user (includes password field)
     const user = await User.findByPhoneOrEmail(phoneOrEmail);
+    
+    console.log('User found:', !!user);
+    if (user) {
+      console.log('User email:', user.email);
+      console.log('User role:', user.role);
+      console.log('Password hash exists:', !!user.password);
+      console.log('Password hash length:', user.password?.length);
+    }
     
     if (!user) {
       return res.status(401).json({
@@ -228,7 +240,9 @@ export const login = async (req, res) => {
     }
     
     // Verify password
+    console.log('Attempting password comparison...');
     const isPasswordValid = await user.comparePassword(password);
+    console.log('Password valid:', isPasswordValid);
     
     if (!isPasswordValid) {
       // Increment failed attempts
