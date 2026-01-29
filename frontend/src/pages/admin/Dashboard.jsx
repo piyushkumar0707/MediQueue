@@ -21,20 +21,26 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      // For now, we'll fetch users and calculate stats
-      // Later we can create dedicated admin stats endpoints
-      const response = await api.get('/users/profile');
       
-      // Fetch recent registrations (mock for now - needs admin endpoint)
-      setStats({
-        totalUsers: 0,
-        totalPatients: 0,
-        totalDoctors: 0,
-        totalAppointments: 0,
-        activeQueue: 0
-      });
+      // Fetch admin stats
+      const statsResponse = await api.get('/admin/stats');
+      console.log('Admin stats:', statsResponse);
       
-      setRecentUsers([]);
+      if (statsResponse.success && statsResponse.data) {
+        setStats({
+          totalUsers: statsResponse.data.users.total,
+          totalPatients: statsResponse.data.users.patients,
+          totalDoctors: statsResponse.data.users.doctors,
+          totalAppointments: statsResponse.data.appointments.total,
+          activeQueue: statsResponse.data.queue.active
+        });
+      }
+      
+      // Fetch recent users
+      const usersResponse = await api.get('/admin/recent-users?limit=5');
+      if (usersResponse.success) {
+        setRecentUsers(usersResponse.data || []);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Failed to load dashboard data');

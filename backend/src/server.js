@@ -26,6 +26,7 @@ import consentRoutes from './routes/consent.routes.js';
 import prescriptionRoutes from './routes/prescription.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -79,6 +80,7 @@ app.use('/api/consent', consentRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
