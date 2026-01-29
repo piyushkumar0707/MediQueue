@@ -143,3 +143,118 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
     data: user
   });
 });
+
+/**
+ * @desc    Create new user
+ * @route   POST /api/admin/users
+ * @access  Private (Admin)
+ */
+export const createUser = asyncHandler(async (req, res) => {
+  const { email, password, role, phoneNumber, personalInfo, professionalInfo } = req.body;
+  
+  // Check if user already exists
+  const existingUser = await User.findOne({ $or: [{ email }, { phoneNumber }] });
+  if (existingUser) {
+    return res.status(409).json({
+      success: false,
+      message: 'User with this email or phone number already exists'
+    });
+  }
+  
+  // Create user
+  const userData = {
+    email,
+    password,
+    role,
+    phoneNumber,
+    countryCode: '+91',
+    personalInfo,
+    isActive: true,
+    isEmailVerified: true,
+    isPhoneVerified: true
+  };
+  
+  if (role === 'doctor' && professionalInfo) {
+    userData.professionalInfo = professionalInfo;
+  }
+  
+  const user = await User.create(userData);
+
+  res.status(201).json({
+    success: true,
+    message: 'User created successfully',
+    data: user
+  });
+});
+
+/**
+ * @desc    Update user
+ * @route   PUT /api/admin/users/:id
+ * @access  Private (Admin)
+ */
+export const updateUser = asyncHandler(async (req, res) => {
+  const { personalInfo, professionalInfo, role, phoneNumber } = req.body;
+  
+  const user = await User.findById(req.params.id);
+  
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+  
+  // Update phone number if provided
+  if (phoneNumber) {
+    user.phoneNumber = phoneNumber;
+  }
+  
+  // Update personal info
+  if (personalInfo) {
+    user.personalInfo = { ...user.personalInfo, ...personalInfo };
+  }
+  
+  // Update professional info for doctors
+  if (role === 'doctor' && professionalInfo) {
+    user.professionalInfo = { ...user.professionalInfo, ...professionalInfo };
+  }
+  
+  await user.save();
+
+  res.json({
+    success: true,
+    message: 'User updated successfully',
+    data: user
+  });
+});
+
+/**
+ * @desc    Delete user
+ * @route   DELETE /api/admin/users/:id
+ * @access  Private (Admin)
+ */
+export const deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+  
+  // Prevent deleting yourself
+  if (user._id.toString() === req.user.userId) {
+    return res.status(400).json({
+      success: false,
+      message: 'You cannot delete your own account'
+    });
+  }
+  
+  await user.deleteOne();
+
+  res.json({
+    success: true,
+    message: 'User deleted successfully'
+  });
+});
