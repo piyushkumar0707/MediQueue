@@ -1,6 +1,8 @@
 import User from '../models/User.js';
 import { generateTokenPair, verifyRefreshToken, generateOTP, hashOTP, verifyOTP, generateTempToken, verifyTempToken } from '../utils/jwt.js';
 import { logger } from '../utils/logger.js';
+import AuditLog from '../models/AuditLog.js';
+import { logFailedAuth } from '../middleware/auditLogger.js';
 
 // Store OTPs temporarily (In production, use Redis)
 const otpStore = new Map();
@@ -217,6 +219,7 @@ export const login = async (req, res) => {
     }
     
     if (!user) {
+      await logFailedAuth(phoneOrEmail, 'User not found', req);
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -247,6 +250,8 @@ export const login = async (req, res) => {
     if (!isPasswordValid) {
       // Increment failed attempts
       await user.incLoginAttempts();
+      await logFailedAuth(phoneOrEmail, 'Invalid password', req);
+      
       
       return res.status(401).json({
         success: false,
@@ -275,6 +280,17 @@ export const login = async (req, res) => {
     // Update last login
     user.lastLoginAt = new Date();
     user.lastActiveAt = new Date();
+    // Log successful login
+    await AuditLog.create({
+      userId: user._id,
+      action: 'LOGIN',
+      category: 'AUTH',
+      description: `User ${user.email} logged in successfully`,
+      ipAddress: req.ip || req.connection.remoteAddress,
+      userAgent: req.get('user-agent'),
+      status: 'SUCCESS'
+    });
+    
     await user.save();
     
     logger.info(`User logged in: ${user.email}`);
