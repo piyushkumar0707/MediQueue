@@ -29,6 +29,7 @@ import PatientPrescriptions from './pages/patient/Prescriptions';
 import DoctorDashboard from './pages/doctor/Dashboard';
 import QueueManagement from './pages/doctor/QueueManagement';
 import PatientRecords from './pages/doctor/PatientRecords';
+import SharedRecords from './pages/doctor/SharedRecords';
 import DoctorPrescriptions from './pages/doctor/PrescriptionsList';
 import CreatePrescription from './pages/doctor/CreatePrescription';
 import DoctorAppointments from './pages/doctor/Appointments';
@@ -106,7 +107,9 @@ function App() {
           <Route index element={<DoctorDashboard />} />
           <Route path="queue" element={<QueueManagement />} />
           <Route path="appointments" element={<DoctorAppointments />} />
+          <Route path="shared-records" element={<SharedRecords />} />
           <Route path="patients/:patientId/records" element={<PatientRecords />} />
+          <Route path="patient/:patientId" element={<PatientRecords />} />
           <Route path="prescriptions" element={<DoctorPrescriptions />} />
           <Route path="prescriptions/create" element={<CreatePrescription />} />
           <Route path="profile" element={<Profile />} />
