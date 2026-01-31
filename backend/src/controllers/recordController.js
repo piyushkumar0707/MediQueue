@@ -241,9 +241,36 @@ export const getRecordById = asyncHandler(async (req, res) => {
   // Log access
   await record.logAccess(req.user.userId, 'view', req.ip);
   
+  // Transform populated data for frontend
+  const transformedRecord = {
+    ...record.toObject(),
+    patient: record.patient ? {
+      _id: record.patient._id,
+      firstName: record.patient.personalInfo?.firstName,
+      lastName: record.patient.personalInfo?.lastName,
+      email: record.patient.email,
+      phoneNumber: record.patient.phoneNumber
+    } : null,
+    uploadedBy: record.uploadedBy ? {
+      _id: record.uploadedBy._id,
+      firstName: record.uploadedBy.personalInfo?.firstName,
+      lastName: record.uploadedBy.personalInfo?.lastName,
+      role: record.uploadedBy.role
+    } : null,
+    sharedWith: record.sharedWith.map(share => ({
+      ...share.toObject(),
+      doctor: share.doctor ? {
+        _id: share.doctor._id,
+        firstName: share.doctor.personalInfo?.firstName,
+        lastName: share.doctor.personalInfo?.lastName,
+        specialization: share.doctor.professionalInfo?.specialization
+      } : null
+    }))
+  };
+  
   res.json({
     success: true,
-    data: record
+    data: transformedRecord
   });
 });
 

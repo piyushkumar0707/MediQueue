@@ -67,6 +67,38 @@ const PatientRecords = () => {
     });
   };
 
+  const getRecordTypeLabel = (type) => {
+    const types = {
+      'lab-report': 'Lab Report',
+      'prescription': 'Prescription',
+      'radiology': 'Radiology',
+      'consultation-notes': 'Consultation Notes',
+      'discharge-summary': 'Discharge Summary',
+      'medical-history': 'Medical History',
+      'insurance': 'Insurance',
+      'vaccination': 'Vaccination',
+      'allergy-info': 'Allergy Information',
+      'other': 'Other'
+    };
+    return types[type] || type;
+  };
+
+  const getRecordTypeBadge = (type) => {
+    const colors = {
+      'lab-report': 'bg-blue-100 text-blue-800',
+      'prescription': 'bg-green-100 text-green-800',
+      'radiology': 'bg-purple-100 text-purple-800',
+      'consultation-notes': 'bg-yellow-100 text-yellow-800',
+      'discharge-summary': 'bg-red-100 text-red-800',
+      'medical-history': 'bg-indigo-100 text-indigo-800',
+      'insurance': 'bg-orange-100 text-orange-800',
+      'vaccination': 'bg-teal-100 text-teal-800',
+      'allergy-info': 'bg-pink-100 text-pink-800',
+      'other': 'bg-gray-100 text-gray-800'
+    };
+    return colors[type] || colors.other;
+  };
+
   const downloadRecord = async (recordId, filename) => {
     try {
       const response = await api.get(`/records/${recordId}/download`, {
@@ -264,33 +296,51 @@ const PatientRecords = () => {
                   <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <p className="mt-4 text-gray-500">No medical records found</p>
+                  <p className="mt-4 text-gray-500">No medical records shared with you</p>
                 </div>
               ) : (
                 records.map((record) => (
                   <div key={record._id} className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{record.title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{record.description}</p>
-                        <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="font-semibold text-gray-900">{record.title}</h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRecordTypeBadge(record.recordType)}`}>
+                            {getRecordTypeLabel(record.recordType)}
+                          </span>
+                        </div>
+                        {record.description && (
+                          <p className="text-sm text-gray-600 mb-3">{record.description}</p>
+                        )}
+                        <div className="flex items-center space-x-4 text-sm text-gray-500">
                           <span className="flex items-center">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            {formatDate(record.date)}
+                            {formatDate(record.recordDate)}
                           </span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                            {record.category}
-                          </span>
+                          <span>📎 {record.files?.length || 0} file(s)</span>
+                          {record.uploadedBy && (
+                            <span>Uploaded by: {record.uploadedBy.personalInfo?.firstName} {record.uploadedBy.personalInfo?.lastName}</span>
+                          )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => downloadRecord(record._id, record.files[0]?.originalName)}
-                        className="ml-4 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-medium transition"
-                      >
-                        Download
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${record.files[0]?.fileUrl}`, '_blank')}
+                          className="px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-medium transition"
+                        >
+                          View
+                        </button>
+                        {record.sharedWith?.find(s => s.canDownload) && (
+                          <button
+                            onClick={() => downloadRecord(record._id, record.files[0]?.fileName)}
+                            className="px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium transition"
+                          >
+                            Download
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))

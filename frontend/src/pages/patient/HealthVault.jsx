@@ -7,8 +7,17 @@ const HealthVault = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [doctors, setDoctors] = useState([]);
   const [stats, setStats] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [shareForm, setShareForm] = useState({
+    doctorId: '',
+    expiresAt: '',
+    canDownload: true
+  });
   
   const [uploadForm, setUploadForm] = useState({
     title: '',
@@ -34,7 +43,22 @@ const HealthVault = () => {
   useEffect(() => {
     fetchRecords();
     fetchStats();
+    fetchDoctors();
   }, [filter]);
+
+  const fetchDoctors = async () => {
+    try {
+      const response = await api.get('/users/doctors');
+      console.log('Doctors API response:', response);
+      if (response.success) {
+        console.log('Doctors data:', response.data);
+        setDoctors(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+      toast.error('Failed to load doctors list');
+    }
+  };
 
   const fetchRecords = async () => {
     try {
@@ -149,6 +173,74 @@ const HealthVault = () => {
     }
   };
 
+  const handleShareClick = (record) => {
+    setSelectedRecord(record);
+    setShareForm({
+      doctorId: '',
+      expiresAt: '',
+      canDownload: true
+    });
+    setShowShareModal(true);
+  };
+
+  const handleShare = async (e) => {
+    e.preventDefault();
+    
+    if (!shareForm.doctorId) {
+      toast.error('Please select a doctor');
+      return;
+    }
+
+    try {
+      const response = await api.post(`/records/${selectedRecord._id}/share`, shareForm);
+      if (response.success) {
+        toast.success('Record shared successfully!');
+        setShowShareModal(false);
+        fetchRecords();
+      }
+    } catch (error) {
+      console.error('Share error:', error);
+      toast.error(error.response?.data?.message || 'Failed to share record');
+    }
+  };
+
+  const handleRevokeAccess = async (recordId, doctorId) => {
+    if (!window.confirm('Are you sure you want to revoke access for this doctor?')) {
+      return;
+    }
+
+    try {
+      const response = await api.delete(`/records/${recordId}/share/${doctorId}`);
+      if (response.success) {
+        toast.success('Access revoked successfully');
+        fetchRecords();
+        if (selectedRecord && selectedRecord._id === recordId) {
+          // Update selected record
+          const updatedRecord = await api.get(`/records/${recordId}`);
+          if (updatedRecord.success) {
+            setSelectedRecord(updatedRecord.data);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Revoke error:', error);
+      toast.error('Failed to revoke access');
+    }
+  };
+
+  const handleViewDetails = async (record) => {
+    try {
+      const response = await api.get(`/records/${record._id}`);
+      if (response.success) {
+        setSelectedRecord(response.data);
+        setShowDetailModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching record details:', error);
+      toast.error('Failed to load record details');
+    }
+  };
+
   const getRecordTypeLabel = (type) => {
     const found = recordTypes.find(rt => rt.value === type);
     return found ? found.label : type;
@@ -231,6 +323,297 @@ const HealthVault = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filter */}
+      <div className="bg-white rounded-xl shadow-md p-4">
+        <div className="flex items-center space-x-4">
+          <label className="text-gray-700 font-medium">Filter by Type:</label>
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="all">All Records</option>
+            {recordTypes.map(type => (
+              <option key={type.value} value={type.value}>{type.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Records List */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          </div>
+        ) : records.length === 0 ? (
+          <div className="text-center py-12">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p className="text-gray-500 mt-4">No medical records found</p>
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="mt-4 text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              Upload your first record
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {records.map((record) => (
+              <div key={record._id} className="p-6 hover:bg-gray-50 transition">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">{record.title}</h3>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRecordTypeBadge(record.recordType)}`}>
+                        {getRecordTypeLabel(record.recordType)}
+                      </span>
+                    </div>
+                    {record.description && (
+                      <p className="text-gray-600 mb-3">{record.description}</p>
+                    )}
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>📅 {new Date(record.recordDate).toLocaleDateString()}</span>
+                      <span>📎 {record.files.length} file(s)</span>
+                      {record.sharedWith.length > 0 && (
+                        <span>👥 Shared with {record.sharedWith.length} doctor(s)</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleViewDetails(record)}
+                      className="px-3 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium text-sm"
+                    >
+                      Details
+                    </button>
+                    <button
+                      onClick={() => handleShareClick(record)}
+                      className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium text-sm"
+                    >
+                      Share
+                    </button>
+                    <button
+                      onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${record.files[0].fileUrl}`, '_blank')}
+                      className="px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg font-medium text-sm"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleDelete(record._id)}
+                      className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Record Detail Modal */}
+      {showDetailModal && selectedRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Record Details</h2>
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{selectedRecord.title}</h3>
+                  <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${getRecordTypeBadge(selectedRecord.recordType)}`}>
+                    {getRecordTypeLabel(selectedRecord.recordType)}
+                  </span>
+                </div>
+
+                {selectedRecord.description && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Description</label>
+                    <p className="mt-1 text-gray-600">{selectedRecord.description}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Record Date</label>
+                    <p className="mt-1 text-gray-900">{new Date(selectedRecord.recordDate).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Uploaded On</label>
+                    <p className="mt-1 text-gray-900">{new Date(selectedRecord.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Attached Files ({selectedRecord.files.length})</label>
+                  <div className="mt-2 space-y-2">
+                    {selectedRecord.files.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{file.fileName}</p>
+                            <p className="text-xs text-gray-500">{(file.fileSize / 1024).toFixed(2)} KB</p>
+                          </div>
+                        </div>
+                        <a
+                          href={`${import.meta.env.VITE_API_URL.replace('/api', '')}${file.fileUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium"
+                        >
+                          View
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-sm font-medium text-gray-700">Shared With</label>
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        handleShareClick(selectedRecord);
+                      }}
+                      className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                      + Share with doctor
+                    </button>
+                  </div>
+                  {selectedRecord.sharedWith && selectedRecord.sharedWith.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedRecord.sharedWith.map((share, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Dr. {share.doctor.firstName} {share.doctor.lastName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Shared on {new Date(share.sharedAt).toLocaleDateString()}
+                              {share.expiresAt && ` • Expires ${new Date(share.expiresAt).toLocaleDateString()}`}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleRevokeAccess(selectedRecord._id, share.doctor._id)}
+                            className="text-sm text-red-600 hover:text-red-700 font-medium"
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 py-3">Not shared with any doctors yet</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && selectedRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Share Record</h2>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-4">Share "{selectedRecord.title}" with a doctor</p>
+
+              <form onSubmit={handleShare} className="space-y-4">
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">Select Doctor *</label>
+                  <select
+                    value={shareForm.doctorId}
+                    onChange={(e) => setShareForm(prev => ({ ...prev, doctorId: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Choose a doctor...</option>
+                    {doctors.map(doctor => (
+                      <option key={doctor._id} value={doctor._id}>
+                        Dr. {doctor.firstName} {doctor.lastName} 
+                        {doctor.professionalInfo?.specialization && ` - ${doctor.professionalInfo.specialization}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">Access Expiry (Optional)</label>
+                  <input
+                    type="date"
+                    value={shareForm.expiresAt}
+                    onChange={(e) => setShareForm(prev => ({ ...prev, expiresAt: e.target.value }))}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Leave empty for permanent access</p>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="canDownload"
+                    checked={shareForm.canDownload}
+                    onChange={(e) => setShareForm(prev => ({ ...prev, canDownload: e.target.checked }))}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="canDownload" className="ml-2 text-sm text-gray-700">
+                    Allow doctor to download files
+                  </label>
+                </div>
+
+                <div className="flex justify-end space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowShareModal(false)}
+                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  >
+                    Share
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

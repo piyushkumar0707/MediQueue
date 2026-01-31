@@ -145,8 +145,14 @@ medicalRecordSchema.methods.logAccess = function(userId, action, ipAddress) {
 
 // Method to check if user has access
 medicalRecordSchema.methods.canUserAccess = function(userId, userRole) {
+  // Convert userId to string for comparison
+  const userIdStr = userId.toString();
+  
+  // Get patient ID as string (handle both ObjectId and populated object)
+  const patientIdStr = this.patient._id ? this.patient._id.toString() : this.patient.toString();
+  
   // Patient always has access to their own records
-  if (this.patient.toString() === userId) {
+  if (patientIdStr === userIdStr) {
     return true;
   }
   
@@ -155,11 +161,18 @@ medicalRecordSchema.methods.canUserAccess = function(userId, userRole) {
     return true;
   }
   
+  // Uploader has access to their uploaded records
+  const uploadedByStr = this.uploadedBy._id ? this.uploadedBy._id.toString() : this.uploadedBy.toString();
+  if (uploadedByStr === userIdStr) {
+    return true;
+  }
+  
   // Check if doctor has explicit access
   if (userRole === 'doctor') {
     // Check if shared with this doctor
     const sharedAccess = this.sharedWith.find(share => {
-      const hasAccess = share.doctor.toString() === userId;
+      const doctorIdStr = share.doctor._id ? share.doctor._id.toString() : share.doctor.toString();
+      const hasAccess = doctorIdStr === userIdStr;
       const notExpired = !share.expiresAt || new Date(share.expiresAt) > new Date();
       return hasAccess && notExpired;
     });

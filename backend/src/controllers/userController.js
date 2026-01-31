@@ -7,7 +7,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 export const getDoctors = asyncHandler(async (req, res) => {
   const { specialization, search, available } = req.query;
 
-  const query = { role: 'doctor' };
+  const query = { role: 'doctor', isActive: true };
 
   // Filter by specialization
   if (specialization && specialization !== 'all') {
@@ -17,19 +17,32 @@ export const getDoctors = asyncHandler(async (req, res) => {
   // Search by name or email
   if (search) {
     query.$or = [
-      { 'personalInfo.fullName': new RegExp(search, 'i') },
+      { 'personalInfo.firstName': new RegExp(search, 'i') },
+      { 'personalInfo.lastName': new RegExp(search, 'i') },
       { email: new RegExp(search, 'i') }
     ];
   }
 
   const doctors = await User.find(query)
-    .select('personalInfo professionalInfo email phoneNumber')
+    .select('personalInfo.firstName personalInfo.lastName professionalInfo.specialization email phoneNumber')
     .sort({ 'personalInfo.firstName': 1 });
+
+  // Transform the data to flatten personalInfo
+  const transformedDoctors = doctors.map(doctor => ({
+    _id: doctor._id,
+    firstName: doctor.personalInfo.firstName,
+    lastName: doctor.personalInfo.lastName,
+    email: doctor.email,
+    phoneNumber: doctor.phoneNumber,
+    professionalInfo: {
+      specialization: doctor.professionalInfo?.specialization || 'General'
+    }
+  }));
 
   res.json({
     success: true,
-    count: doctors.length,
-    data: doctors
+    count: transformedDoctors.length,
+    data: transformedDoctors
   });
 });
 
