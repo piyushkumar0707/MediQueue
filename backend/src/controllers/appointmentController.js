@@ -1,7 +1,9 @@
 import Appointment from '../models/Appointment.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
+import notificationService from '../services/notificationService.js';
 
 // @desc    Book an appointment
 // @route   POST /api/appointments
@@ -87,11 +89,52 @@ export const bookAppointment = asyncHandler(async (req, res) => {
   console.log('Appointment patient field:', appointment.patient);
 
   await appointment.populate([
-    { path: 'patient', select: 'personalInfo phoneNumber email' },
-    { path: 'doctor', select: 'personalInfo professionalInfo' }
+    { path: 'patient', select: 'personalInfo phoneNumber email firstName lastName' },
+    { path: 'doctor', select: 'personalInfo professionalInfo firstName lastName' }
   ]);
 
   logger.info(`Appointment booked: ${appointment._id} by patient ${req.user.email}`);
+
+  // Notify patient about successful booking
+  const patientNotification = await Notification.create({
+    recipient: req.user.userId,
+    type: 'appointment_booked',
+    title: 'Appointment Confirmed',
+    message: `Your appointment with Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime} has been confirmed.`,
+    priority: 'medium',
+    relatedEntity: {
+      entityType: 'Appointment',
+      entityId: appointment._id
+    },
+    actionUrl: `/patient/appointments`,
+    channels: {
+      inApp: true,
+      email: true
+    }
+  });
+
+  await notificationService.sendNotification(patientNotification);
+
+  // Notify doctor about new appointment
+  const doctorNotification = await Notification.create({
+    recipient: doctorId,
+    sender: req.user.userId,
+    type: 'appointment_booked',
+    title: 'New Appointment Booked',
+    message: `${appointment.patient.firstName} ${appointment.patient.lastName} has booked an appointment on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime}. Reason: ${reasonForVisit}`,
+    priority: 'medium',
+    relatedEntity: {
+      entityType: 'Appointment',
+      entityId: appointment._id
+    },
+    actionUrl: `/doctor/appointments`,
+    channels: {
+      inApp: true,
+      email: true
+    }
+  });
+
+  await notificationService.sendNotification(doctorNotification);
 
   res.status(201).json({
     success: true,
@@ -322,7 +365,59 @@ export const cancelAppointment = asyncHandler(async (req, res) => {
   appointment.cancelReason = cancelReason || 'No reason provided';
   await appointment.save();
 
+  await appointment.populate([
+    { path: 'patient', select: 'firstName lastName email' },
+    { path: 'doctor', select: 'firstName lastName email' }
+  ]);
+
   logger.info(`Appointment ${appointment._id} cancelled by ${req.user.email}`);
+
+  // Determine who cancelled and notify the other party
+  const cancelledByPatient = isPatient;
+  
+  if (cancelledByPatient) {
+    // Notify doctor
+    const doctorNotification = await Notification.create({
+      recipient: appointment.doctor._id,
+      sender: req.user.userId,
+      type: 'appointment_cancelled',
+      title: 'Appointment Cancelled',
+      message: `${appointment.patient.firstName} ${appointment.patient.lastName} has cancelled their appointment scheduled for ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot.startTime}. Reason: ${cancelReason || 'No reason provided'}`,
+      priority: 'high',
+      relatedEntity: {
+        entityType: 'Appointment',
+        entityId: appointment._id
+      },
+      actionUrl: `/doctor/appointments`,
+      channels: {
+        inApp: true,
+        email: true
+      }
+    });
+
+    await notificationService.sendNotification(doctorNotification);
+  } else {
+    // Notify patient
+    const patientNotification = await Notification.create({
+      recipient: appointment.patient._id,
+      sender: req.user.userId,
+      type: 'appointment_cancelled',
+      title: 'Appointment Cancelled',
+      message: `Your appointment with Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} scheduled for ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot.startTime} has been cancelled. Reason: ${cancelReason || 'No reason provided'}`,
+      priority: 'high',
+      relatedEntity: {
+        entityType: 'Appointment',
+        entityId: appointment._id
+      },
+      actionUrl: `/patient/appointments`,
+      channels: {
+        inApp: true,
+        email: true
+      }
+    });
+
+    await notificationService.sendNotification(patientNotification);
+  }
 
   res.json({
     success: true,
@@ -395,11 +490,52 @@ export const rescheduleAppointment = asyncHandler(async (req, res) => {
   await appointment.save();
 
   await appointment.populate([
-    { path: 'patient', select: 'personalInfo phoneNumber email' },
-    { path: 'doctor', select: 'personalInfo professionalInfo' }
+    { path: 'patient', select: 'personalInfo phoneNumber email firstName lastName' },
+    { path: 'doctor', select: 'personalInfo professionalInfo firstName lastName' }
   ]);
 
   logger.info(`Appointment ${appointment._id} rescheduled by patient ${req.user.userId}`);
+
+  // Notify patient about successful reschedule
+  const patientNotification = await Notification.create({
+    recipient: req.user.userId,
+    type: 'appointment_rescheduled',
+    title: 'Appointment Rescheduled',
+    message: `Your appointment with Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} has been rescheduled to ${newAppointmentDate.toLocaleDateString()} at ${timeSlot.startTime}.`,
+    priority: 'medium',
+    relatedEntity: {
+      entityType: 'Appointment',
+      entityId: appointment._id
+    },
+    actionUrl: `/patient/appointments`,
+    channels: {
+      inApp: true,
+      email: true
+    }
+  });
+
+  await notificationService.sendNotification(patientNotification);
+
+  // Notify doctor about rescheduled appointment
+  const doctorNotification = await Notification.create({
+    recipient: appointment.doctor._id,
+    sender: req.user.userId,
+    type: 'appointment_rescheduled',
+    title: 'Appointment Rescheduled',
+    message: `${appointment.patient.firstName} ${appointment.patient.lastName} has rescheduled their appointment to ${newAppointmentDate.toLocaleDateString()} at ${timeSlot.startTime}.`,
+    priority: 'medium',
+    relatedEntity: {
+      entityType: 'Appointment',
+      entityId: appointment._id
+    },
+    actionUrl: `/doctor/appointments`,
+    channels: {
+      inApp: true,
+      email: true
+    }
+  });
+
+  await notificationService.sendNotification(doctorNotification);
 
   res.json({
     success: true,

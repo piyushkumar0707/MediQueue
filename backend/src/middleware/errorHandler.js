@@ -21,6 +21,7 @@ export const errorHandler = (err, req, res, next) => {
     message = Object.values(err.errors)
       .map((e) => e.message)
       .join(', ');
+    logger.error('Mongoose Validation Error:', message);
   }
 
   // Mongoose duplicate key error

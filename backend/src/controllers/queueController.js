@@ -3,6 +3,8 @@ import Appointment from '../models/Appointment.js';
 import User from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
+import Notification from '../models/Notification.js';
+import notificationService from '../services/notificationService.js';
 
 // @desc    Join queue (walk-in or from appointment)
 // @route   POST /api/queue/join
@@ -223,6 +225,25 @@ export const callNextPatient = asyncHandler(async (req, res) => {
       status: 'in-progress'
     });
   }
+
+  // Create notification for patient
+  const notification = await Notification.createNotification({
+    recipient: nextPatient.patient._id,
+    sender: req.user.userId,
+    type: 'queue_update',
+    title: '🔔 Your Turn!',
+    message: `Please proceed to ${consultationRoom || 'the consultation room'}. The doctor is ready to see you now.`,
+    priority: 'high',
+    channels: {
+      inApp: true,
+      email: true,
+      sms: false,
+    },
+    actionUrl: '/patient/queue',
+  });
+
+  // Send notification through all channels
+  await notificationService.sendNotification(notification);
 
   logger.info(`Doctor ${req.user.email} called patient ${nextPatient.patient.email}`);
 

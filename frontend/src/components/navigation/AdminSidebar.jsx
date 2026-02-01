@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
+import NotificationBell from './NotificationBell';
 
 const AdminSidebar = () => {
   const { user, logout } = useAuthStore();
@@ -18,7 +19,10 @@ const AdminSidebar = () => {
   return (
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
       <div className="p-6">
-        <h1 className="text-xl font-bold text-primary-600">CareQueue</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-xl font-bold text-primary-600">CareQueue</h1>
+          <NotificationBell />
+        </div>
         <p className="text-sm text-gray-600">Admin Portal</p>
         {user?.personalInfo?.fullName && (
           <p className="text-xs text-gray-500 mt-2">

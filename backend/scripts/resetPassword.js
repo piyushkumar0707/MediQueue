@@ -2,11 +2,11 @@ import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import User from '../src/models/User.js';
 
-mongoose.connect('mongodb://localhost:27017/mediqueue');
+mongoose.connect('mongodb://localhost:27017/carequeue');
 
 const resetPassword = async () => {
   try {
-    console.log('Resetting password for doctor@test.com...\n');
+    console.log('Resetting password for hackathon20sep@gmail.com...\n');
     
     const password = 'password123';
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -15,7 +15,7 @@ const resetPassword = async () => {
     console.log('New hash:', hashedPassword);
     
     const result = await User.updateOne(
-      { email: 'doctor@test.com' },
+      { email: 'hackathon20sep@gmail.com' },
       { $set: { password: hashedPassword } }
     );
     
@@ -25,13 +25,13 @@ const resetPassword = async () => {
     
     // Verify it works
     console.log('\nVerifying new password...');
-    const user = await User.findByPhoneOrEmail('doctor@test.com');
+    const user = await User.findByPhoneOrEmail('hackathon20sep@gmail.com');
     const isMatch = await bcrypt.compare(password, user.password);
     
     if (isMatch) {
       console.log('✅ Password verification successful!');
       console.log('\n📝 You can now login with:');
-      console.log('   Email: doctor@test.com');
+      console.log('   Email: hackathon20sep@gmail.com');
       console.log('   Password: password123');
     } else {
       console.log('❌ Password verification failed!');

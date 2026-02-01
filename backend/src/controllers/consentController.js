@@ -2,6 +2,8 @@ import Consent from '../models/Consent.js';
 import User from '../models/User.js';
 import MedicalRecord from '../models/MedicalRecord.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import Notification from '../models/Notification.js';
+import notificationService from '../services/notificationService.js';
 
 // @desc    Get my consents (patient view)
 // @route   GET /api/consent/my-consents
@@ -144,6 +146,23 @@ export const grantConsent = asyncHandler(async (req, res) => {
     };
   }
 
+  // Notify doctor that consent was granted
+  const doctorNotification = await Notification.createNotification({
+    recipient: doctorId,
+    sender: req.user.userId,
+    type: 'consent_granted',
+    title: '✅ Consent Granted',
+    message: `A patient has granted you access to their medical records.`,
+    priority: 'medium',
+    channels: {
+      inApp: true,
+      email: true,
+      sms: false,
+    },
+    actionUrl: '/doctor/shared-records',
+  });
+  await notificationService.sendNotification(doctorNotification);
+
   res.status(201).json({
     success: true,
     message: 'Consent granted successfully',
@@ -180,6 +199,23 @@ export const revokeConsent = asyncHandler(async (req, res) => {
   }
 
   await consent.revoke(req.user.userId, req.body.reason || 'Revoked by patient');
+
+  // Notify doctor that consent was revoked
+  const doctorNotification = await Notification.createNotification({
+    recipient: consent.doctor,
+    sender: req.user.userId,
+    type: 'consent_revoked',
+    title: '🚫 Consent Revoked',
+    message: `A patient has revoked your access to their medical records.`,
+    priority: 'high',
+    channels: {
+      inApp: true,
+      email: true,
+      sms: false,
+    },
+    actionUrl: '/doctor/shared-records',
+  });
+  await notificationService.sendNotification(doctorNotification);
 
   res.json({
     success: true,

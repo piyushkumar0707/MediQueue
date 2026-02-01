@@ -3,14 +3,58 @@ import Prescription from '../models/Prescription.js';
 import User from '../models/User.js';
 import Appointment from '../models/Appointment.js';
 import Queue from '../models/Queue.js';
+import Notification from '../models/Notification.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
+import notificationService from '../services/notificationService.js';
 
 // @desc    Create new prescription
 // @route   POST /api/prescriptions
 // @access  Private (Doctor)
 export const createPrescription = asyncHandler(async (req, res) => {
   const { patientId, appointmentId, queueEntryId, diagnosis, medicines, tests, notes, followUpDate, followUpInstructions } = req.body;
+
+  // Debug logging
+  logger.info('Create prescription request:', {
+    patientId,
+    doctorId: req.user.userId,
+    diagnosis,
+    medicinesCount: medicines?.length,
+    medicines: JSON.stringify(medicines)
+  });
+
+  // Validate required fields
+  if (!patientId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Patient ID is required'
+    });
+  }
+
+  if (!diagnosis || !diagnosis.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Diagnosis is required'
+    });
+  }
+
+  if (!medicines || !Array.isArray(medicines) || medicines.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'At least one medicine is required'
+    });
+  }
+
+  // Validate each medicine has required fields
+  for (let i = 0; i < medicines.length; i++) {
+    const med = medicines[i];
+    if (!med.name || !med.dosage || !med.frequency || !med.duration) {
+      return res.status(400).json({
+        success: false,
+        message: `Medicine ${i + 1} is missing required fields (name, dosage, frequency, or duration)`
+      });
+    }
+  }
 
   // Validate patient exists
   const patient = await User.findById(patientId);
@@ -58,11 +102,32 @@ export const createPrescription = asyncHandler(async (req, res) => {
 
   // Populate patient and doctor info
   await prescription.populate([
-    { path: 'patient', select: 'personalInfo phoneNumber email' },
-    { path: 'doctor', select: 'personalInfo professionalInfo' }
+    { path: 'patient', select: 'personalInfo phoneNumber email firstName lastName' },
+    { path: 'doctor', select: 'personalInfo professionalInfo firstName lastName' }
   ]);
 
   logger.info(`Prescription created by Dr. ${req.user.userId} for patient ${patientId}`);
+
+  // Notify patient about new prescription
+  const patientNotification = await Notification.create({
+    recipient: patientId,
+    sender: req.user.userId,
+    type: 'prescription_created',
+    title: 'New Prescription Available',
+    message: `Dr. ${req.user.firstName} ${req.user.lastName} has created a new prescription for you. Diagnosis: ${diagnosis}. Please review it and follow the instructions.`,
+    priority: 'medium',
+    relatedEntity: {
+      entityType: 'prescription',
+      entityId: prescription._id
+    },
+    actionUrl: `/patient/prescriptions`,
+    channels: {
+      inApp: true,
+      email: true
+    }
+  });
+
+  await notificationService.sendNotification(patientNotification);
 
   res.status(201).json({
     success: true,

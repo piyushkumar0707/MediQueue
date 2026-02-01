@@ -46,6 +46,7 @@ import Analytics from './pages/admin/Analytics';
 // Shared Pages
 import Profile from './pages/Profile';
 import Help from './pages/Help';
+import NotificationCenter from './pages/shared/NotificationCenter';
 
 // Protected Route Component
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -93,6 +94,7 @@ function App() {
           <Route path="records" element={<HealthVault />} />
           <Route path="consent" element={<ConsentManagement />} />
           <Route path="prescriptions" element={<PatientPrescriptions />} />
+          <Route path="notifications" element={<NotificationCenter />} />
           <Route path="profile" element={<Profile />} />
           <Route path="help" element={<Help />} />
         </Route>
@@ -115,6 +117,7 @@ function App() {
           <Route path="prescriptions" element={<DoctorPrescriptions />} />
           <Route path="prescriptions/create" element={<CreatePrescription />} />
           <Route path="emergency-requests" element={<EmergencyRequests />} />
+          <Route path="notifications" element={<NotificationCenter />} />
           <Route path="profile" element={<Profile />} />
           <Route path="help" element={<Help />} />
         </Route>
@@ -134,6 +137,7 @@ function App() {
           <Route path="emergency-access" element={<EmergencyAccessReview />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="notifications" element={<NotificationCenter />} />
           <Route path="profile" element={<Profile />} />
           <Route path="help" element={<Help />} />
         </Route>

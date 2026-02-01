@@ -142,16 +142,14 @@ const JoinQueue = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">
-                        Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName}
+                        Dr. {doctor.firstName} {doctor.lastName}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {doctor.professionalInfo?.specialty || 'General Physician'}
+                        {doctor.professionalInfo?.specialization || 'General Physician'}
                       </p>
-                      {doctor.professionalInfo?.department && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {doctor.professionalInfo.department}
-                        </p>
-                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {doctor.professionalInfo?.department || ''}
+                      </p>
                     </div>
                     {selectedDoctor?._id === doctor._id && (
                       <div className="flex-shrink-0">
@@ -182,10 +180,10 @@ const JoinQueue = () => {
                 <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
                   <p className="text-xs text-gray-600 mb-1">Selected Doctor</p>
                   <p className="font-semibold text-gray-900">
-                    Dr. {selectedDoctor.personalInfo?.firstName} {selectedDoctor.personalInfo?.lastName}
+                    Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {selectedDoctor.professionalInfo?.specialty || 'General Physician'}
+                    {selectedDoctor.professionalInfo?.specialization || 'General Physician'}
                   </p>
                 </div>
               ) : (

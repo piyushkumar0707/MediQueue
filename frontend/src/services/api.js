@@ -138,4 +138,58 @@ export const getDoctors = async () => {
   return api.get('/users/doctors');
 };
 
+// ============================================
+// Notification API Methods
+// ============================================
+
+// Get all notifications for current user
+export const getNotifications = async (params = {}) => {
+  return api.get('/notifications', { params });
+};
+
+// Get unread count
+export const getUnreadCount = async () => {
+  return api.get('/notifications/unread-count');
+};
+
+// Get notification statistics
+export const getNotificationStats = async () => {
+  return api.get('/notifications/stats');
+};
+
+// Mark all as read
+export const markAllNotificationsAsRead = async () => {
+  return api.patch('/notifications/mark-all-read');
+};
+
+// Clear all read notifications
+export const clearReadNotifications = async () => {
+  return api.delete('/notifications/clear-read');
+};
+
+// Create notification (admin/system)
+export const createNotification = async (data) => {
+  return api.post('/notifications', data);
+};
+
+// Get notification by ID
+export const getNotificationById = async (id) => {
+  return api.get(`/notifications/${id}`);
+};
+
+// Mark as read
+export const markNotificationAsRead = async (id) => {
+  return api.patch(`/notifications/${id}/read`);
+};
+
+// Mark as unread
+export const markNotificationAsUnread = async (id) => {
+  return api.patch(`/notifications/${id}/unread`);
+};
+
+// Delete notification
+export const deleteNotification = async (id) => {
+  return api.delete(`/notifications/${id}`);
+};
+
 export default api;

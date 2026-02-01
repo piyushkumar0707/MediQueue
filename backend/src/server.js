@@ -11,6 +11,8 @@ import { Server } from 'socket.io';
 import connectDB from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './utils/logger.js';
+import notificationService from './services/notificationService.js';
+import emailService from './services/emailService.js';
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -28,6 +30,7 @@ import prescriptionRoutes from './routes/prescription.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -44,6 +47,12 @@ const io = new Server(httpServer, {
     credentials: true,
   },
 });
+
+// Initialize notification service with Socket.io
+notificationService.setSocketIO(io);
+
+// Initialize email service
+emailService.initialize();
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -83,6 +92,7 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

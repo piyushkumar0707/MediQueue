@@ -291,7 +291,7 @@ export const login = async (req, res) => {
       status: 'SUCCESS'
     });
     
-    await user.save();
+    await user.save({ validateBeforeSave: false });
     
     logger.info(`User logged in: ${user.email}`);
     

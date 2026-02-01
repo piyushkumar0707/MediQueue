@@ -340,7 +340,7 @@ userSchema.methods.addRefreshToken = async function(token, deviceInfo, ipAddress
     this.refreshTokens = this.refreshTokens.slice(-3);
   }
   
-  await this.save();
+  await this.save({ validateBeforeSave: false });
 };
 
 // Method to remove refresh token
