@@ -260,14 +260,14 @@ const BookAppointment = () => {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg text-gray-900">
-                          Dr. {doctor.personalInfo.fullName}
+                          Dr. {doctor.firstName} {doctor.lastName}
                         </h3>
                         <p className="text-sm text-indigo-600 font-medium">
-                          {doctor.professionalInfo?.specialization || 'General Physician'}
+                          {doctor.specialization || 'General Physician'}
                         </p>
-                        {doctor.professionalInfo?.experience && (
+                        {doctor.experience && (
                           <p className="text-sm text-gray-600 mt-1">
-                            {doctor.professionalInfo.experience} years experience
+                            {doctor.experience} years experience
                           </p>
                         )}
                         {doctor.professionalInfo?.qualification && (
@@ -309,7 +309,7 @@ const BookAppointment = () => {
               </button>
               <h2 className="text-2xl font-bold text-gray-900">Select Date & Time</h2>
               <p className="text-gray-600 mt-1">
-                Booking with Dr. {selectedDoctor.personalInfo.fullName}
+                Booking with Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}
               </p>
             </div>
 
@@ -467,8 +467,8 @@ const BookAppointment = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Dr. {selectedDoctor.personalInfo.fullName}</h3>
-                  <p className="text-sm text-indigo-600">{selectedDoctor.professionalInfo?.specialization}</p>
+                  <h3 className="font-semibold text-lg">Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}</h3>
+                  <p className="text-sm text-indigo-600">{selectedDoctor.specialization}</p>
                 </div>
               </div>
 

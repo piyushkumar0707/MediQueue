@@ -7,7 +7,8 @@ const AdminSidebar = () => {
   const navItems = [
     { to: '/admin', label: 'Dashboard', icon: '🏠' },
     { to: '/admin/audit', label: 'Audit Logs', icon: '🧾' },
-    { to: '/admin/emergency-review', label: 'Emergency Review', icon: '🚨' },
+    { to: '/admin/emergency-cases', label: 'Emergency Cases', icon: '🚨' },
+    { to: '/admin/emergency-access', label: 'Emergency Access', icon: '🔐' },
     { to: '/admin/users', label: 'User Management', icon: '👥' },
     { to: '/admin/analytics', label: 'Analytics', icon: '📊' },
     { to: '/admin/profile', label: 'Profile', icon: '👤' },

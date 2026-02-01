@@ -1,5 +1,7 @@
 import MedicalRecord from '../models/MedicalRecord.js';
 import User from '../models/User.js';
+import Consent from '../models/Consent.js';
+import EmergencyAccess from '../models/EmergencyAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 import { generateEncryptionKey } from '../services/encryption.service.js';
@@ -151,28 +153,121 @@ export const getPatientRecords = asyncHandler(async (req, res) => {
     });
   }
   
-  const query = {
-    patient: patientId,
-    status: 'active'
-  };
+  let records = [];
   
-  // If doctor, only show records shared with them
-  if (req.user.role === 'doctor') {
-    query['sharedWith.doctor'] = req.user.userId;
+  // If admin, get all records
+  if (req.user.role === 'admin') {
+    const query = {
+      patient: patientId,
+      status: 'active'
+    };
+    
+    if (recordType && recordType !== 'all') {
+      query.recordType = recordType;
+    }
+    
+    records = await MedicalRecord.find(query)
+      .populate('uploadedBy', 'personalInfo role')
+      .populate('patient', 'personalInfo email phoneNumber')
+      .sort({ recordDate: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+  } 
+  // If doctor, check for explicit shares, active consent, AND emergency access
+  else if (req.user.role === 'doctor') {
+    // Get records explicitly shared with this doctor
+    const sharedQuery = {
+      patient: patientId,
+      status: 'active',
+      'sharedWith.doctor': req.user.userId
+    };
+    
+    if (recordType && recordType !== 'all') {
+      sharedQuery.recordType = recordType;
+    }
+    
+    const explicitlySharedRecords = await MedicalRecord.find(sharedQuery)
+      .populate('uploadedBy', 'personalInfo role')
+      .populate('patient', 'personalInfo email phoneNumber')
+      .sort({ recordDate: -1 });
+    
+    // Check for active consent
+    const activeConsent = await Consent.findOne({
+      patient: patientId,
+      doctor: req.user.userId,
+      status: 'active',
+      $or: [
+        { expiresAt: null },
+        { expiresAt: { $gt: new Date() } }
+      ]
+    });
+    
+    let consentBasedRecords = [];
+    
+    if (activeConsent) {
+      let consentQuery = {
+        patient: patientId,
+        status: 'active'
+      };
+      
+      // Apply scope-based filtering
+      if (activeConsent.scope === 'record-types' && activeConsent.recordTypes && activeConsent.recordTypes.length > 0) {
+        consentQuery.recordType = { $in: activeConsent.recordTypes };
+      }
+      
+      // Apply record type filter if provided
+      if (recordType && recordType !== 'all') {
+        if (consentQuery.recordType) {
+          // If already has record type from consent, intersect with requested type
+          if (activeConsent.recordTypes.includes(recordType)) {
+            consentQuery.recordType = recordType;
+          } else {
+            consentQuery.recordType = { $in: [] }; // No match
+          }
+        } else {
+          consentQuery.recordType = recordType;
+        }
+      }
+      
+      consentBasedRecords = await MedicalRecord.find(consentQuery)
+        .populate('uploadedBy', 'personalInfo role')
+        .populate('patient', 'personalInfo email phoneNumber')
+        .sort({ recordDate: -1 });
+    }
+    
+    // Check for active emergency access
+    const emergencyAccess = await EmergencyAccess.getActiveAccess(req.user.userId, patientId);
+    let emergencyBasedRecords = [];
+    
+    if (emergencyAccess) {
+      let emergencyQuery = {
+        patient: patientId,
+        status: 'active'
+      };
+      
+      if (recordType && recordType !== 'all') {
+        emergencyQuery.recordType = recordType;
+      }
+      
+      emergencyBasedRecords = await MedicalRecord.find(emergencyQuery)
+        .populate('uploadedBy', 'personalInfo role')
+        .populate('patient', 'personalInfo email phoneNumber')
+        .sort({ recordDate: -1 });
+    }
+    
+    // Combine and deduplicate
+    const allRecords = [...explicitlySharedRecords, ...consentBasedRecords, ...emergencyBasedRecords];
+    const uniqueRecords = Array.from(
+      new Map(allRecords.map(record => [record._id.toString(), record])).values()
+    );
+    
+    // Apply pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    records = uniqueRecords.slice(startIndex, endIndex);
   }
   
-  if (recordType && recordType !== 'all') {
-    query.recordType = recordType;
-  }
-  
-  const records = await MedicalRecord.find(query)
-    .populate('uploadedBy', 'personalInfo role')
-    .populate('patient', 'personalInfo email phoneNumber')
-    .sort({ recordDate: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
-  
-  const count = await MedicalRecord.countDocuments(query);
+  const count = records.length;
   
   // Log access for each record
   for (const record of records) {
@@ -194,22 +289,91 @@ export const getPatientRecords = asyncHandler(async (req, res) => {
 // @route   GET /api/records/shared-with-me
 // @access  Private (Doctor)
 export const getSharedRecords = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 10, recordType } = req.query;
   
-  const records = await MedicalRecord.getSharedWithDoctor(req.user.userId);
+  // Get records explicitly shared with this doctor
+  const explicitlySharedRecords = await MedicalRecord.getSharedWithDoctor(req.user.userId);
+  
+  // Get active consents for this doctor
+  const activeConsents = await Consent.find({
+    doctor: req.user.userId,
+    status: 'active',
+    $or: [
+      { expiresAt: null },
+      { expiresAt: { $gt: new Date() } }
+    ]
+  }).populate('patient');
+  
+  // For each active consent, get records based on consent scope
+  const consentBasedRecords = [];
+  
+  for (const consent of activeConsents) {
+    let query = {
+      patient: consent.patient._id,
+      status: 'active'
+    };
+    
+    // Apply scope-based filtering
+    if (consent.scope === 'record-types' && consent.recordTypes && consent.recordTypes.length > 0) {
+      query.recordType = { $in: consent.recordTypes };
+    }
+    // If scope is 'all-records', no additional filtering needed
+    // If scope is 'specific-records', would need to check specificRecords array
+    
+    const records = await MedicalRecord.find(query)
+      .populate('patient', 'personalInfo email phoneNumber')
+      .populate('uploadedBy', 'personalInfo')
+      .sort({ recordDate: -1 });
+    
+    consentBasedRecords.push(...records);
+  }
+  
+  // Get active emergency accesses for this doctor
+  const emergencyAccesses = await EmergencyAccess.find({
+    doctor: req.user.userId,
+    status: 'active',
+    expiresAt: { $gt: new Date() }
+  }).populate('patient');
+  
+  // For each active emergency access, get all records for that patient
+  const emergencyBasedRecords = [];
+  
+  for (const emergencyAccess of emergencyAccesses) {
+    const records = await MedicalRecord.find({
+      patient: emergencyAccess.patient._id,
+      status: 'active'
+    })
+      .populate('patient', 'personalInfo email phoneNumber')
+      .populate('uploadedBy', 'personalInfo')
+      .sort({ recordDate: -1 });
+    
+    emergencyBasedRecords.push(...records);
+  }
+  
+  // Combine and deduplicate records (using record ID)
+  const allRecords = [...explicitlySharedRecords, ...consentBasedRecords, ...emergencyBasedRecords];
+  const uniqueRecords = Array.from(
+    new Map(allRecords.map(record => [record._id.toString(), record])).values()
+  );
+  
+  // Apply record type filter if provided
+  let filteredRecords = uniqueRecords;
+  if (recordType && recordType !== 'all') {
+    filteredRecords = uniqueRecords.filter(record => record.recordType === recordType);
+  }
   
   // Apply pagination
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
-  const paginatedRecords = records.slice(startIndex, endIndex);
+  const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
   
   res.json({
     success: true,
     data: paginatedRecords,
     pagination: {
       currentPage: parseInt(page),
-      totalPages: Math.ceil(records.length / limit),
-      totalItems: records.length
+      totalPages: Math.ceil(filteredRecords.length / limit),
+      totalItems: filteredRecords.length
     }
   });
 });
@@ -230,8 +394,66 @@ export const getRecordById = asyncHandler(async (req, res) => {
     });
   }
   
-  // Check access
-  if (!record.canUserAccess(req.user.userId, req.user.role)) {
+  // Check access - Allow patient, uploader, admin, explicitly shared doctors, doctors with active consent, or doctors with emergency access
+  let hasAccess = false;
+  let accessSource = null; // Track how access was granted
+  
+  // Check basic access (patient, uploader, admin, explicitly shared)
+  if (record.canUserAccess(req.user.userId, req.user.role)) {
+    hasAccess = true;
+    accessSource = 'basic';
+  }
+  
+  // If not already granted access and user is a doctor, check for active consent
+  if (!hasAccess && req.user.role === 'doctor') {
+    const activeConsent = await Consent.findOne({
+      patient: record.patient._id,
+      doctor: req.user.userId,
+      status: 'active',
+      $or: [
+        { expiresAt: null },
+        { expiresAt: { $gt: new Date() } }
+      ]
+    });
+    
+    if (activeConsent) {
+      // Check if consent covers this record
+      if (activeConsent.scope === 'all-records') {
+        hasAccess = true;
+        accessSource = 'consent';
+      } else if (activeConsent.scope === 'record-types' && 
+                 activeConsent.recordTypes && 
+                 activeConsent.recordTypes.includes(record.recordType)) {
+        hasAccess = true;
+        accessSource = 'consent';
+      } else if (activeConsent.scope === 'specific-records' && 
+                 activeConsent.specificRecords && 
+                 activeConsent.specificRecords.some(id => id.toString() === record._id.toString())) {
+        hasAccess = true;
+        accessSource = 'consent';
+      }
+      
+      // Log consent access
+      if (hasAccess) {
+        await activeConsent.logAccess('viewed', record._id, req.ip);
+      }
+    }
+  }
+  
+  // If still no access and user is a doctor, check for active emergency access
+  if (!hasAccess && req.user.role === 'doctor') {
+    const emergencyAccess = await EmergencyAccess.getActiveAccess(req.user.userId, record.patient._id);
+    
+    if (emergencyAccess) {
+      hasAccess = true;
+      accessSource = 'emergency';
+      
+      // Log emergency access
+      await emergencyAccess.logAccess(record._id, record.recordType, 'viewed', req.ip);
+    }
+  }
+  
+  if (!hasAccess) {
     return res.status(403).json({
       success: false,
       message: 'You do not have access to this record'

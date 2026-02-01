@@ -33,11 +33,13 @@ import SharedRecords from './pages/doctor/SharedRecords';
 import DoctorPrescriptions from './pages/doctor/PrescriptionsList';
 import CreatePrescription from './pages/doctor/CreatePrescription';
 import DoctorAppointments from './pages/doctor/Appointments';
+import EmergencyRequests from './pages/doctor/EmergencyRequests';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import AuditLogs from './pages/admin/AuditLogs';
-import EmergencyReview from './pages/admin/EmergencyReview';
+import EmergencyCaseReview from './pages/admin/EmergencyCaseReview';
+import EmergencyAccessReview from './pages/admin/EmergencyAccessReview';
 import UserManagement from './pages/admin/UserManagement';
 import Analytics from './pages/admin/Analytics';
 
@@ -112,6 +114,7 @@ function App() {
           <Route path="patient/:patientId" element={<PatientRecords />} />
           <Route path="prescriptions" element={<DoctorPrescriptions />} />
           <Route path="prescriptions/create" element={<CreatePrescription />} />
+          <Route path="emergency-requests" element={<EmergencyRequests />} />
           <Route path="profile" element={<Profile />} />
           <Route path="help" element={<Help />} />
         </Route>
@@ -127,7 +130,8 @@ function App() {
         >
           <Route index element={<AdminDashboard />} />
           <Route path="audit" element={<AuditLogs />} />
-          <Route path="emergency-review" element={<EmergencyReview />} />
+          <Route path="emergency-cases" element={<EmergencyCaseReview />} />
+          <Route path="emergency-access" element={<EmergencyAccessReview />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="profile" element={<Profile />} />
