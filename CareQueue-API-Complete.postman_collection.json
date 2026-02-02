@@ -1,0 +1,1717 @@
+{
+  "info": {
+    "name": "CareQueue API - Complete Collection",
+    "description": "Complete API collection for CareQueue Healthcare Platform - All Endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "carequeue-complete-api",
+    "version": "2.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doctorId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "patientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "appointmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "prescriptionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "queueId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "recordId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "consentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register - Initiate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('sessionId', response.data.sessionId);",
+                  "    console.log('SessionId:', response.data.sessionId);",
+                  "    console.log('Dev OTP:', response.data.devOTP);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"9876543210\",\n  \"email\": \"newuser@example.com\",\n  \"countryCode\": \"+91\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/initiate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "initiate"]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('OTP Verified');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"otp\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-otp"]
+            }
+          }
+        },
+        {
+          "name": "Complete Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+                  "    pm.collectionVariables.set('userId', response.data.user._id);",
+                  "    console.log('Registration Complete');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"personalInfo\": {\n    \"fullName\": \"John Doe\",\n    \"dateOfBirth\": \"1990-01-15\",\n    \"gender\": \"male\",\n    \"bloodGroup\": \"O+\",\n    \"address\": \"123 Main St, City\"\n  },\n  \"password\": \"SecurePass123!\",\n  \"role\": \"patient\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "complete"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+                  "    pm.collectionVariables.set('userId', response.data.user._id);",
+                  "    if (response.data.user.role === 'doctor') {",
+                  "        pm.collectionVariables.set('doctorId', response.data.user._id);",
+                  "    } else if (response.data.user.role === 'patient') {",
+                  "        pm.collectionVariables.set('patientId', response.data.user._id);",
+                  "    }",
+                  "    console.log('Login Successful');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor1@gmail.com\",\n  \"password\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset-token-here\",\n  \"newPassword\": \"NewSecurePass123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    console.log('Token Refreshed');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh-token"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Users & Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"personalInfo\": {\n    \"fullName\": \"John Updated\",\n    \"phoneNumber\": \"9876543210\",\n    \"address\": \"456 New Street\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"oldPassword123\",\n  \"newPassword\": \"newPassword456!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "Get All Doctors",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/doctors?specialization=cardiology&department=emergency",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "doctors"],
+              "query": [
+                { "key": "specialization", "value": "cardiology", "disabled": true },
+                { "key": "department", "value": "emergency", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Doctor By ID",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/doctors/{{doctorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "doctors", "{{doctorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Patient By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/patients/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "patients", "{{patientId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Appointments",
+      "item": [
+        {
+          "name": "Patient - Book Appointment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('appointmentId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"appointmentDate\": \"2026-02-10\",\n  \"timeSlot\": \"10:00 AM - 10:30 AM\",\n  \"reasonForVisit\": \"Regular checkup\",\n  \"symptoms\": \"Mild fever\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get My Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/my-appointments?upcoming=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "my-appointments"],
+              "query": [
+                { "key": "upcoming", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get My Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/doctor-appointments?date=2026-02-10&status=scheduled",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "doctor-appointments"],
+              "query": [
+                { "key": "date", "value": "2026-02-10", "disabled": true },
+                { "key": "status", "value": "scheduled", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get Patient Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/patient/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "patient", "{{patientId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Available Slots",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/available-slots/{{doctorId}}?date=2026-02-10",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "available-slots", "{{doctorId}}"],
+              "query": [
+                { "key": "date", "value": "2026-02-10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Appointment By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "{{appointmentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments/{{appointmentId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "{{appointmentId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Reschedule Appointment",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newDate\": \"2026-02-15\",\n  \"newTimeSlot\": \"11:00 AM - 11:30 AM\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/appointments/{{appointmentId}}/reschedule",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "{{appointmentId}}", "reschedule"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["appointments", "{{appointmentId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Queue Management",
+      "item": [
+        {
+          "name": "Patient - Join Queue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('queueId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"department\": \"general\",\n  \"reasonForVisit\": \"Consultation\",\n  \"priority\": \"normal\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/queue/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "join"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get My Queue Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/my-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "my-status"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get My Queue History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/my-history",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "my-history"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get Queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/doctor-queue?status=waiting&department=general",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "doctor-queue"],
+              "query": [
+                { "key": "status", "value": "waiting", "disabled": true },
+                { "key": "department", "value": "general", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Call Next Patient",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department\": \"general\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/queue/call-next",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "call-next"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get Queue Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Update Queue Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in-consultation\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/queue/{{queueId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "{{queueId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Queue Entry",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/queue/{{queueId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["queue", "{{queueId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Prescriptions",
+      "item": [
+        {
+          "name": "Doctor - Create Prescription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('prescriptionId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"appointmentId\": \"{{appointmentId}}\",\n  \"diagnosis\": \"Common Cold\",\n  \"medicines\": [\n    {\n      \"name\": \"Paracetamol\",\n      \"dosage\": \"500mg\",\n      \"frequency\": \"3 times a day\",\n      \"duration\": \"5 days\",\n      \"timing\": \"After meals\",\n      \"instructions\": \"Take with warm water\"\n    }\n  ],\n  \"tests\": [\"Blood test\", \"X-Ray\"],\n  \"notes\": \"Rest for 3 days\",\n  \"followUpDate\": \"2026-02-15\",\n  \"followUpInstructions\": \"Visit if fever persists\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/prescriptions",
+              "host": ["{{baseUrl}}"],
+              "path": ["prescriptions"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get My Prescriptions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prescriptions/doctor-prescriptions?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["prescriptions", "doctor-prescriptions"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get Patient Prescription History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prescriptions/patient/{{patientId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["prescriptions", "patient", "{{patientId}}", "history"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get Prescription Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prescriptions/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["prescriptions", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get My Prescriptions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prescriptions/my-prescriptions?status=active",
+              "host": ["{{baseUrl}}"],
+              "path": ["prescriptions", "my-prescriptions"],
+              "query": [
+                { "key": "status", "value": "active", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Prescription By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prescriptions/{{prescriptionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["prescriptions", "{{prescriptionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Update Prescription",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Updated notes\",\n  \"status\": \"completed\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/prescriptions/{{prescriptionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["prescriptions", "{{prescriptionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Prescription",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prescriptions/{{prescriptionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["prescriptions", "{{prescriptionId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Medical Records",
+      "item": [
+        {
+          "name": "Patient - Upload Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('recordId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "title", "value": "Blood Test Report", "type": "text" },
+                { "key": "recordType", "value": "Lab Report", "type": "text" },
+                { "key": "description", "value": "Annual blood work", "type": "text" },
+                { "key": "recordDate", "value": "2026-01-30", "type": "text" },
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/records",
+              "host": ["{{baseUrl}}"],
+              "path": ["records"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get My Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/records/my-records?recordType=Lab Report",
+              "host": ["{{baseUrl}}"],
+              "path": ["records", "my-records"],
+              "query": [
+                { "key": "recordType", "value": "Lab Report", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get Record Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/records/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["records", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get Shared Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/records/shared-with-me",
+              "host": ["{{baseUrl}}"],
+              "path": ["records", "shared-with-me"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get Patient Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/records/patient/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["records", "patient", "{{patientId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Record By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["records", "{{recordId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Record",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Title\",\n  \"description\": \"Updated description\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["records", "{{recordId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Record",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["records", "{{recordId}}"]
+            }
+          }
+        },
+        {
+          "name": "Share Record with Doctor",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"expiresAt\": \"2026-12-31\",\n  \"canDownload\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/records/{{recordId}}/share",
+              "host": ["{{baseUrl}}"],
+              "path": ["records", "{{recordId}}", "share"]
+            }
+          }
+        },
+        {
+          "name": "Revoke Record Access",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/records/{{recordId}}/share/{{doctorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["records", "{{recordId}}", "share", "{{doctorId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Consent Management",
+      "item": [
+        {
+          "name": "Patient - Get My Consents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/consent/my-consents?status=active",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent", "my-consents"],
+              "query": [
+                { "key": "status", "value": "active", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Patient - Grant Consent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('consentId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"purpose\": \"Treatment and consultation\",\n  \"scope\": [\"medical-history\", \"lab-reports\", \"prescriptions\"],\n  \"expiresAt\": \"2026-12-31\",\n  \"canDownload\": true,\n  \"canShare\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/consent/grant",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent", "grant"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Update Consent",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scope\": [\"medical-history\", \"lab-reports\"],\n  \"canDownload\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/consent/{{consentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent", "{{consentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Revoke Consent",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/consent/{{consentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent", "{{consentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Patient - Get Consent Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/consent/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get My Patient Consents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/consent/for-my-patients",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent", "for-my-patients"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Check Consent",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/consent/check/{{patientId}}/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent", "check", "{{patientId}}", "{{recordId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Consent History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/consent/{{consentId}}/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["consent", "{{consentId}}", "history"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Emergency Access",
+      "item": [
+        {
+          "name": "Doctor - Request Emergency Access",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"reason\": \"Patient unconscious, immediate access needed\",\n  \"emergencyType\": \"critical\",\n  \"location\": \"Emergency Room 3\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/emergency-access/request",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency-access", "request"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Get My Emergency Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/emergency-access/my-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency-access", "my-requests"]
+            }
+          }
+        },
+        {
+          "name": "Doctor - Check Emergency Access",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/emergency-access/check/{{patientId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency-access", "check", "{{patientId}}"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Get Requests For Review",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/emergency-access/for-review?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency-access", "for-review"],
+              "query": [
+                { "key": "status", "value": "pending", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin - Review Emergency Access",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewStatus\": \"approved\",\n  \"reviewNotes\": \"Emergency verified, access granted\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/emergency-access/{{recordId}}/review",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency-access", "{{recordId}}", "review"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Get Emergency Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/emergency-access/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency-access", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Revoke Emergency Access",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/emergency-access/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency-access", "{{recordId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications?page=1&limit=20&type=appointment&priority=high&isRead=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "type", "value": "appointment", "disabled": true },
+                { "key": "priority", "value": "high", "disabled": true },
+                { "key": "isRead", "value": "false", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/unread-count",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "unread-count"]
+            }
+          }
+        },
+        {
+          "name": "Get Notification Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Notification By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "{{notificationId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Notification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipientId\": \"{{userId}}\",\n  \"type\": \"system_alert\",\n  \"title\": \"System Maintenance\",\n  \"message\": \"Scheduled maintenance tonight\",\n  \"priority\": \"medium\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            }
+          }
+        },
+        {
+          "name": "Mark As Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/{{notificationId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "{{notificationId}}", "read"]
+            }
+          }
+        },
+        {
+          "name": "Mark As Unread",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/{{notificationId}}/unread",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "{{notificationId}}", "unread"]
+            }
+          }
+        },
+        {
+          "name": "Mark All As Read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/mark-all-read",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "mark-all-read"]
+            }
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "{{notificationId}}"]
+            }
+          }
+        },
+        {
+          "name": "Clear Read Notifications",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/clear-read",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "clear-read"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Admin - User Management",
+      "item": [
+        {
+          "name": "Get Admin Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Recent Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/recent-users?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "recent-users"],
+              "query": [
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?role=patient&status=active&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"],
+              "query": [
+                { "key": "role", "value": "patient", "disabled": true },
+                { "key": "status", "value": "active", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newdoctor@example.com\",\n  \"phoneNumber\": \"9876543210\",\n  \"password\": \"TempPass123!\",\n  \"role\": \"doctor\",\n  \"personalInfo\": {\n    \"fullName\": \"Dr. Jane Smith\",\n    \"gender\": \"female\"\n  },\n  \"professionalInfo\": {\n    \"specialization\": \"Cardiology\",\n    \"licenseNumber\": \"DOC12345\",\n    \"department\": \"cardiology\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"personalInfo\": {\n    \"fullName\": \"Updated Name\"\n  },\n  \"status\": \"active\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"suspended\",\n  \"reason\": \"Policy violation\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{userId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Admin - Emergency Cases",
+      "item": [
+        {
+          "name": "Get Emergency Cases",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/emergency?status=active&priority=high",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "emergency"],
+              "query": [
+                { "key": "status", "value": "active", "disabled": true },
+                { "key": "priority", "value": "high", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Emergency Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/emergency/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "emergency", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Available Doctors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/emergency/available-doctors?specialization=emergency",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "emergency", "available-doctors"],
+              "query": [
+                { "key": "specialization", "value": "emergency", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Emergency Priority",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"critical\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/emergency/{{recordId}}/priority",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "emergency", "{{recordId}}", "priority"]
+            }
+          }
+        },
+        {
+          "name": "Assign Doctor To Emergency",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctorId\": \"{{doctorId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/emergency/{{recordId}}/assign",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "emergency", "{{recordId}}", "assign"]
+            }
+          }
+        },
+        {
+          "name": "Update Emergency Status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"resolved\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/emergency/{{recordId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "emergency", "{{recordId}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Analytics",
+      "item": [
+        {
+          "name": "Get Analytics Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/overview?startDate=2026-01-01&endDate=2026-02-28",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "overview"],
+              "query": [
+                { "key": "startDate", "value": "2026-01-01", "disabled": true },
+                { "key": "endDate", "value": "2026-02-28", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Growth",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/user-growth?period=monthly",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "user-growth"],
+              "query": [
+                { "key": "period", "value": "monthly", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Appointment Trends",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/appointment-trends?period=weekly",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "appointment-trends"],
+              "query": [
+                { "key": "period", "value": "weekly", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Queue Performance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/queue-performance?department=general",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "queue-performance"],
+              "query": [
+                { "key": "department", "value": "general", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Doctor Performance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/doctor-performance?doctorId={{doctorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "doctor-performance"],
+              "query": [
+                { "key": "doctorId", "value": "{{doctorId}}", "disabled": true }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Audit Logs",
+      "item": [
+        {
+          "name": "Get Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit/logs?action=LOGIN&category=AUTHENTICATION&startDate=2026-01-01&page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit", "logs"],
+              "query": [
+                { "key": "action", "value": "LOGIN", "disabled": true },
+                { "key": "category", "value": "AUTHENTICATION", "disabled": true },
+                { "key": "startDate", "value": "2026-01-01", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Audit Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Security Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit/security?severity=high",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit", "security"],
+              "query": [
+                { "key": "severity", "value": "high", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Activity Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit/user/{{userId}}?limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit", "user", "{{userId}}"],
+              "query": [
+                { "key": "limit", "value": "100" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

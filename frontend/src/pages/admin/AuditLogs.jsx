@@ -140,11 +140,56 @@ const AuditLogs = () => {
     return new Date(date).toLocaleString();
   };
 
+  const exportToCSV = () => {
+    try {
+      const headers = ['Date/Time', 'User', 'Email', 'Action', 'Category', 'Description', 'Status', 'IP Address'];
+      const csvData = logs.map(log => [
+        formatDate(log.createdAt),
+        `${log.userId?.personalInfo?.firstName || ''} ${log.userId?.personalInfo?.lastName || ''}`.trim(),
+        log.userId?.email || 'N/A',
+        log.action,
+        log.category,
+        log.description.replace(/"/g, '""'), // Escape quotes
+        log.status,
+        log.ipAddress || 'N/A'
+      ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `audit-logs-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Audit logs exported successfully!');
+    } catch (error) {
+      console.error('Error exporting to CSV:', error);
+      toast.error('Failed to export audit logs');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Audit Logs</h1>
         <div className="flex gap-2">
+          {activeTab === 'logs' && (
+            <button
+              onClick={exportToCSV}
+              disabled={logs.length === 0}
+              className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Export CSV
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('logs')}
             className={`px-4 py-2 rounded-lg ${activeTab === 'logs' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
