@@ -4,6 +4,7 @@ import Notification from '../models/Notification.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 import notificationService from '../services/notificationService.js';
+import { activityTypes, emitStatsUpdate } from '../utils/adminEvents.js';
 
 // @desc    Book an appointment
 // @route   POST /api/appointments
@@ -94,6 +95,27 @@ export const bookAppointment = asyncHandler(async (req, res) => {
   ]);
 
   logger.info(`Appointment booked: ${appointment._id} by patient ${req.user.email}`);
+
+  // Emit real-time event to admin dashboard
+  const io = req.app.get('io');
+  if (io) {
+    activityTypes.appointmentBooked(
+      io,
+      appointment,
+      appointment.patient,
+      appointment.doctor
+    );
+    
+    // Emit updated appointment stats
+    const totalAppointments = await Appointment.countDocuments();
+    const scheduledAppointments = await Appointment.countDocuments({ 
+      status: { $in: ['scheduled', 'confirmed'] } 
+    });
+    emitStatsUpdate(io, {
+      totalAppointments,
+      scheduledAppointments
+    });
+  }
 
   // Notify patient about successful booking
   const patientNotification = await Notification.create({

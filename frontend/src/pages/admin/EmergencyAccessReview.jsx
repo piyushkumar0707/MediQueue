@@ -57,7 +57,7 @@ const EmergencyAccessReview = () => {
       
       // Handle both response structures
       const emergencyAccesses = accessesResponse.data?.emergencyAccesses || accessesResponse.data || [];
-      const statsData = statsResponse.data || stats;
+      const statsData = statsResponse.data?.data || statsResponse.data || stats;
       
       setEmergencyAccesses(emergencyAccesses);
       setStats(statsData);

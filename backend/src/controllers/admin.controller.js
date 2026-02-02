@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import Appointment from '../models/Appointment.js';
 import Queue from '../models/Queue.js';
+import EmergencyAccess from '../models/EmergencyAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 /**
@@ -37,6 +38,12 @@ export const getAdminStats = asyncHandler(async (req, res) => {
     appointmentDate: { $gte: today, $lt: tomorrow }
   });
 
+  // Get emergency access stats
+  const totalEmergencyRequests = await EmergencyAccess.countDocuments();
+  const flaggedEmergency = await EmergencyAccess.countDocuments({ flaggedForReview: true });
+  const activeEmergency = await EmergencyAccess.countDocuments({ status: 'approved' });
+  const unreviewed = await EmergencyAccess.countDocuments({ status: 'pending' });
+
   res.json({
     success: true,
     data: {
@@ -54,6 +61,12 @@ export const getAdminStats = asyncHandler(async (req, res) => {
       },
       queue: {
         active: activeQueue
+      },
+      emergencyAccess: {
+        total: totalEmergencyRequests,
+        flagged: flaggedEmergency,
+        active: activeEmergency,
+        unreviewed: unreviewed
       }
     }
   });

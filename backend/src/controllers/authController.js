@@ -3,6 +3,7 @@ import { generateTokenPair, verifyRefreshToken, generateOTP, hashOTP, verifyOTP,
 import { logger } from '../utils/logger.js';
 import AuditLog from '../models/AuditLog.js';
 import { logFailedAuth } from '../middleware/auditLogger.js';
+import { activityTypes, emitStatsUpdate } from '../utils/adminEvents.js';
 
 // Store OTPs temporarily (In production, use Redis)
 const otpStore = new Map();
@@ -161,6 +162,20 @@ export const completeRegistration = async (req, res) => {
     await user.save();
     
     logger.info(`User registered successfully: ${user.email}`);
+    
+    // Emit real-time event to admin dashboard
+    const io = req.app.get('io');
+    if (io) {
+      activityTypes.userRegistration(io, user);
+      
+      // Emit updated stats
+      const totalUsers = await User.countDocuments();
+      const roleCount = await User.countDocuments({ role: user.role });
+      emitStatsUpdate(io, {
+        totalUsers,
+        [`total${user.role.charAt(0).toUpperCase() + user.role.slice(1)}s`]: roleCount
+      });
+    }
     
     // Remove sensitive data
     user.password = undefined;
