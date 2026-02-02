@@ -53,6 +53,14 @@ const appointmentSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  reminderSent24h: {
+    type: Boolean,
+    default: false
+  },
+  reminderSent1h: {
+    type: Boolean,
+    default: false
+  },
   queueEntry: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Queue'

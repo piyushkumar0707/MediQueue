@@ -109,15 +109,25 @@ prescriptionSchema.pre('save', async function(next) {
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
+    const prefix = `RX-${year}${month}`;
     
-    // Get count of prescriptions today
-    const startOfDay = new Date(date.setHours(0, 0, 0, 0));
-    const count = await this.constructor.countDocuments({
-      createdAt: { $gte: startOfDay }
-    });
+    // Find the highest prescription number for this month
+    const lastPrescription = await this.constructor
+      .findOne({ prescriptionNumber: new RegExp(`^${prefix}`) })
+      .sort({ prescriptionNumber: -1 })
+      .select('prescriptionNumber');
+    
+    let nextNumber = 1;
+    if (lastPrescription && lastPrescription.prescriptionNumber) {
+      // Extract the number part and increment
+      const match = lastPrescription.prescriptionNumber.match(/-(\d{4})$/);
+      if (match) {
+        nextNumber = parseInt(match[1], 10) + 1;
+      }
+    }
     
     // Format: RX-YYYYMM-XXXX
-    this.prescriptionNumber = `RX-${year}${month}-${String(count + 1).padStart(4, '0')}`;
+    this.prescriptionNumber = `${prefix}-${String(nextNumber).padStart(4, '0')}`;
   }
   
   // Set default valid until date (30 days from creation)

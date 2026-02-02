@@ -13,6 +13,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './utils/logger.js';
 import notificationService from './services/notificationService.js';
 import emailService from './services/emailService.js';
+import { initializeAppointmentSchedulers } from './services/appointmentScheduler.js';
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -132,6 +133,10 @@ connectDB()
     httpServer.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      
+      // Initialize appointment reminder schedulers
+      initializeAppointmentSchedulers();
+      logger.info('Appointment reminder schedulers initialized');
     });
   })
   .catch((error) => {

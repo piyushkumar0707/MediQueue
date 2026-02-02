@@ -19,10 +19,7 @@ const AdminSidebar = () => {
   return (
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
       <div className="p-6">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="text-xl font-bold text-primary-600">CareQueue</h1>
-          <NotificationBell />
-        </div>
+        <h1 className="text-xl font-bold text-primary-600 mb-2">CareQueue</h1>
         <p className="text-sm text-gray-600">Admin Portal</p>
         {user?.personalInfo?.fullName && (
           <p className="text-xs text-gray-500 mt-2">
