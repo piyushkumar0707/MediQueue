@@ -4,6 +4,8 @@ import MedicalRecord from '../models/MedicalRecord.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import Notification from '../models/Notification.js';
 import notificationService from '../services/notificationService.js';
+import AuditLog from '../models/AuditLog.js';
+import crypto from 'crypto';
 
 // @desc    Get my consents (patient view)
 // @route   GET /api/consent/my-consents
@@ -163,6 +165,36 @@ export const grantConsent = asyncHandler(async (req, res) => {
   });
   await notificationService.sendNotification(doctorNotification);
 
+  // Audit log - HIPAA Critical
+  const hashString = JSON.stringify({
+    userId: req.user.userId,
+    action: 'CONSENT_GRANTED',
+    timestamp: new Date().toISOString()
+  });
+  
+  await AuditLog.create({
+    userId: req.user.userId,
+    action: 'CONSENT_GRANTED',
+    category: 'CONSENT',
+    description: `Patient granted consent to Dr. ${transformedConsent.doctor.firstName} ${transformedConsent.doctor.lastName}`,
+    targetUserId: doctorId,
+    targetResource: 'Consent',
+    targetResourceId: consent._id,
+    ipAddress: req.ip || req.connection?.remoteAddress,
+    userAgent: req.get('user-agent'),
+    metadata: {
+      scope: consent.scope,
+      purpose: consent.purpose,
+      expiresAt: consent.expiresAt
+    },
+    status: 'SUCCESS',
+    severity: 'HIGH',
+    isHIPAARelevant: true,
+    dataAccessed: ['Consent Information', 'Medical Records Access'],
+    accessReason: purpose || 'Medical treatment',
+    hash: crypto.createHash('sha256').update(hashString).digest('hex')
+  });
+
   res.status(201).json({
     success: true,
     message: 'Consent granted successfully',
@@ -216,6 +248,34 @@ export const revokeConsent = asyncHandler(async (req, res) => {
     actionUrl: '/doctor/shared-records',
   });
   await notificationService.sendNotification(doctorNotification);
+
+  // Audit log - HIPAA Critical
+  const hashString = JSON.stringify({
+    userId: req.user.userId,
+    action: 'CONSENT_REVOKED',
+    timestamp: new Date().toISOString()
+  });
+  
+  await AuditLog.create({
+    userId: req.user.userId,
+    action: 'CONSENT_REVOKED',
+    category: 'CONSENT',
+    description: `Patient revoked consent from doctor`,
+    targetUserId: consent.doctor,
+    targetResource: 'Consent',
+    targetResourceId: consent._id,
+    ipAddress: req.ip || req.connection?.remoteAddress,
+    userAgent: req.get('user-agent'),
+    metadata: {
+      reason: req.body.reason || 'Revoked by patient'
+    },
+    status: 'SUCCESS',
+    severity: 'HIGH',
+    isHIPAARelevant: true,
+    dataAccessed: ['Consent Information'],
+    accessReason: 'Consent revocation',
+    hash: crypto.createHash('sha256').update(hashString).digest('hex')
+  });
 
   res.json({
     success: true,

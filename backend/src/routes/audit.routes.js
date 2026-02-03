@@ -4,7 +4,11 @@ import {
   getAuditLogs,
   getAuditStats,
   getUserActivityLogs,
-  getSecurityEvents
+  getSecurityEvents,
+  getHIPAAComplianceReport,
+  getEmergencyAccessReport,
+  getRecordAccessReport,
+  exportAuditLogs
 } from '../controllers/audit.controller.js';
 
 const router = express.Router();
@@ -23,5 +27,13 @@ router.get('/security', getSecurityEvents);
 
 // GET /api/audit/user/:userId - Get user activity logs
 router.get('/user/:userId', getUserActivityLogs);
+
+// Compliance Reports
+router.get('/compliance/hipaa', getHIPAAComplianceReport);
+router.get('/compliance/emergency', getEmergencyAccessReport);
+router.get('/compliance/record-access', getRecordAccessReport);
+
+// Export
+router.get('/export', exportAuditLogs);
 
 export default router;

@@ -1,8 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
-import NotificationBell from './NotificationBell';
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ onNavigate }) => {
   const { user, logout } = useAuthStore();
   
   const navItems = [
@@ -16,25 +15,30 @@ const AdminSidebar = () => {
     { to: '/admin/help', label: 'Help', icon: '❓' },
   ];
 
+  const handleNavClick = () => {
+    if (onNavigate) onNavigate();
+  };
+
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen flex flex-col">
-      <div className="p-6">
-        <h1 className="text-xl font-bold text-primary-600 mb-2">CareQueue</h1>
-        <p className="text-sm text-gray-600">Admin Portal</p>
+    <aside className="w-full h-full bg-white flex flex-col">
+      <div className="p-4 sm:p-6">
+        <h1 className="text-lg sm:text-xl font-bold text-primary-600 mb-2">CareQueue</h1>
+        <p className="text-xs sm:text-sm text-gray-600">Admin Portal</p>
         {user?.personalInfo?.fullName && (
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 mt-2 truncate">
             {user.personalInfo.fullName}
           </p>
         )}
       </div>
-      <nav className="mt-6 flex-1">
+      <nav className="mt-4 sm:mt-6 flex-1 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === '/admin'}
+            onClick={handleNavClick}
             className={({ isActive }) =>
-              `flex items-center px-6 py-3 text-sm font-medium transition-colors ${
+              `flex items-center px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-primary-50 text-primary-600 border-r-4 border-primary-600'
                   : 'text-gray-600 hover:bg-gray-50'
