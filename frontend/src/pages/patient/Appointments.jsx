@@ -101,6 +101,35 @@ const Appointments = () => {
     setShowRescheduleModal(true);
   };
 
+  const downloadAppointmentConfirmation = async (appointment) => {
+    try {
+      const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
+      const token = authStorage?.state?.accessToken;
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/appointments/${appointment._id}/download`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to download');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `appointment-${appointment._id.slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Appointment confirmation downloaded');
+    } catch (error) {
+      toast.error('Failed to download confirmation');
+    }
+  };
+
   const handleRescheduleSubmit = async (e) => {
     e.preventDefault();
     
@@ -286,6 +315,12 @@ const Appointments = () => {
                     className="px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium transition"
                   >
                     Reschedule
+                  </button>
+                  <button
+                    onClick={() => downloadAppointmentConfirmation(appointment)}
+                    className="px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg font-medium transition"
+                  >
+                    Download PDF
                   </button>
                 </div>
               )}

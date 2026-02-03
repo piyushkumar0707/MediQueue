@@ -7,6 +7,7 @@ import Notification from '../models/Notification.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 import notificationService from '../services/notificationService.js';
+import { generatePrescriptionPDF } from '../services/pdfGenerators.js';
 
 // @desc    Create new prescription
 // @route   POST /api/prescriptions
@@ -367,4 +368,64 @@ export const getPrescriptionStats = asyncHandler(async (req, res) => {
       completedPrescriptions: 0
     }
   });
+});
+
+// @desc    Download prescription as PDF
+// @route   GET /api/prescriptions/:id/download
+// @access  Private (Patient/Doctor)
+export const downloadPrescription = asyncHandler(async (req, res) => {
+  const prescription = await Prescription.findById(req.params.id)
+    .populate('patient', 'personalInfo phone email')
+    .populate('doctor', 'personalInfo professionalInfo phone');
+
+  if (!prescription) {
+    return res.status(404).json({
+      success: false,
+      message: 'Prescription not found'
+    });
+  }
+
+  // Check authorization
+  const userId = req.user.userId;
+  const isPatient = prescription.patient._id.toString() === userId;
+  const isDoctor = prescription.doctor._id.toString() === userId;
+  const isAdmin = req.user.role === 'admin';
+
+  if (!isPatient && !isDoctor && !isAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not authorized to download this prescription'
+    });
+  }
+
+  try {
+    // Generate PDF
+    logger.info('Generating prescription PDF', { prescriptionId: prescription._id });
+    const pdfBuffer = await generatePrescriptionPDF(
+      prescription,
+      prescription.patient,
+      prescription.doctor
+    );
+    logger.info('PDF generated successfully', { size: pdfBuffer.length });
+
+    // Set response headers
+    const fileName = `prescription-${prescription.prescriptionNumber}-${new Date().toISOString().split('T')[0]}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    // Send PDF
+    res.send(pdfBuffer);
+  } catch (error) {
+    logger.error('Error downloading prescription:', { 
+      error: error.message, 
+      stack: error.stack,
+      prescriptionId: prescription._id 
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Error generating PDF',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 });

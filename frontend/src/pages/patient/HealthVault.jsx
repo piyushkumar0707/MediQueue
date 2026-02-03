@@ -241,6 +241,35 @@ const HealthVault = () => {
     }
   };
 
+  const downloadRecordReport = async (record) => {
+    try {
+      const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
+      const token = authStorage?.state?.accessToken;
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/records/${record._id}/download-report`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to download');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `medical-record-${record._id.slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Medical record report downloaded');
+    } catch (error) {
+      toast.error('Failed to download report');
+    }
+  };
+
   const getRecordTypeLabel = (type) => {
     const found = recordTypes.find(rt => rt.value === type);
     return found ? found.label : type;
@@ -405,6 +434,12 @@ const HealthVault = () => {
                       className="px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg font-medium text-sm"
                     >
                       View
+                    </button>
+                    <button
+                      onClick={() => downloadRecordReport(record)}
+                      className="px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg font-medium text-sm"
+                    >
+                      Download PDF
                     </button>
                     <button
                       onClick={() => handleDelete(record._id)}

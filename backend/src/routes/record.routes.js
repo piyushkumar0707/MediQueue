@@ -11,7 +11,8 @@ import {
   revokeAccess,
   updateRecord,
   deleteRecord,
-  getRecordStats
+  getRecordStats,
+  downloadRecordReport
 } from '../controllers/recordController.js';
 
 const router = express.Router();
@@ -32,6 +33,7 @@ router.get('/shared-with-me', protect, authorize('doctor'), getSharedRecords);
 router.get('/patient/:patientId', protect, authorize('doctor', 'admin'), getPatientRecords);
 
 // Shared routes
+router.get('/:id/download-report', protect, downloadRecordReport);
 router.get('/:id', protect, getRecordById);
 router.patch('/:id', protect, updateRecord);
 router.delete('/:id', protect, deleteRecord);

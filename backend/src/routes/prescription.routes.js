@@ -8,7 +8,8 @@ import {
   getPatientPrescriptionHistory,
   updatePrescription,
   deletePrescription,
-  getPrescriptionStats
+  getPrescriptionStats,
+  downloadPrescription
 } from '../controllers/prescriptionController.js';
 
 const router = express.Router();
@@ -24,6 +25,7 @@ router.get('/stats', protect, authorize('doctor'), getPrescriptionStats);
 router.get('/my-prescriptions', protect, authorize('patient'), getMyPrescriptions);
 
 // Shared routes
+router.get('/:id/download', protect, downloadPrescription);
 router.get('/:id', protect, getPrescription);
 router.patch('/:id', protect, authorize('doctor'), updatePrescription);
 router.delete('/:id', protect, authorize('doctor', 'admin'), deletePrescription);

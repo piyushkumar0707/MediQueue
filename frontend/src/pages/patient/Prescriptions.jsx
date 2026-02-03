@@ -46,22 +46,33 @@ const Prescriptions = () => {
     }
   };
 
-  const downloadPrescription = (prescription) => {
-    // Create prescription content
-    const content = generatePrescriptionText(prescription);
-    
-    // Create blob and download
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Prescription_${prescription.prescriptionNumber}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast.success('Prescription downloaded');
+  const downloadPrescription = async (prescription) => {
+    try {
+      const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
+      const token = authStorage?.state?.accessToken;
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/prescriptions/${prescription._id}/download`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to download');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `prescription-${prescription.prescriptionNumber}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Prescription downloaded');
+    } catch (error) {
+      toast.error('Failed to download prescription');
+    }
   };
 
   const generatePrescriptionText = (rx) => {

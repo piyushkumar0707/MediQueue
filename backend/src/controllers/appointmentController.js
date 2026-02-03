@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 import notificationService from '../services/notificationService.js';
 import { activityTypes, emitStatsUpdate } from '../utils/adminEvents.js';
+import { generateAppointmentPDF } from '../services/pdfGenerators.js';
 
 // @desc    Book an appointment
 // @route   POST /api/appointments
@@ -125,7 +126,7 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     message: `Your appointment with Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime} has been confirmed.`,
     priority: 'medium',
     relatedEntity: {
-      entityType: 'Appointment',
+      entityType: 'appointment',
       entityId: appointment._id
     },
     actionUrl: `/patient/appointments`,
@@ -146,7 +147,7 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     message: `${appointment.patient.firstName} ${appointment.patient.lastName} has booked an appointment on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime}. Reason: ${reasonForVisit}`,
     priority: 'medium',
     relatedEntity: {
-      entityType: 'Appointment',
+      entityType: 'appointment',
       entityId: appointment._id
     },
     actionUrl: `/doctor/appointments`,
@@ -614,4 +615,57 @@ export const getPatientAppointments = asyncHandler(async (req, res) => {
     success: true,
     data: appointments
   });
+});
+
+// @desc    Download appointment confirmation as PDF
+// @route   GET /api/appointments/:id/download
+// @access  Private (Patient/Doctor)
+export const downloadAppointmentConfirmation = asyncHandler(async (req, res) => {
+  const appointment = await Appointment.findById(req.params.id)
+    .populate('patient', 'personalInfo phone email')
+    .populate('doctor', 'personalInfo professionalInfo phone');
+
+  if (!appointment) {
+    return res.status(404).json({
+      success: false,
+      message: 'Appointment not found'
+    });
+  }
+
+  // Check authorization
+  const userId = req.user.userId;
+  const isPatient = appointment.patient._id.toString() === userId;
+  const isDoctor = appointment.doctor._id.toString() === userId;
+  const isAdmin = req.user.role === 'admin';
+
+  if (!isPatient && !isDoctor && !isAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not authorized to access this appointment'
+    });
+  }
+
+  try {
+    // Generate PDF
+    const pdfBuffer = await generateAppointmentPDF(
+      appointment,
+      appointment.patient,
+      appointment.doctor
+    );
+
+    // Set response headers
+    const fileName = `appointment-${appointment._id.toString().slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    // Send PDF
+    res.send(pdfBuffer);
+  } catch (error) {
+    logger.error('Error downloading appointment PDF:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating PDF'
+    });
+  }
 });

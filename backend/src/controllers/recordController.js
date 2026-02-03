@@ -7,6 +7,7 @@ import { logger } from '../utils/logger.js';
 import { generateEncryptionKey } from '../services/encryption.service.js';
 import { getFileInfo, deleteFile } from '../middleware/upload.js';
 import path from 'path';
+import { generateMedicalRecordPDF } from '../services/pdfGenerators.js';
 
 // @desc    Upload medical record
 // @route   POST /api/records
@@ -709,4 +710,59 @@ export const getRecordStats = asyncHandler(async (req, res) => {
       byType: stats
     }
   });
+});
+
+// @desc    Download medical record as PDF report
+// @route   GET /api/records/:id/download-report
+// @access  Private (Patient/Doctor with access)
+export const downloadRecordReport = asyncHandler(async (req, res) => {
+  const record = await MedicalRecord.findById(req.params.id)
+    .populate('patient', 'personalInfo phone email')
+    .populate('uploadedBy', 'personalInfo professionalInfo')
+    .populate('sharedWith.doctor', 'personalInfo professionalInfo');
+
+  if (!record) {
+    return res.status(404).json({
+      success: false,
+      message: 'Medical record not found'
+    });
+  }
+
+  // Check authorization
+  const userId = req.user.userId;
+  const isPatient = record.patient._id.toString() === userId;
+  const isUploader = record.uploadedBy._id.toString() === userId;
+  const isSharedDoctor = record.sharedWith.some(share => share.doctor._id.toString() === userId);
+  const isAdmin = req.user.role === 'admin';
+
+  if (!isPatient && !isUploader && !isSharedDoctor && !isAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not authorized to access this record'
+    });
+  }
+
+  try {
+    // Generate PDF
+    const pdfBuffer = await generateMedicalRecordPDF(
+      record,
+      record.patient,
+      record.uploadedBy
+    );
+
+    // Set response headers
+    const fileName = `medical-record-${record._id.toString().slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    // Send PDF
+    res.send(pdfBuffer);
+  } catch (error) {
+    logger.error('Error downloading medical record PDF:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating PDF'
+    });
+  }
 });

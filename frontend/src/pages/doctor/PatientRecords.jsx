@@ -101,18 +101,28 @@ const PatientRecords = () => {
 
   const downloadRecord = async (recordId, filename) => {
     try {
-      const response = await api.get(`/records/${recordId}/download`, {
-        responseType: 'blob'
+      const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
+      const token = authStorage?.state?.accessToken;
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/records/${recordId}/download-report`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
-      const url = window.URL.createObjectURL(new Blob([response]));
+      if (!response.ok) throw new Error('Failed to download');
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', filename);
+      link.download = filename || `medical-record-${recordId.slice(-8)}.pdf`;
       document.body.appendChild(link);
       link.click();
-      link.remove();
-      toast.success('Download started');
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Medical record downloaded');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file');
