@@ -57,6 +57,16 @@ export const initiateRegistration = async (req, res) => {
     // TODO: Send OTP via SMS (integrate Twilio)
     logger.info(`OTP generated for registration: ${otp} (phone: ${phoneNumber})`);
     
+    // Console log for easy testing
+    console.log('\n' + '='.repeat(60));
+    console.log('📱 REGISTRATION OTP');
+    console.log('='.repeat(60));
+    console.log(`Phone: ${phoneNumber}`);
+    console.log(`OTP: ${otp}`);
+    console.log(`Session ID: ${sessionId}`);
+    console.log(`Expires in: 5 minutes`);
+    console.log('='.repeat(60) + '\n');
+    
     // In development, return OTP (REMOVE IN PRODUCTION)
     const response = {
       success: true,
@@ -546,6 +556,16 @@ export const forgotPassword = async (req, res) => {
     
     // TODO: Send OTP via SMS/Email
     logger.info(`Password reset OTP generated: ${otp} (user: ${user.email})`);
+    
+    // Console log for easy testing
+    console.log('\n' + '='.repeat(60));
+    console.log('🔐 PASSWORD RESET OTP');
+    console.log('='.repeat(60));
+    console.log(`User: ${user.email || user.phoneNumber}`);
+    console.log(`OTP: ${otp}`);
+    console.log(`Session ID: ${sessionId}`);
+    console.log(`Expires in: 10 minutes`);
+    console.log('='.repeat(60) + '\n');
     
     const response = {
       success: true,

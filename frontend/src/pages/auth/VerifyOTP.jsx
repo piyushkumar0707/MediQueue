@@ -18,6 +18,15 @@ const VerifyOTP = () => {
   const phoneNumber = location.state?.phoneNumber;
   const email = location.state?.email;
   const purpose = location.state?.purpose || 'registration'; // 'registration' or 'password-reset'
+  const devOTP = location.state?.devOTP; // Development OTP for testing
+
+  // Log OTP for testing
+  useEffect(() => {
+    if (devOTP) {
+      console.log('🔐 OTP for Testing:', devOTP);
+      console.log('Session ID:', sessionId);
+    }
+  }, [devOTP, sessionId]);
 
   // Redirect if no session
   useEffect(() => {
@@ -200,10 +209,21 @@ const VerifyOTP = () => {
               {phoneNumber || email}
             </span>
           </p>
+          
+          {/* Dev OTP Display */}
+          {devOTP && (
+            <div className="mt-4 p-3 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
+              <p className="text-sm text-yellow-900">
+                <span className="font-semibold">🔐 Test Mode OTP:</span>
+                <br />
+                <span className="font-mono text-2xl font-bold text-yellow-800">{devOTP}</span>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* OTP Input */}
-        <div className="mb-6">
+        <div className="mb-6">\
           <div className="flex justify-center gap-2 mb-6">
             {otp.map((digit, index) => (
               <input

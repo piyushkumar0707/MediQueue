@@ -91,7 +91,11 @@ const Register = () => {
       // Response structure: { success, message, sessionId, otpSent, otp? }
       if (response && response.sessionId) {
         setSessionId(response.sessionId);
-        if (response.otp) setDevOTP(response.otp); // Development only
+        if (response.otp) {
+          setDevOTP(response.otp); // Development only
+          console.log('🔐 OTP for Testing:', response.otp);
+          console.log('Session ID:', response.sessionId);
+        }
         setCurrentStep(STEPS.OTP_VERIFICATION);
       } else {
         console.error('Invalid response structure:', response);

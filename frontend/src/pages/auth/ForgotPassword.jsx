@@ -70,13 +70,20 @@ const ForgotPassword = () => {
 
       // Note: api.interceptors unwraps response.data automatically
       if (response.success) {
+        // Log OTP for testing
+        if (response.otp) {
+          console.log('🔐 Password Reset OTP:', response.otp);
+          console.log('Session ID:', response.sessionId);
+        }
+        
         // Navigate to OTP verification
         navigate('/verify-otp', {
           state: {
             sessionId: response.sessionId,
             phoneNumber: inputType === 'phone' ? formData.phoneOrEmail : null,
             email: inputType === 'email' ? formData.phoneOrEmail : null,
-            purpose: 'password-reset'
+            purpose: 'password-reset',
+            devOTP: response.otp // Pass OTP for dev display
           }
         });
       }
