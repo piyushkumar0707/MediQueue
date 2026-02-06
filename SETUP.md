@@ -3,7 +3,6 @@
 ## Prerequisites
 - Node.js v18 or higher
 - MongoDB installed and running
-- Git (optional)
 
 ## Installation Steps
 
