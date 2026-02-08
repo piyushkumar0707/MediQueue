@@ -573,7 +573,7 @@ db.emergencyaccesses.find({ flaggedForReview: true }).pretty();
 db.emergencyaccesses.find({ reviewedBy: null }).pretty();
 ```
 
----
+
 
 ## Performance Testing
 
