@@ -52,3 +52,11 @@ logs/
 # Misc
 .eslintcache
 .stylelintcache
+
+# Status and documentation files (excluded from repository)
+ACCURATE_STATUS_REPORT.md
+CURRENT_STATUS.md
+EMERGENCY_ACCESS_TESTING.md
+PROFILE_IMPLEMENTATION.md
+PROJECT_OVERVIEW.md
+PROJECT_STRUCTURE.md
