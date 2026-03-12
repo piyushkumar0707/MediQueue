@@ -3,7 +3,7 @@ import User from '../src/models/User.js';
 import bcrypt from 'bcryptjs';
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/mediqueue');
+mongoose.connect('mongodb://localhost:27017/carequeue');
 
 const updatePasswords = async () => {
   try {
