@@ -38,9 +38,16 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Don't redirect on auth endpoints (login/register) — let the form show the error
+      const url = error.config?.url || '';
+      const isAuthEndpoint = url.includes('/auth/login') ||
+        url.includes('/auth/register') ||
+        url.includes('/auth/refresh-token');
+      if (!isAuthEndpoint) {
+        // Clear the Zustand persisted auth state (correct key)
+        localStorage.removeItem('auth-storage');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error.response?.data || error.message);
   }

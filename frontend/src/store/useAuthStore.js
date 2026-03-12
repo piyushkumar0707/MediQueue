@@ -116,7 +116,7 @@ const useAuthStore = create(
             await api.post('/auth/logout', { refreshToken });
           }
         } catch (error) {
-          console.error('Logout error:', error);
+          // Ignore logout API errors — clear local state regardless
         } finally {
           set({
             user: null,
@@ -125,6 +125,8 @@ const useAuthStore = create(
             isAuthenticated: false,
             error: null
           });
+          // Force-clear persisted storage so rehydration on reload starts clean
+          localStorage.removeItem('auth-storage');
         }
       },
 
@@ -135,7 +137,7 @@ const useAuthStore = create(
         try {
           await api.post('/auth/logout-all');
         } catch (error) {
-          console.error('Logout all error:', error);
+          // Ignore logout API errors — clear local state regardless
         } finally {
           set({
             user: null,
@@ -144,6 +146,7 @@ const useAuthStore = create(
             isAuthenticated: false,
             error: null
           });
+          localStorage.removeItem('auth-storage');
         }
       },
 
