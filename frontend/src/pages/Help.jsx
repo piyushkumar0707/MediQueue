@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import useAuthStore from '../store/useAuthStore';
 
 const Help = () => {
+  const { user } = useAuthStore();
+  const role = user?.role;
   const faqs = [
     {
       question: 'How do I book an appointment?',
@@ -71,35 +74,99 @@ const Help = () => {
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link to="/patient/appointments/book" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
-          <div className="p-3 bg-indigo-100 rounded-lg w-fit mb-4">
-            <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h3 className="font-semibold text-gray-900 mb-2">Book Appointment</h3>
-          <p className="text-sm text-gray-600">Schedule a consultation with a doctor</p>
-        </Link>
-
-        <Link to="/patient/queue/join" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
-          <div className="p-3 bg-yellow-100 rounded-lg w-fit mb-4">
-            <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h3 className="font-semibold text-gray-900 mb-2">Join Queue</h3>
-          <p className="text-sm text-gray-600">Join a doctor's queue for quick consultation</p>
-        </Link>
-
-        <Link to="/patient/records" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
-          <div className="p-3 bg-green-100 rounded-lg w-fit mb-4">
-            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h3 className="font-semibold text-gray-900 mb-2">Health Vault</h3>
-          <p className="text-sm text-gray-600">Access your medical records and documents</p>
-        </Link>
+        {role === 'patient' && (
+          <>
+            <Link to="/patient/appointments/book" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <div className="p-3 bg-indigo-100 rounded-lg w-fit mb-4">
+                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Book Appointment</h3>
+              <p className="text-sm text-gray-600">Schedule a consultation with a doctor</p>
+            </Link>
+            <Link to="/patient/queue/join" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <div className="p-3 bg-yellow-100 rounded-lg w-fit mb-4">
+                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Join Queue</h3>
+              <p className="text-sm text-gray-600">Join a doctor's queue for quick consultation</p>
+            </Link>
+            <Link to="/patient/records" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <div className="p-3 bg-green-100 rounded-lg w-fit mb-4">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Health Vault</h3>
+              <p className="text-sm text-gray-600">Access your medical records and documents</p>
+            </Link>
+          </>
+        )}
+        {role === 'doctor' && (
+          <>
+            <Link to="/doctor/queue" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <div className="p-3 bg-indigo-100 rounded-lg w-fit mb-4">
+                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Queue Management</h3>
+              <p className="text-sm text-gray-600">Manage your patient queue</p>
+            </Link>
+            <Link to="/doctor/shared-records" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <div className="p-3 bg-green-100 rounded-lg w-fit mb-4">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Shared Records</h3>
+              <p className="text-sm text-gray-600">View patient records shared with you</p>
+            </Link>
+            <Link to="/doctor/prescriptions" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <div className="p-3 bg-yellow-100 rounded-lg w-fit mb-4">
+                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Prescriptions</h3>
+              <p className="text-sm text-gray-600">Manage patient prescriptions</p>
+            </Link>
+          </>
+        )}
+        {role === 'admin' && (
+          <>
+            <Link to="/admin/users" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <div className="p-3 bg-indigo-100 rounded-lg w-fit mb-4">
+                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">User Management</h3>
+              <p className="text-sm text-gray-600">Manage platform users and roles</p>
+            </Link>
+            <Link to="/admin/audit" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <div className="p-3 bg-yellow-100 rounded-lg w-fit mb-4">
+                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Audit Logs</h3>
+              <p className="text-sm text-gray-600">Review security and compliance logs</p>
+            </Link>
+            <Link to="/admin/analytics" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+              <div className="p-3 bg-green-100 rounded-lg w-fit mb-4">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Analytics</h3>
+              <p className="text-sm text-gray-600">View platform usage and statistics</p>
+            </Link>
+          </>
+        )}
       </div>
 
       {/* FAQs */}

@@ -32,7 +32,6 @@ const SharedRecords = () => {
     try {
       setLoading(true);
       const response = await api.get('/records/shared-with-me');
-      console.log('Shared records response:', response);
       if (response.success) {
         setRecords(response.data);
       }

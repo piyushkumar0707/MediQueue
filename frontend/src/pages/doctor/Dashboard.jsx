@@ -30,7 +30,6 @@ const DoctorDashboard = () => {
 
       // Fetch today's queue
       const queueRes = await api.get('/queue/doctor-queue?status=all');
-      console.log('Queue response:', queueRes);
       if (queueRes.success) {
         const queueData = queueRes.data || [];
         const summary = queueRes.summary || {};
@@ -49,7 +48,6 @@ const DoctorDashboard = () => {
 
       // Fetch today's appointments
       const appointmentsRes = await api.get('/appointments/doctor-appointments');
-      console.log('Appointments response:', appointmentsRes);
       if (appointmentsRes.success) {
         const appointmentsData = appointmentsRes.data || [];
         setTodayAppointments(appointmentsData);

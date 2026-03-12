@@ -71,10 +71,7 @@ const ForgotPassword = () => {
       // Note: api.interceptors unwraps response.data automatically
       if (response.success) {
         // Log OTP for testing
-        if (response.otp) {
-          console.log('🔐 Password Reset OTP:', response.otp);
-          console.log('Session ID:', response.sessionId);
-        }
+
         
         // Navigate to OTP verification
         navigate('/verify-otp', {

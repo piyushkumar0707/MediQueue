@@ -17,7 +17,6 @@ const DoctorAppointments = () => {
     try {
       setLoading(true);
       const response = await api.get('/appointments/doctor-appointments');
-      console.log('Doctor appointments response:', response);
       if (response.success) {
         setAppointments(response.data || []);
       }

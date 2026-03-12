@@ -172,11 +172,9 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      logout();
-      toast.success('Logged out successfully');
-      navigate('/login');
-    }
+    logout();
+    toast.success('Logged out successfully');
+    navigate('/login');
   };
 
   if (loading) {

@@ -8,6 +8,9 @@ const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [filter, setFilter] = useState('all'); // all, upcoming, completed, cancelled
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancellingId, setCancellingId] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [rescheduleData, setRescheduleData] = useState({
     appointmentDate: '',
@@ -21,12 +24,8 @@ const Appointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      console.log('Fetching appointments from: /appointments/my-appointments');
       const response = await api.get('/appointments/my-appointments');
-      console.log('API Response:', response);
-      // Response is already unwrapped by interceptor (response.data)
       if (response.success) {
-        console.log('Appointments found:', response.data.length);
         setAppointments(response.data || []);
       }
     } catch (error) {
@@ -76,17 +75,21 @@ const Appointments = () => {
   };
 
   const handleCancelAppointment = async (appointmentId) => {
-    const reason = window.prompt('Please provide a reason for cancellation (optional):');
-    if (reason === null) return; // User clicked cancel
+    setCancellingId(appointmentId);
+    setCancelReason('');
+    setShowCancelModal(true);
+  };
 
+  const confirmCancel = async () => {
     try {
-      await api.delete(`/appointments/${appointmentId}`, {
-        data: { cancelReason: reason || 'No reason provided' }
+      await api.delete(`/appointments/${cancellingId}`, {
+        data: { cancelReason: cancelReason || 'No reason provided' }
       });
       toast.success('Appointment cancelled successfully');
+      setShowCancelModal(false);
+      setCancellingId(null);
       fetchAppointments();
     } catch (error) {
-      console.error('Cancel error:', error);
       toast.error(error.message || 'Failed to cancel appointment');
     }
   };
@@ -172,6 +175,7 @@ const Appointments = () => {
   }
 
   return (
+    <>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -420,6 +424,38 @@ const Appointments = () => {
         </div>
       )}
     </div>
+
+      {/* Cancel Appointment Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancel Appointment</h3>
+            <p className="text-sm text-gray-600 mb-4">Please provide a reason for cancellation (optional).</p>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Reason for cancellation..."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => { setShowCancelModal(false); setCancellingId(null); }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition"
+              >
+                Keep Appointment
+              </button>
+              <button
+                onClick={confirmCancel}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition"
+              >
+                Yes, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

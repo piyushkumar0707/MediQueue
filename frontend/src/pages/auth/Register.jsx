@@ -18,7 +18,7 @@ const Register = () => {
   
   const [currentStep, setCurrentStep] = useState(STEPS.PHONE_EMAIL);
   const [sessionId, setSessionId] = useState('');
-  const [devOTP, setDevOTP] = useState(''); // For development only
+
   
   const [formData, setFormData] = useState({
     phoneNumber: '',
@@ -91,11 +91,7 @@ const Register = () => {
       // Response structure: { success, message, sessionId, otpSent, otp? }
       if (response && response.sessionId) {
         setSessionId(response.sessionId);
-        if (response.otp) {
-          setDevOTP(response.otp); // Development only
-          console.log('🔐 OTP for Testing:', response.otp);
-          console.log('Session ID:', response.sessionId);
-        }
+
         setCurrentStep(STEPS.OTP_VERIFICATION);
       } else {
         console.error('Invalid response structure:', response);
@@ -236,7 +232,7 @@ const Register = () => {
       
       if (response && response.sessionId) {
         setSessionId(response.sessionId);
-        if (response.otp) setDevOTP(response.otp);
+
       }
     } catch (err) {
       console.error('Resend OTP failed:', err);
@@ -250,7 +246,7 @@ const Register = () => {
         return <PhoneEmailStep formData={formData} handleChange={handleChange} handleSubmit={handlePhoneEmailSubmit} validationErrors={validationErrors} isLoading={isLoading} error={error} />;
       
       case STEPS.OTP_VERIFICATION:
-        return <OTPStep formData={formData} handleChange={handleChange} handleSubmit={handleOTPSubmit} validationErrors={validationErrors} isLoading={isLoading} error={error} devOTP={devOTP} onResend={handleResendOTP} />;
+        return <OTPStep formData={formData} handleChange={handleChange} handleSubmit={handleOTPSubmit} validationErrors={validationErrors} isLoading={isLoading} error={error} onResend={handleResendOTP} />;
       
       case STEPS.ROLE_SELECTION:
         return <RoleSelectionStep handleRoleSelect={handleRoleSelect} />;
@@ -377,7 +373,7 @@ const PhoneEmailStep = ({ formData, handleChange, handleSubmit, validationErrors
   </div>
 );
 
-const OTPStep = ({ formData, handleChange, handleSubmit, validationErrors, devOTP, onResend }) => {
+const OTPStep = ({ formData, handleChange, handleSubmit, validationErrors, onResend }) => {
   const [resendCountdown, setResendCountdown] = useState(0);
   
   useEffect(() => {
@@ -402,13 +398,7 @@ const OTPStep = ({ formData, handleChange, handleSubmit, validationErrors, devOT
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Verify OTP</h2>
         <p className="text-gray-600 mt-2">Enter the 6-digit code sent to your phone</p>
-        {devOTP && (
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Dev Mode:</strong> Your OTP is <strong className="font-mono text-lg">{devOTP}</strong>
-            </p>
-          </div>
-        )}
+
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">

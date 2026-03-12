@@ -235,7 +235,9 @@ const UserManagement = () => {
       {/* Users Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center">Loading...</div>
+          <div className="p-8 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
         ) : users.length === 0 ? (
           <div className="p-8 text-center text-gray-500">No users found</div>
         ) : (

@@ -83,9 +83,6 @@ const JoinQueue = () => {
     doctor.professionalInfo?.department?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  console.log('Doctors state:', doctors.length);
-  console.log('Filtered doctors:', filteredDoctors.length);
-  console.log('Search term:', searchTerm);
 
   if (loading) {
     return (
@@ -142,7 +139,7 @@ const JoinQueue = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">
-                        Dr. {doctor.firstName} {doctor.lastName}
+                        Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName}
                       </h3>
                       <p className="text-sm text-gray-600">
                         {doctor.professionalInfo?.specialization || 'General Physician'}

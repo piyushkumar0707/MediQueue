@@ -27,9 +27,6 @@ const useAuthStore = create(
             countryCode
           });
           
-          console.log('API response (full):', response);
-          console.log('API response.data:', response.data);
-          
           // Handle both wrapped and unwrapped responses
           const data = response.data || response;
           

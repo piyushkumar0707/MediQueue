@@ -34,7 +34,6 @@ const NotificationBell = () => {
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket.io connected');
       // Join user-specific room
       newSocket.emit('join', {
         userId: user.id,
@@ -44,8 +43,6 @@ const NotificationBell = () => {
 
     // Listen for notifications
     newSocket.on('notification', (data) => {
-      console.log('Notification received:', data);
-
       if (data.type === 'new_notification') {
         // Add notification to store
         addNotification(data.data);
@@ -65,7 +62,6 @@ const NotificationBell = () => {
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Socket.io disconnected');
     });
 
     setSocket(newSocket);

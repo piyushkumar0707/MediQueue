@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import { Toaster } from 'react-hot-toast';
 import 'react-toastify/dist/ReactToastify.css';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -68,6 +69,7 @@ function App() {
           pauseOnHover
           theme="light"
         />
+        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       
       <Routes>
         {/* Public Auth Routes */}

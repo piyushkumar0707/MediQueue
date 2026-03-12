@@ -88,7 +88,6 @@ const AdminDashboard = () => {
     });
 
     socketRef.current.on('connect', () => {
-      console.log('Socket connected:', socketRef.current.id);
       setSocketConnected(true);
       toast.success('Real-time monitoring active', { duration: 2000 });
       
@@ -97,26 +96,22 @@ const AdminDashboard = () => {
     });
 
     socketRef.current.on('disconnect', () => {
-      console.log('Socket disconnected');
       setSocketConnected(false);
       toast.error('Real-time monitoring disconnected', { duration: 2000 });
     });
 
     // Listen for stats updates
     socketRef.current.on('stats-update', (newStats) => {
-      console.log('Stats updated:', newStats);
       setStats(prevStats => ({ ...prevStats, ...newStats }));
     });
 
     // Listen for activity events
     socketRef.current.on('activity-event', (activity) => {
-      console.log('New activity:', activity);
       setActivities(prev => [activity, ...prev].slice(0, 20));
     });
 
     // Listen for system health updates
     socketRef.current.on('health-update', (health) => {
-      console.log('Health updated:', health);
       setSystemHealth(prevHealth => ({ ...prevHealth, ...health }));
     });
 
@@ -136,9 +131,6 @@ const AdminDashboard = () => {
       ]);
 
       const responseTime = Date.now() - startTime;
-      
-      console.log('Stats API Response:', statsRes.data);
-      console.log('Users API Response:', usersRes.data);
       
       // Map backend response to frontend state - handle both nested and flat structures
       const backendData = statsRes.data?.data || statsRes.data;

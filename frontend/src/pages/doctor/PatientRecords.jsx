@@ -25,28 +25,24 @@ const PatientRecords = () => {
 
       // Fetch patient details
       const patientRes = await api.get(`/users/${patientId}`);
-      console.log('Patient response:', patientRes);
       if (patientRes.success) {
         setPatient(patientRes.data);
       }
 
       // Fetch medical records
       const recordsRes = await api.get(`/records/patient/${patientId}`);
-      console.log('Records response:', recordsRes);
       if (recordsRes.success) {
         setRecords(recordsRes.data || []);
       }
 
       // Fetch prescriptions
       const prescriptionsRes = await api.get(`/prescriptions/patient/${patientId}`);
-      console.log('Prescriptions response:', prescriptionsRes);
       if (prescriptionsRes.success) {
         setPrescriptions(prescriptionsRes.data || []);
       }
 
       // Fetch appointments
       const appointmentsRes = await api.get(`/appointments/patient/${patientId}`);
-      console.log('Appointments response:', appointmentsRes);
       if (appointmentsRes.success) {
         setAppointments(appointmentsRes.data || []);
       }
