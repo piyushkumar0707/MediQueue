@@ -1,163 +1,197 @@
-# CareQueue + Health-Vault
+<div align="center">
 
-A secure healthcare operations platform combining real-time patient queue management with consent-based, encrypted medical records.
+# MediQueue — CareQueue + Health-Vault
 
-## 🏥 Features
+### A production-grade healthcare operations platform built with security and real-time UX at its core.
 
-### CareQueue
-- Real-time patient queue & appointment management
-- Live queue tracking with WebSocket
-- Smart waiting time estimation
-- Multi-department support
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongoosejs.com)
+[![Socket.io](https://img.shields.io/badge/Socket.io-v4-010101?style=flat-square&logo=socket.io)](https://socket.io)
+[![JWT](https://img.shields.io/badge/Auth-JWT%20%2B%20OTP-orange?style=flat-square)](https://jwt.io)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 
-### Health-Vault
-- Consent-based medical records access
-- End-to-end encryption
-- Comprehensive audit logging
-- Emergency override with accountability
+</div>
 
-## 👥 User Roles
+![Architecture Overview](architecture%20diagram%20mediqueue.png)
 
-- **Patient**: Book appointments, track queue, manage medical records
-- **Doctor**: Manage consultations, access patient records, write prescriptions
-- **Admin**: System oversight, audit logs, user management, analytics
+---
 
-## 🛠️ Tech Stack
+## What is this?
 
-### Frontend
-- React 18 with Vite
-- TypeScript
-- Tailwind CSS
-- React Router v6
-- Socket.io Client
-- Axios
-- Zustand (State Management)
+MediQueue solves two real-world healthcare problems in a single platform:
 
-### Backend
-- Node.js
-- Express.js
-- MongoDB with Mongoose
-- Socket.io (Real-time)
-- JWT Authentication
-- Bcrypt (Password Hashing)
-- Multer (File Upload)
+- **CareQueue** — eliminates physical waiting rooms with a real-time digital queue. Patients join remotely, track their position live, and get notified when it's their turn.
+- **Health-Vault** — gives patients full ownership of their medical records with consent-based sharing, AES-256-GCM encryption at rest, and an immutable audit trail for every access.
 
-## 📁 Project Structure
+Three user roles — **Patient**, **Doctor**, **Admin** — each with their own dashboard, workflows, and permission boundary.
 
-```
-care-vault/
-├── backend/              # Node.js + Express API
-│   ├── src/
-│   │   ├── config/      # Configuration files
-│   │   ├── controllers/ # Route controllers
-│   │   ├── middleware/  # Custom middleware
-│   │   ├── models/      # Mongoose models
-│   │   ├── routes/      # API routes
-│   │   ├── services/    # Business logic
-│   │   ├── utils/       # Helper functions
-│   │   └── server.js    # Entry point
-│   └── package.json
-│
-├── frontend/            # React application
-│   ├── src/
-│   │   ├── components/  # Reusable components
-│   │   ├── pages/       # Page components
-│   │   ├── services/    # API services
-│   │   ├── hooks/       # Custom hooks
-│   │   ├── store/       # State management
-│   │   ├── utils/       # Utilities
-│   │   └── App.jsx      # Root component
-│   └── package.json
-│
-└── README.md
-```
+---
 
-## 🚀 Getting Started
+## Technical Highlights
+
+These are the engineering decisions worth talking about:
+
+| Concern | Solution |
+|---|---|
+| Real-time queue updates | Socket.io v4 rooms (`user:<id>`) — server pushes diffs on every queue state change |
+| Medical record security | AES-256-GCM encryption via a dedicated service; key separate from data |
+| Authentication | Two-token JWT (15 min access + 7 day refresh) with a two-step OTP registration flow |
+| Authorization | Stateless `protect()` + `authorize(...roles)` middleware; no DB hit on every request |
+| Audit compliance | Immutable `AuditLog` model; middleware wraps every sensitive admin action automatically |
+| Emergency access | Doctors can request override access; all overrides are logged and surfaced to admins for review |
+| File uploads | Multer disk storage, 5-file / 10 MB limit, served via authenticated static route |
+
+---
+
+## Feature Breakdown
+
+### Patient
+- Register with email/SMS OTP verification (two-step flow)
+- Book appointments and join a live queue remotely
+- Real-time queue position tracking with estimated wait time
+- Upload, view, and delete medical records (encrypted)
+- Grant / revoke per-doctor consent to individual records
+- View prescriptions from completed consultations
+- In-app notification centre with real-time push
+
+![Queue Flow](queue%20flow.png)
+
+![Health-Vault Flow](health-valut%20flow.png)
+
+### Doctor
+- Live queue dashboard — call next patient, manage consultation flow
+- Access patient records (consent-gated or emergency override with justification)
+- Write and manage prescriptions
+- View shared records and appointment history
+- Receive real-time notifications for queue events
+
+### Admin
+- Full user management (create, suspend, promote, delete)
+- Analytics dashboard — appointments, queue throughput, system usage
+- Audit log explorer with filtering (who accessed what, when, why)
+- Emergency access review — approve / reject doctor override requests
+- Real-time system activity monitoring
+
+---
+
+## Architecture
+
+![System Architecture Component View](system%20arch%20comp%20view.png)
+
+![Event Flow Diagram](event-flow%20diagram%20mediqueue.png)
+
+### Data Model
+
+![Database ER Diagram](database%20ER%20diagram%20mediqueue.png)
+
+### Key Design Decisions
+
+- **ES Modules** throughout the backend (`"type": "module"`) — native `import`/`export`, no CommonJS.
+- **Stateless auth middleware** (`middleware/auth.js`) to keep hot-path requests fast; a separate DB-checking middleware exists only for the auth router.
+- **`io` shared via `app.set('io', io)`** — controllers emit real-time events without coupling to the Socket layer.
+- **Zustand** persisted to `localStorage` as `auth-storage`; the Axios interceptor reads the token directly from the store shape — no additional auth state duplication.
+
+---
+
+## API Surface
+
+| Prefix | Responsibility |
+|---|---|
+| `POST /api/auth` | Register (OTP 2-step), login, refresh token, forgot/reset password |
+| `GET/PUT /api/users` | Profile management |
+| `GET/POST/DELETE /api/appointments` | Booking lifecycle |
+| `GET/POST /api/queue` | Join queue, call-next, queue stats |
+| `GET/POST/DELETE /api/records` | Encrypted file upload, list, download, share, PDF export |
+| `GET/POST/DELETE /api/consent` | Grant, revoke, and query consent grants |
+| `GET/POST /api/emergency-access` | Doctor override requests |
+| `GET/POST /api/prescriptions` | Create and view prescriptions |
+| `GET /api/audit` | Tamper-evident audit log queries (admin) |
+| `GET /api/analytics` | Dashboard metrics |
+| `GET/POST/PUT/DELETE /api/admin` | User and emergency case management |
+| `GET/POST /api/notifications` | Real-time notification inbox |
+
+---
+
+## Tech Stack
+
+**Backend:** Node.js 18 · Express · MongoDB (Mongoose) · Socket.io v4 · JWT · bcrypt · Multer · node-cron · Nodemailer · Twilio
+
+**Frontend:** React 18 · Vite · Tailwind CSS · Zustand · React Query · Axios · Socket.io-client · React Router v6
+
+**Security:** AES-256-GCM (medical records) · JWT dual-token · OTP via SMS + email · RBAC · Helmet · Rate limiting · Immutable audit log
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB
-- npm or yarn
+- Node.js v18+
+- MongoDB (local or Atlas)
+- npm
 
-### Installation
+### Setup
 
-1. Clone the repository
 ```bash
-git clone <repository-url>
-cd care-vault
-```
+# 1. Clone
+git clone https://github.com/piyushkumar0707/MediQueue.git
+cd MediQueue
 
-2. Install backend dependencies
-```bash
+# 2. Backend
 cd backend
+cp .env.example .env        # fill in MONGODB_URI, JWT secrets, ENCRYPTION_KEY (32 chars), Twilio/email
 npm install
-```
+npm run dev                 # → http://localhost:5000
 
-3. Install frontend dependencies
-```bash
-cd ../frontend
-npm install
-```
-
-4. Set up environment variables
-- Copy `.env.example` to `.env` in both frontend and backend
-- Update the values according to your setup
-
-5. Start MongoDB
-```bash
-mongod
-```
-
-6. Start the backend server
-```bash
-cd backend
-npm run dev
-```
-
-7. Start the frontend development server
-```bash
+# 3. Frontend (new terminal)
 cd frontend
-npm run dev
+cp .env.example .env        # set VITE_API_URL and VITE_SOCKET_URL
+npm install
+npm run dev                 # → http://localhost:5173
 ```
 
-## 🔐 Security Features
+### Environment Variables (Backend)
 
-- Multi-Factor Authentication (OTP)
-- Role-Based Access Control (RBAC)
-- End-to-end encryption for medical records
-- Session management with JWT
-- Comprehensive audit logging
-- Emergency override with justification tracking
+| Variable | Description |
+|---|---|
+| `MONGODB_URI` | MongoDB connection string |
+| `JWT_ACCESS_SECRET` | Sign access tokens (short-lived) |
+| `JWT_REFRESH_SECRET` | Sign refresh tokens |
+| `ENCRYPTION_KEY` | Exactly 32 characters — AES-256 key for medical records |
+| `TWILIO_*` | SMS OTP delivery |
+| `EMAIL_*` | Email OTP delivery |
 
-## 📊 Key Workflows
+> ⚠️ Never change `ENCRYPTION_KEY` after records are stored — existing records become unreadable.
 
-### Patient Journey
-1. Register/Login with MFA
-2. Book appointment or join queue
-3. Track queue position in real-time
-4. Get notified when called
-5. Upload and manage medical records
-6. Grant/revoke doctor access to records
+---
 
-### Doctor Workflow
-1. Login to doctor dashboard
-2. View today's queue
-3. Call next patient
-4. Request patient record access
-5. View records (with consent or emergency override)
-6. Complete consultation and write prescription
+## Project Structure
 
-### Admin Functions
-1. Monitor system health
-2. Review emergency access logs
-3. Manage users and roles
-4. View analytics and reports
-5. Ensure compliance
+```
+├── backend/src/
+│   ├── server.js              # Entry: middleware chain + route mount + Socket.io init
+│   ├── config/                # DB connection, Multer config
+│   ├── controllers/           # One controller per domain (auth, queue, records, etc.)
+│   ├── middleware/            # auth.js (JWT-only) · authMiddleware.js · auditLogger.js
+│   ├── models/                # 9 Mongoose schemas
+│   ├── routes/                # Express routers (11 route files)
+│   ├── services/              # notificationService, emailService, encryption.service
+│   └── utils/                 # encryption, helpers
+│
+└── frontend/src/
+    ├── App.jsx                # Route tree with role-gated <ProtectedRoute>
+    ├── store/                 # useAuthStore (Zustand) · notificationStore
+    ├── services/api.js        # Single Axios instance + interceptor
+    ├── pages/
+    │   ├── patient/           # Dashboard, Queue, Appointments, HealthVault, Consent, Prescriptions
+    │   ├── doctor/            # Dashboard, QueueManagement, PatientRecords, Prescriptions
+    │   └── admin/             # Dashboard, UserManagement, AuditLogs, Analytics, EmergencyReview
+    └── components/            # Shared UI: layouts, navigation, common
+```
 
-## 📝 License
+---
+
+## License
 
 This project is proprietary and confidential.
 
-## 👨‍💻 Development Team
-
-Developed for secure healthcare operations.
