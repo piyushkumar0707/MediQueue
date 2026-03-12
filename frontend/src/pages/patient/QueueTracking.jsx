@@ -102,8 +102,11 @@ const QueueTracking = () => {
   }
 
   const { status, queueNumber, currentPosition, estimatedWaitTime, doctor } = queueData;
-  const waitMinutes = Math.ceil(estimatedWaitTime / 60);
-  const progress = currentPosition > 0 ? Math.max(0, 100 - (currentPosition * 20)) : 100;
+  // currentPosition is 1-indexed queue position (1 = you're next, 2 = 1 person ahead, etc.)
+  const peopleAhead = Math.max(0, (currentPosition || 1) - 1);
+  // estimatedWaitTime is already in minutes
+  const waitMinutes = estimatedWaitTime || 0;
+  const progress = Math.max(0, 100 - (peopleAhead * 20));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -169,14 +172,14 @@ const QueueTracking = () => {
               <div className="text-sm text-gray-600">Your Queue Number</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-indigo-600 mb-2">{currentPosition}</div>
+              <div className="text-4xl font-bold text-indigo-600 mb-2">{peopleAhead}</div>
               <div className="text-sm text-gray-600">
-                {currentPosition === 0 ? 'Your Turn!' : `${currentPosition === 1 ? 'Person' : 'People'} Ahead`}
+                {peopleAhead === 0 ? 'Your Turn!' : `${peopleAhead === 1 ? 'Person' : 'People'} Ahead`}
               </div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-indigo-600 mb-2">~{waitMinutes}</div>
-              <div className="text-sm text-gray-600">Minutes Wait</div>
+              <div className="text-sm text-gray-600">Min Wait</div>
             </div>
           </div>
 

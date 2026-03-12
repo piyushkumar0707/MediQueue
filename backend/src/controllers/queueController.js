@@ -1,6 +1,10 @@
+import mongoose from 'mongoose';
 import Queue from '../models/Queue.js';
 import Appointment from '../models/Appointment.js';
 import User from '../models/User.js';
+
+// Priority map: emergency=3 (highest), urgent=2, normal=1
+const PRIORITY_VAL = { emergency: 3, urgent: 2, normal: 1 };
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 import Notification from '../models/Notification.js';
@@ -94,14 +98,17 @@ export const getMyQueueStatus = asyncHandler(async (req, res) => {
     });
   }
 
-  // Calculate current position
+  // Calculate current position dynamically
   const position = await queueEntry.calculatePosition();
+  // Recalculate wait time based on current position (15 min per patient ahead)
+  const freshEstimatedWait = Math.max(0, (position - 1) * 15);
 
   res.json({
     success: true,
     data: {
       ...queueEntry.toObject(),
       currentPosition: position,
+      estimatedWaitTime: freshEstimatedWait,
       waitDuration: queueEntry.waitDuration
     }
   });
@@ -158,7 +165,14 @@ export const getDoctorQueue = asyncHandler(async (req, res) => {
   const queue = await Queue.find(query)
     .populate('patient', 'personalInfo phoneNumber email')
     .populate('appointment')
-    .sort({ priority: -1, checkInTime: 1 });
+    .sort({ checkInTime: 1 });
+
+  // Sort with correct priority order: emergency > urgent > normal
+  queue.sort((a, b) => {
+    const priDiff = (PRIORITY_VAL[b.priority] || 1) - (PRIORITY_VAL[a.priority] || 1);
+    if (priDiff !== 0) return priDiff;
+    return new Date(a.checkInTime) - new Date(b.checkInTime);
+  });
 
   // Calculate positions for waiting patients
   const queueWithPositions = await Promise.all(
@@ -195,21 +209,28 @@ export const callNextPatient = asyncHandler(async (req, res) => {
     { status: 'completed', completedTime: new Date() }
   );
 
-  // Get next patient (priority: emergency > urgent > normal, then by check-in time)
-  const nextPatient = await Queue.findOne({
-    doctor: req.user.userId,
-    status: 'waiting'
-  })
-    .sort({ priority: -1, checkInTime: 1 })
-    .populate('patient', 'personalInfo phoneNumber email')
-    .populate('appointment');
+  // Get next patient with correct priority order: emergency > urgent > normal
+  const [rawNext] = await Queue.aggregate([
+    { $match: { doctor: new mongoose.Types.ObjectId(req.user.userId), status: 'waiting' } },
+    { $addFields: { _priorityVal: { $switch: { branches: [
+      { case: { $eq: ['$priority', 'emergency'] }, then: 3 },
+      { case: { $eq: ['$priority', 'urgent'] }, then: 2 },
+      { case: { $eq: ['$priority', 'normal'] }, then: 1 }
+    ], default: 1 } } } },
+    { $sort: { _priorityVal: -1, checkInTime: 1 } },
+    { $limit: 1 }
+  ]);
 
-  if (!nextPatient) {
+  if (!rawNext) {
     return res.status(404).json({
       success: false,
       message: 'No patients waiting in queue'
     });
   }
+
+  const nextPatient = await Queue.findById(rawNext._id)
+    .populate('patient', 'personalInfo phoneNumber email')
+    .populate('appointment');
 
   // Update status
   nextPatient.status = 'in-progress';

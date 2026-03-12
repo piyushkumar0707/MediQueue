@@ -72,19 +72,27 @@ queueSchema.virtual('waitDuration').get(function() {
   return 0;
 });
 
+// Priority order: emergency (highest) > urgent > normal
+const PRIORITY_ORDER = ['normal', 'urgent', 'emergency'];
+
 // Method to calculate position in queue
 queueSchema.methods.calculatePosition = async function() {
   const Queue = this.constructor;
+  const myPriorityIdx = PRIORITY_ORDER.indexOf(this.priority);
+  // Patients with higher semantic priority (further right in PRIORITY_ORDER)
+  const higherPriorities = PRIORITY_ORDER.slice(myPriorityIdx + 1);
+
+  const orConditions = [
+    { priority: this.priority, checkInTime: { $lt: this.checkInTime } } // Same priority, earlier check-in
+  ];
+  if (higherPriorities.length > 0) {
+    orConditions.unshift({ priority: { $in: higherPriorities } }); // Any higher-priority patient
+  }
+
   const position = await Queue.countDocuments({
     doctor: this.doctor,
     status: 'waiting',
-    $or: [
-      { priority: { $gt: this.priority } }, // Higher priority
-      { 
-        priority: this.priority,
-        checkInTime: { $lt: this.checkInTime } // Same priority, earlier check-in
-      }
-    ]
+    $or: orConditions
   });
   return position + 1;
 };
