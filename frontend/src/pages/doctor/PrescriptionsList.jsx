@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 const Prescriptions = () => {
   const navigate = useNavigate();

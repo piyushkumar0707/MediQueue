@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 const CreatePrescription = () => {
   const navigate = useNavigate();

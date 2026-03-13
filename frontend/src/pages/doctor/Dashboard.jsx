@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
 import api from '../../services/api';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 
 const DoctorDashboard = () => {
   const { user } = useAuthStore();

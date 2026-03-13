@@ -66,7 +66,8 @@ export const initiateRegistration = async (req, res) => {
       countryCode: countryCode || '+91',
     }, 5 * 60);
     
-    // TODO: Send OTP via SMS (integrate Twilio)
+    // TODO [INCOMPLETE]: SMS delivery not wired up — Twilio notificationService exists
+    // but is not called here. Implement: await notificationService.sendOTP(phoneNumber, otp)
     logger.info(`OTP generated for registration (phone: ${phoneNumber}, session: ${sessionId})`);
     
     // In development, return OTP (REMOVE IN PRODUCTION)
@@ -572,7 +573,8 @@ export const forgotPassword = async (req, res) => {
       userId: user._id.toString(),
     }, 10 * 60);
     
-    // TODO: Send OTP via SMS/Email
+    // TODO [INCOMPLETE]: OTP delivery not wired up — neither SMS (Twilio) nor email
+    // (Nodemailer) is called here. Implement: await notificationService.sendOTP() or emailService.sendOtpEmail()
     logger.info(`Password reset OTP generated (user: ${user.email}, session: ${sessionId})`);
     
     const response = {
