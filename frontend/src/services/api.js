@@ -9,12 +9,32 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Send httpOnly cookies with every request
+  timeout: 15000,
 });
+
+// Flag to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Clears the failed request queue on logout — call from useAuthStore
+export const clearAuthQueue = () => {
+  processQueue(new Error('Logged out'));
+};
 
 // Request interceptor - add auth token
 api.interceptors.request.use(
   (config) => {
-    // Get token from Zustand persist storage
     const authStorage = localStorage.getItem('auth-storage');
     if (authStorage) {
       try {
@@ -29,31 +49,85 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor - handle errors
+// Response interceptor - handle token refresh on 401
 api.interceptors.response.use(
   (response) => response.data,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Don't redirect on auth endpoints (login/register) — let the form show the error
-      const url = error.config?.url || '';
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't attempt refresh on auth endpoints — let the form handle the error
+      const url = originalRequest?.url || '';
       const isAuthEndpoint = url.includes('/auth/login') ||
         url.includes('/auth/register') ||
         url.includes('/auth/refresh-token');
-      if (!isAuthEndpoint) {
-        // Clear the Zustand persisted auth state (correct key)
-        localStorage.removeItem('auth-storage');
-        // Lazy import to avoid circular deps
-        import('react-hot-toast').then(({ default: toast }) => {
-          toast.error('Session expired. Please log in again.', { id: 'session-expired', duration: 3000 });
-        });
-        setTimeout(() => { window.location.href = '/login'; }, 1500);
+
+      if (isAuthEndpoint) {
+        return Promise.reject(error.response?.data || error.message);
+      }
+
+      if (isRefreshing) {
+        // Queue this request until refresh completes
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(token => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch(err => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const authStorage = localStorage.getItem('auth-storage');
+
+      if (authStorage) {
+        try {
+          const { state } = JSON.parse(authStorage);
+          const { refreshToken } = state;
+
+          if (!refreshToken) throw new Error('No refresh token available');
+
+          const response = await axios.post(
+            `${API_URL}/auth/refresh-token`,
+            { refreshToken }
+          );
+
+          const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
+
+          const updatedState = { ...state, accessToken: newAccessToken, refreshToken: newRefreshToken };
+          localStorage.setItem('auth-storage', JSON.stringify({ state: updatedState }));
+
+          processQueue(null, newAccessToken);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          isRefreshing = false;
+
+          return api(originalRequest);
+
+        } catch (refreshError) {
+          processQueue(refreshError, null);
+          isRefreshing = false;
+          localStorage.removeItem('auth-storage');
+          failedQueue = [];
+          // Lazy import to avoid circular deps
+          import('react-hot-toast').then(({ default: toast }) => {
+            toast.error('Session expired. Please log in again.', { id: 'session-expired', duration: 3000 });
+          });
+          setTimeout(() => { window.location.href = '/login'; }, 1500);
+          return Promise.reject(refreshError);
+        }
+      } else {
+        isRefreshing = false;
+        window.location.href = '/login';
+        return Promise.reject(error);
       }
     }
+
     return Promise.reject(error.response?.data || error.message);
   }
 );

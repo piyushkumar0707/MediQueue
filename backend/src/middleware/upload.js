@@ -1,13 +1,9 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../config/cloudinary.js';
 import { logger } from '../utils/logger.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Allowed file types for medical records
+// Allowed MIME types for medical records
 const ALLOWED_FILE_TYPES = {
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
@@ -22,30 +18,23 @@ const ALLOWED_FILE_TYPES = {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../../uploads/medical-records');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+// Cloudinary storage — files go to the 'medical-records' folder
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    // Images are delivered as-is; everything else as 'raw' (preserves original format)
+    const isImage = file.mimetype.startsWith('image/');
+    return {
+      folder: 'medical-records',
+      resource_type: isImage ? 'image' : 'raw',
+      // Keep original filename (sanitized) so it's human-readable in Cloudinary
+      public_id: `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`,
+    };
   },
-  filename: (req, file, cb) => {
-    // Generate unique filename: timestamp-random-originalname
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    const nameWithoutExt = path.basename(file.originalname, ext);
-    const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9]/g, '_');
-    cb(null, `${sanitizedName}-${uniqueSuffix}${ext}`);
-  }
 });
 
 // File filter function
 const fileFilter = (req, file, cb) => {
-  // Check if file type is allowed
   if (ALLOWED_FILE_TYPES[file.mimetype]) {
     cb(null, true);
   } else {
@@ -53,66 +42,68 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Create multer upload instance
+// Multer instance backed by Cloudinary
 export const upload = multer({
-  storage: storage,
+  storage,
   limits: {
     fileSize: MAX_FILE_SIZE,
-    files: 5 // Maximum 5 files per upload
+    files: 5,
   },
-  fileFilter: fileFilter
+  fileFilter,
 });
 
-// Middleware to handle multer errors
+// Middleware to handle multer / Cloudinary errors
 export const handleUploadErrors = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         success: false,
-        message: `File size too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`
+        message: `File size too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`,
       });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({
         success: false,
-        message: 'Too many files. Maximum 5 files per upload'
+        message: 'Too many files. Maximum 5 files per upload',
       });
     }
-    return res.status(400).json({
-      success: false,
-      message: err.message
-    });
-  } else if (err) {
-    return res.status(400).json({
-      success: false,
-      message: err.message
-    });
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  if (err) {
+    return res.status(400).json({ success: false, message: err.message });
   }
   next();
 };
 
-// Helper function to delete file
-export const deleteFile = (filePath) => {
+/**
+ * Delete a file from Cloudinary by its public_id.
+ * @param {string} publicId  - Cloudinary public_id stored in the DB
+ * @param {string} resourceType - 'image' | 'raw' (default: 'raw')
+ */
+export const deleteFile = async (publicId, resourceType = 'raw') => {
   try {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      return true;
-    }
-    return false;
+    const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+    return result.result === 'ok';
   } catch (error) {
-    logger.error('Error deleting file:', error);
+    logger.error('Error deleting file from Cloudinary:', error);
     return false;
   }
 };
 
-// Helper function to get file info
+/**
+ * Map a multer-storage-cloudinary file object to the shape stored in MedicalRecord.files[].
+ * After upload, multer populates:
+ *   file.path       → secure HTTPS URL
+ *   file.filename   → Cloudinary public_id
+ *   file.mimetype, file.size, file.originalname
+ */
 export const getFileInfo = (file) => {
   return {
     fileName: file.originalname,
-    fileUrl: `/uploads/medical-records/${file.filename}`,
-    filePath: file.path,
+    fileUrl: file.path,          // Cloudinary secure URL
+    cloudinaryPublicId: file.filename, // stored so we can delete later
     fileType: file.mimetype,
-    fileSize: file.size
+    fileSize: file.size,
   };
 };
 
@@ -122,5 +113,5 @@ export default {
   deleteFile,
   getFileInfo,
   ALLOWED_FILE_TYPES,
-  MAX_FILE_SIZE
+  MAX_FILE_SIZE,
 };

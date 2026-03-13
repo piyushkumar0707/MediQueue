@@ -53,6 +53,9 @@ const medicalRecordSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    cloudinaryPublicId: {
+      type: String, // Cloudinary public_id — used for deletion
+    },
     fileType: {
       type: String,
       required: true

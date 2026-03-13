@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../services/api';
-import { clearAuthQueue } from '../services/apiService';
+import { clearAuthQueue } from '../services/api';
 
 const useAuthStore = create(
   persist(

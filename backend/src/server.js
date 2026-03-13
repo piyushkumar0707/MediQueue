@@ -76,9 +76,6 @@ app.use(morgan('combined', { stream: { write: message => logger.info(message.tri
 // Make io accessible to routes
 app.set('io', io);
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
 // Health check routes (both /health and /api/health for compatibility)
 app.get('/health', (req, res) => {
   res.status(200).json({

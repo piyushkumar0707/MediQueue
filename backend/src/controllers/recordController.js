@@ -14,14 +14,21 @@ import { generateMedicalRecordPDF } from '../services/pdfGenerators.js';
 // @access  Private (Patient/Doctor)
 export const uploadRecord = asyncHandler(async (req, res) => {
   const { patientId, recordType, title, description, recordDate, metadata, visibility } = req.body;
-  
+
+  // Helper to clean up already-uploaded Cloudinary files on early exit
+  const cleanupFiles = () => {
+    if (req.files) {
+      req.files.forEach(file => {
+        const isImage = file.mimetype?.startsWith('image/');
+        deleteFile(file.filename, isImage ? 'image' : 'raw');
+      });
+    }
+  };
+
   // Validate patient exists
   const patient = await User.findById(patientId);
   if (!patient || patient.role !== 'patient') {
-    // Clean up uploaded files
-    if (req.files) {
-      req.files.forEach(file => deleteFile(file.path));
-    }
+    cleanupFiles();
     return res.status(404).json({
       success: false,
       message: 'Patient not found'
@@ -34,9 +41,7 @@ export const uploadRecord = asyncHandler(async (req, res) => {
   const isAdmin = req.user.role === 'admin';
   
   if (!isOwnRecord && !isDoctor && !isAdmin) {
-    if (req.files) {
-      req.files.forEach(file => deleteFile(file.path));
-    }
+    cleanupFiles();
     return res.status(403).json({
       success: false,
       message: 'Unauthorized to upload records for this patient'
