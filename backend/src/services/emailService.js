@@ -360,6 +360,86 @@ class EmailService {
     return { subject, html };
   }
 
+  registrationOtpEmail(otp, expiresInMinutes = 5) {
+    const subject = '🔐 Your CareQueue Verification Code';
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; }
+          .content { background-color: #f9fafb; padding: 30px; }
+          .otp-box { background-color: #eff6ff; border: 2px dashed #2563eb; border-radius: 8px; padding: 20px; text-align: center; margin: 24px 0; }
+          .otp-code { font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1d4ed8; }
+          .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header"><h1>🏥 CareQueue</h1></div>
+          <div class="content">
+            <h2>Verify Your Account</h2>
+            <p>Use the code below to complete your registration. It expires in <strong>${expiresInMinutes} minutes</strong>.</p>
+            <div class="otp-box">
+              <div class="otp-code">${otp}</div>
+            </div>
+            <p>If you did not request this, please ignore this email.</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated message from CareQueue. Please do not reply.</p>
+            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    return { subject, html };
+  }
+
+  passwordResetOtpEmail(otp, expiresInMinutes = 10) {
+    const subject = '🔑 Your CareQueue Password Reset Code';
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #7c3aed; color: white; padding: 20px; text-align: center; }
+          .content { background-color: #f9fafb; padding: 30px; }
+          .otp-box { background-color: #f5f3ff; border: 2px dashed #7c3aed; border-radius: 8px; padding: 20px; text-align: center; margin: 24px 0; }
+          .otp-code { font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #6d28d9; }
+          .warning { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 16px 0; }
+          .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header"><h1>🏥 CareQueue</h1></div>
+          <div class="content">
+            <h2>Password Reset Request</h2>
+            <p>Use the code below to reset your password. It expires in <strong>${expiresInMinutes} minutes</strong>.</p>
+            <div class="otp-box">
+              <div class="otp-code">${otp}</div>
+            </div>
+            <div class="warning">
+              ⚠️ <strong>Never share this code with anyone.</strong> CareQueue staff will never ask for your OTP.
+            </div>
+            <p>If you did not request a password reset, you can safely ignore this email. Your account is secure.</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated message from CareQueue. Please do not reply.</p>
+            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    return { subject, html };
+  }
+
   appointmentBookedEmail(patientName, doctorName, appointmentDate, timeSlot, reasonForVisit) {
     const subject = '✅ Appointment Confirmed - CareQueue';
     const html = `

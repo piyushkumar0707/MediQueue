@@ -66,24 +66,21 @@ export const initiateRegistration = async (req, res) => {
       countryCode: countryCode || '+91',
     }, 5 * 60);
     
-    // TODO [INCOMPLETE]: SMS delivery not wired up — Twilio notificationService exists
-    // but is not called here. Implement: await notificationService.sendOTP(phoneNumber, otp)
-    logger.info(`OTP generated for registration (phone: ${phoneNumber}, session: ${sessionId})`);
-    
-    // In development, return OTP (REMOVE IN PRODUCTION)
-    const response = {
+    // Send OTP via email
+    const { subject, html } = emailService.registrationOtpEmail(otp, 5);
+    await emailService.sendEmail(email, subject, html);
+    logger.info(`Registration OTP emailed to ${email} (session: ${sessionId})`);
+
+    res.status(200).json({
       success: true,
       message: 'OTP sent successfully',
       sessionId,
       otpSent: true
-    };
-    
-    // OTP is logged server-side for dev inspection; never sent in response
+    });
+
     if (process.env.NODE_ENV === 'development') {
       logger.debug(`[DEV] Registration OTP for session ${sessionId}: ${otp}`);
     }
-    
-    res.status(200).json(response);
     
   } catch (error) {
     logger.error('Registration initiation error:', error);
@@ -573,17 +570,17 @@ export const forgotPassword = async (req, res) => {
       userId: user._id.toString(),
     }, 10 * 60);
     
-    // TODO [INCOMPLETE]: OTP delivery not wired up — neither SMS (Twilio) nor email
-    // (Nodemailer) is called here. Implement: await notificationService.sendOTP() or emailService.sendOtpEmail()
-    logger.info(`Password reset OTP generated (user: ${user.email}, session: ${sessionId})`);
-    
+    // Send OTP via email
+    const { subject, html } = emailService.passwordResetOtpEmail(otp, 10);
+    await emailService.sendEmail(user.email, subject, html);
+    logger.info(`Password reset OTP emailed to ${user.email} (session: ${sessionId})`);
+
     const response = {
       success: true,
       message: 'Password reset OTP sent successfully',
       sessionId
     };
-    
-    // OTP is logged server-side for dev inspection; never sent in response
+
     if (process.env.NODE_ENV === 'development') {
       logger.debug(`[DEV] Password reset OTP for session ${sessionId}: ${otp}`);
     }
