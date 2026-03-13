@@ -16,8 +16,10 @@ export const getMyConsents = asyncHandler(async (req, res) => {
     .populate('specificRecords', 'title recordType')
     .sort({ createdAt: -1 });
 
-  // Transform doctor data to flatten personalInfo
-  const transformedConsents = consents.map(consent => {
+  // Transform doctor data to flatten personalInfo, skip consents with missing doctor
+  const transformedConsents = consents
+    .filter(consent => consent.doctor != null)
+    .map(consent => {
     const obj = consent.toObject();
     if (obj.doctor && obj.doctor.personalInfo) {
       obj.doctor = {
@@ -49,8 +51,10 @@ export const getDoctorConsents = asyncHandler(async (req, res) => {
     .populate('patient', 'personalInfo.firstName personalInfo.lastName email phoneNumber')
     .sort({ createdAt: -1 });
 
-  // Transform patient data
-  const transformedConsents = consents.map(consent => {
+  // Transform patient data, skip consents with missing patient
+  const transformedConsents = consents
+    .filter(consent => consent.patient != null)
+    .map(consent => {
     const obj = consent.toObject();
     if (obj.patient && obj.patient.personalInfo) {
       obj.patient = {
@@ -358,6 +362,14 @@ export const getConsentHistory = asyncHandler(async (req, res) => {
     return res.status(404).json({
       success: false,
       message: 'Consent not found'
+    });
+  }
+
+  // Check for deleted related documents
+  if (!consent.patient || !consent.doctor) {
+    return res.status(404).json({
+      success: false,
+      message: 'Associated patient or doctor record no longer exists'
     });
   }
 

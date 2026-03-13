@@ -1,5 +1,6 @@
 import { logger } from '../utils/logger.js';
 import emailService from './emailService.js';
+import twilio from 'twilio';
 
 /**
  * Notification Service
@@ -252,19 +253,50 @@ class NotificationService {
   }
 
   /**
-   * Send SMS notification (placeholder for future implementation)
-   * @param {Object} notification - Notification data with recipient phone
+   * Send SMS notification via Twilio
+   * @param {Object} notification - Notification document with populated recipient
    */
   async sendSMS(notification) {
-    // TODO: Implement SMS sending with Twilio
-    logger.info(`SMS notification queued: ${notification.type} to ${notification.recipient}`);
-    
-    // Future implementation:
-    // - Use Twilio API
-    // - Format SMS message (160 char limit)
-    // - Handle SMS failures and retries
-    
-    return true;
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+
+    if (!accountSid || !authToken || !fromNumber) {
+      logger.warn('Twilio credentials not configured — SMS not sent');
+      return false;
+    }
+
+    try {
+      // Populate recipient to get phone number if not already populated
+      if (!notification.recipient.phoneNumber) {
+        await notification.populate('recipient', 'phoneNumber countryCode');
+      }
+
+      const recipientPhone = notification.recipient.phoneNumber;
+      if (!recipientPhone) {
+        logger.warn(`No phone number for recipient ${notification.recipient._id || notification.recipient}`);
+        return false;
+      }
+
+      const countryCode = notification.recipient.countryCode || '+91';
+      const toNumber = `${countryCode}${recipientPhone}`;
+
+      // Trim message to SMS limit (160 chars)
+      const smsBody = notification.message.substring(0, 160);
+
+      const client = twilio(accountSid, authToken);
+      await client.messages.create({
+        body: smsBody,
+        from: fromNumber,
+        to: toNumber
+      });
+
+      logger.info(`SMS sent to ${toNumber} for notification ${notification._id}`);
+      return true;
+    } catch (error) {
+      logger.error(`Failed to send SMS for notification ${notification._id}: ${error.message}`);
+      return false;
+    }
   }
 
   /**

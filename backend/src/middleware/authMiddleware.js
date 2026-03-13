@@ -54,8 +54,12 @@ export const protect = async (req, res, next) => {
       });
     }
     
-    // Update last active time (async, don't wait)
-    User.findByIdAndUpdate(user._id, { lastActiveAt: new Date() }).exec();
+    // Update last active time
+    try {
+      await User.findByIdAndUpdate(user._id, { lastActiveAt: new Date() });
+    } catch (updateErr) {
+      logger.warn(`Failed to update lastActiveAt for user ${user._id}: ${updateErr.message}`);
+    }
     
     // Attach user to request
     req.user = decoded;

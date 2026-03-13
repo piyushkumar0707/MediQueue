@@ -8,6 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Send httpOnly cookies with every request
 });
 
 // Request interceptor - add auth token
@@ -46,7 +47,11 @@ api.interceptors.response.use(
       if (!isAuthEndpoint) {
         // Clear the Zustand persisted auth state (correct key)
         localStorage.removeItem('auth-storage');
-        window.location.href = '/login';
+        // Lazy import to avoid circular deps
+        import('react-hot-toast').then(({ default: toast }) => {
+          toast.error('Session expired. Please log in again.', { id: 'session-expired', duration: 3000 });
+        });
+        setTimeout(() => { window.location.href = '/login'; }, 1500);
       }
     }
     return Promise.reject(error.response?.data || error.message);

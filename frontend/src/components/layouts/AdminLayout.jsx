@@ -50,7 +50,7 @@ const AdminLayout = () => {
 
             <div className="flex-1">
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
-                Welcome, {user?.personalInfo?.fullName || 'Administrator'}
+                Welcome, {user?.personalInfo?.firstName ? `${user.personalInfo.firstName} ${user.personalInfo.lastName || ''}`.trim() : 'Administrator'}
               </h2>
               <p className="text-xs sm:text-sm text-gray-500">System Administrator</p>
             </div>

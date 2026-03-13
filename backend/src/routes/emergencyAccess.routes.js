@@ -1,5 +1,7 @@
 import express from 'express';
 import { protect, authorize } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { validateEmergencyAccess } from '../middleware/validators.js';
 import {
   requestEmergencyAccess,
   getMyEmergencyRequests,
@@ -16,7 +18,7 @@ const router = express.Router();
 router.use(protect);
 
 // Doctor routes
-router.post('/request', authorize('doctor'), requestEmergencyAccess);
+router.post('/request', authorize('doctor'), validateEmergencyAccess, validate, requestEmergencyAccess);
 router.get('/my-requests', authorize('doctor'), getMyEmergencyRequests);
 router.get('/check/:patientId', authorize('doctor'), checkEmergencyAccess);
 

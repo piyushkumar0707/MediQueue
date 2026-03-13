@@ -1,6 +1,6 @@
 import { verifyOTP } from '../utils/jwt.js';
 import { logger } from '../utils/logger.js';
-import { otpStore } from './authController.js';
+import { getOTP, deleteOTP } from '../utils/otpStore.js';
 
 /**
  * @desc    Verify OTP without completing registration
@@ -18,22 +18,13 @@ export const verifyOtpOnly = async (req, res) => {
       });
     }
     
-    // Get OTP data from store
-    const otpData = otpStore.get(sessionId);
+    // Get OTP data from Redis
+    const otpData = await getOTP(sessionId);
     
     if (!otpData) {
       return res.status(400).json({
         success: false,
         message: 'Invalid or expired session. Please request a new OTP.'
-      });
-    }
-    
-    // Check expiry
-    if (Date.now() > otpData.expiresAt) {
-      otpStore.delete(sessionId);
-      return res.status(400).json({
-        success: false,
-        message: 'OTP has expired. Please request a new one.'
       });
     }
     

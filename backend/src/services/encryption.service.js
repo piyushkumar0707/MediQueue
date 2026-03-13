@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { logger } from '../utils/logger.js';
 
 // Encryption configuration
 const ALGORITHM = 'aes-256-gcm';
@@ -48,7 +49,7 @@ export const encrypt = (data, keyBase64) => {
       authTag: authTag.toString('base64')
     };
   } catch (error) {
-    console.error('Encryption error:', error);
+    logger.error('Encryption error:', error);
     throw new Error('Failed to encrypt data');
   }
 };
@@ -80,7 +81,7 @@ export const decrypt = (encryptedData, ivBase64, authTagBase64, keyBase64, parse
     // Parse JSON if needed
     return parseJSON ? JSON.parse(decrypted) : decrypted;
   } catch (error) {
-    console.error('Decryption error:', error);
+    logger.error('Decryption error:', error);
     throw new Error('Failed to decrypt data');
   }
 };
@@ -123,7 +124,7 @@ export const encryptFile = (fileBuffer, keyBase64) => {
       authTag: authTag.toString('base64')
     };
   } catch (error) {
-    console.error('File encryption error:', error);
+    logger.error('File encryption error:', error);
     throw new Error('Failed to encrypt file');
   }
 };
@@ -152,7 +153,7 @@ export const decryptFile = (encryptedBuffer, ivBase64, authTagBase64, keyBase64)
     
     return decrypted;
   } catch (error) {
-    console.error('File decryption error:', error);
+    logger.error('File decryption error:', error);
     throw new Error('Failed to decrypt file');
   }
 };

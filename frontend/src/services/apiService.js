@@ -6,6 +6,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
+  withCredentials: true, // Send httpOnly cookies with every request
   timeout: 15000 // 15 seconds
 });
 
@@ -23,6 +24,10 @@ const processQueue = (error, token = null) => {
   });
   
   failedQueue = [];
+};
+
+export const clearAuthQueue = () => {
+  processQueue(new Error('Logged out'));
 };
 
 // Request interceptor - Attach access token to requests
@@ -120,8 +125,9 @@ api.interceptors.response.use(
           processQueue(refreshError, null);
           isRefreshing = false;
           
-          // Refresh failed, logout user
+          // Refresh failed (expired/invalid) — force full logout
           localStorage.removeItem('auth-storage');
+          failedQueue = [];
           window.location.href = '/login';
           
           return Promise.reject(refreshError);

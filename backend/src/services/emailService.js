@@ -32,7 +32,7 @@ class EmailService {
           pass: process.env.EMAIL_PASSWORD
         },
         tls: {
-          rejectUnauthorized: false
+          rejectUnauthorized: true
         }
       });
 
@@ -168,6 +168,42 @@ class EmailService {
           </div>
           <div class="footer">
             <p>This is an urgent automated message from CareQueue.</p>
+            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    return { subject, html };
+  }
+
+  verificationEmail(userName, verificationUrl) {
+    const subject = '✅ Verify Your Email — CareQueue';
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; }
+          .content { background-color: #f9fafb; padding: 30px; }
+          .button { display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header"><h1>🏥 CareQueue</h1></div>
+          <div class="content">
+            <h2>Verify Your Email Address</h2>
+            <p>Hi ${userName},</p>
+            <p>Thank you for registering! Please click the button below to verify your email address. This link expires in 24 hours.</p>
+            <a href="${verificationUrl}" class="button">Verify Email</a>
+            <p>If you did not create an account, you can safely ignore this email.</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated message from CareQueue. Please do not reply.</p>
             <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
           </div>
         </div>

@@ -1,47 +1,89 @@
-import jwt from 'jsonwebtoken';
-import { asyncHandler } from './errorHandler.js';
+import { verifyAccessToken, extractTokenFromHeader } from '../utils/jwt.js';
+import User from '../models/User.js';
+import { logger } from '../utils/logger.js';
 
-// Protect routes - verify JWT token
-export const protect = asyncHandler(async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  console.log('=== AUTH MIDDLEWARE DEBUG ===');
-  console.log('Token present:', !!token);
-  console.log('Token (first 20 chars):', token?.substring(0, 20));
-
-  if (!token) {
-    res.status(401);
-    throw new Error('Not authorized, no token');
-  }
-
+/**
+ * Middleware to protect routes - requires valid access token.
+ * Supports Authorization header (Bearer) and httpOnly cookie fallback.
+ */
+export const protect = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-    console.log('Decoded token:', decoded);
+    // Support Authorization header first, then cookie fallback
+    let token = extractTokenFromHeader(req.headers.authorization);
+    if (!token && req.cookies?.accessToken) {
+      token = req.cookies.accessToken;
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.'
+      });
+    }
+
+    // Verify token
+    let decoded;
+    try {
+      decoded = verifyAccessToken(token);
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    // Check if user still exists in DB
+    const user = await User.findById(decoded.userId).select('-password -mfaSecret');
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'User no longer exists' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ success: false, message: 'Account has been deactivated' });
+    }
+
+    // Check if password was changed after token was issued
+    if (user.changedPasswordAfter && user.changedPasswordAfter(decoded.iat)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Password was recently changed. Please login again.'
+      });
+    }
+
+    // Update last active time (non-blocking)
+    User.findByIdAndUpdate(user._id, { lastActiveAt: new Date() }).catch(err =>
+      logger.warn(`Failed to update lastActiveAt for user ${user._id}: ${err.message}`)
+    );
+
     req.user = decoded;
+    req.userDoc = user;
+
     next();
   } catch (error) {
-    console.log('JWT verification error:', error.message);
-    res.status(401);
-    throw new Error('Not authorized, token failed');
+    logger.error('Auth middleware error:', error);
+    res.status(500).json({ success: false, message: 'Authentication failed', error: error.message });
   }
-});
+};
 
-// Authorize specific roles
+/**
+ * Middleware to authorize specific roles.
+ * @param  {...String} roles - Allowed roles (patient, doctor, admin)
+ */
 export const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      res.status(403);
-      throw new Error(
-        `User role '${req.user.role}' is not authorized to access this route`
-      );
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
     }
+
+    if (!roles.includes(req.user.role)) {
+      logger.warn(`Unauthorized access attempt by ${req.user.userId} to ${req.path}`);
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. This route requires one of the following roles: ${roles.join(', ')}`
+      });
+    }
+
     next();
   };
 };

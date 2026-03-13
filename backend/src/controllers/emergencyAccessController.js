@@ -47,7 +47,7 @@ export const requestEmergencyAccess = asyncHandler(async (req, res) => {
     facilityName: facilityName || '',
     requestIpAddress: req.ip,
     requestUserAgent: req.headers['user-agent'],
-    status: 'active' // Auto-approved but requires admin review
+    status: 'pending' // Requires admin approval before access is granted
   });
 
   await emergencyAccess.populate([
@@ -76,6 +76,31 @@ export const requestEmergencyAccess = asyncHandler(async (req, res) => {
   });
 
   await notificationService.sendNotification(patientNotification);
+
+  // Always notify admins about new emergency access requests
+  if (!emergencyAccess.flaggedForReview) {
+    const admins = await User.find({ role: 'admin' });
+    for (const admin of admins) {
+      const adminNotification = await Notification.create({
+        recipient: admin._id,
+        sender: req.user.userId,
+        type: 'emergency_access_pending',
+        title: '🚨 New Emergency Access Request',
+        message: `Dr. ${req.user.firstName} ${req.user.lastName} has requested emergency access for patient. Type: ${emergencyType}. Location: ${location || 'Not specified'}. Requires approval.`,
+        priority: 'urgent',
+        relatedEntity: {
+          entityType: 'EmergencyAccess',
+          entityId: emergencyAccess._id
+        },
+        actionUrl: `/admin/emergency-review`,
+        channels: {
+          inApp: true,
+          email: true
+        }
+      });
+      await notificationService.sendNotification(adminNotification);
+    }
+  }
 
   // If flagged, notify admin
   if (emergencyAccess.flaggedForReview) {

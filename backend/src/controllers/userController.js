@@ -5,44 +5,53 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 // @route   GET /api/users/doctors
 // @access  Public/Private
 export const getDoctors = asyncHandler(async (req, res) => {
-  const { specialization, search, available } = req.query;
+  const { specialization, search, available, page = 1, limit = 20 } = req.query;
 
   const query = { role: 'doctor', isActive: true };
 
   // Filter by specialization
   if (specialization && specialization !== 'all') {
-    query['professionalInfo.specialization'] = new RegExp(specialization, 'i');
+    const escapedSpec = specialization.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    query['professionalInfo.specialization'] = new RegExp(escapedSpec, 'i');
   }
 
   // Search by name or email
   if (search) {
+    if (search.length > 50) {
+      return res.status(400).json({ success: false, message: 'Search query too long' });
+    }
+    // Escape special regex characters to prevent ReDoS
+    const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.$or = [
-      { 'personalInfo.firstName': new RegExp(search, 'i') },
-      { 'personalInfo.lastName': new RegExp(search, 'i') },
-      { email: new RegExp(search, 'i') }
+      { 'personalInfo.firstName': new RegExp(escapedSearch, 'i') },
+      { 'personalInfo.lastName': new RegExp(escapedSearch, 'i') },
+      { email: new RegExp(escapedSearch, 'i') }
     ];
   }
 
-  const doctors = await User.find(query)
-    .select('personalInfo.firstName personalInfo.lastName professionalInfo.specialization email phoneNumber')
-    .sort({ 'personalInfo.firstName': 1 });
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const skip = (pageNum - 1) * limitNum;
 
-  // Transform the data to flatten personalInfo
-  const transformedDoctors = doctors.map(doctor => ({
-    _id: doctor._id,
-    firstName: doctor.personalInfo.firstName,
-    lastName: doctor.personalInfo.lastName,
-    email: doctor.email,
-    phoneNumber: doctor.phoneNumber,
-    professionalInfo: {
-      specialization: doctor.professionalInfo?.specialization || 'General'
-    }
-  }));
+  const [doctors, total] = await Promise.all([
+    User.find(query)
+      .select('personalInfo professionalInfo email phoneNumber')
+      .sort({ 'personalInfo.firstName': 1 })
+      .limit(limitNum)
+      .skip(skip),
+    User.countDocuments(query)
+  ]);
 
   res.json({
     success: true,
-    count: transformedDoctors.length,
-    data: transformedDoctors
+    count: doctors.length,
+    data: doctors,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      pages: Math.ceil(total / limitNum)
+    }
   });
 });
 

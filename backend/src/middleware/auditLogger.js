@@ -1,4 +1,5 @@
 import AuditLog from '../models/AuditLog.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Middleware to log audit events
@@ -34,7 +35,7 @@ export const auditLogger = (action, category) => {
 
         // Create audit log asynchronously (don't block response)
         AuditLog.create(logData).catch(err => {
-          console.error('Error creating audit log:', err);
+          logger.error('Error creating audit log:', err);
         });
       }
 
@@ -158,6 +159,6 @@ export const logFailedAuth = async (email, reason, req) => {
       status: 'FAILURE'
     });
   } catch (error) {
-    console.error('Error logging failed auth:', error);
+    logger.error('Error logging failed auth:', error);
   }
 };

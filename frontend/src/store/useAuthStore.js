@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../services/api';
+import { clearAuthQueue } from '../services/apiService';
 
 const useAuthStore = create(
   persist(
@@ -118,6 +119,7 @@ const useAuthStore = create(
         } catch (error) {
           // Ignore logout API errors — clear local state regardless
         } finally {
+          clearAuthQueue();
           set({
             user: null,
             accessToken: null,
@@ -139,6 +141,7 @@ const useAuthStore = create(
         } catch (error) {
           // Ignore logout API errors — clear local state regardless
         } finally {
+          clearAuthQueue();
           set({
             user: null,
             accessToken: null,

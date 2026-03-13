@@ -184,49 +184,49 @@ const PatientDashboard = () => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link to="/patient/appointments" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition cursor-pointer">
+        <Link to="/patient/appointments" className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl shadow-md p-6 hover:shadow-xl transition cursor-pointer text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Upcoming</p>
-              <p className="text-3xl font-bold text-indigo-600">{stats.upcomingCount}</p>
+              <p className="text-sm text-indigo-100 mb-1">Upcoming</p>
+              <p className="text-3xl font-bold text-white">{stats.upcomingCount}</p>
             </div>
-            <div className="p-3 bg-indigo-100 rounded-full">
-              <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-white/20 rounded-full">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Click to view all →</p>
+          <p className="text-xs text-indigo-100 mt-2">Click to view all →</p>
         </Link>
 
-        <Link to="/patient/appointments" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition cursor-pointer">
+        <Link to="/patient/appointments" className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-md p-6 hover:shadow-xl transition cursor-pointer text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Visits</p>
-              <p className="text-3xl font-bold text-green-600">{stats.completedVisits}</p>
+              <p className="text-sm text-emerald-100 mb-1">Total Visits</p>
+              <p className="text-3xl font-bold text-white">{stats.completedVisits}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-white/20 rounded-full">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Completed visits</p>
+          <p className="text-xs text-emerald-100 mt-2">Completed visits</p>
         </Link>
 
-        <Link to="/patient/appointments" className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition cursor-pointer">
+        <Link to="/patient/appointments" className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-md p-6 hover:shadow-xl transition cursor-pointer text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Appointments</p>
-              <p className="text-3xl font-bold text-purple-600">{stats.totalAppointments}</p>
+              <p className="text-sm text-purple-100 mb-1">Appointments</p>
+              <p className="text-3xl font-bold text-white">{stats.totalAppointments}</p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-full">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 bg-white/20 rounded-full">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">All appointments</p>
+          <p className="text-xs text-purple-100 mt-2">All appointments</p>
         </Link>
       </div>
 
@@ -255,7 +255,7 @@ const PatientDashboard = () => {
             {upcomingAppointments.map((appointment) => (
               <div 
                 key={appointment._id} 
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-indigo-300 transition"
+                className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:border-indigo-200 hover:bg-indigo-50/30 transition"
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -286,15 +286,19 @@ const PatientDashboard = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <p className="mt-2 text-gray-600">No upcoming appointments</p>
+          <div className="text-center py-12 px-4">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-indigo-50 flex items-center justify-center">
+              <svg className="h-10 w-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-base font-semibold text-gray-700 mb-1">No upcoming appointments</h3>
+            <p className="text-sm text-gray-400 mb-5">Schedule a visit with a doctor to get started</p>
             <Link 
               to="/patient/appointments/book" 
-              className="mt-4 inline-block bg-indigo-600 text-white py-2 px-6 rounded-lg hover:bg-indigo-700 transition"
+              className="inline-flex items-center gap-2 bg-indigo-600 text-white py-2.5 px-6 rounded-lg hover:bg-indigo-700 transition font-medium text-sm"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
               Book Appointment
             </Link>
           </div>
@@ -302,78 +306,57 @@ const PatientDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link 
           to="/patient/queue/join" 
-          className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
+          className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-6 hover:shadow-xl hover:-translate-y-0.5 transition-all text-white group"
         >
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition">
-              <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Join Queue</h3>
-              <p className="text-sm text-gray-600">Join a doctor's queue</p>
-            </div>
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-white/30 transition">
+            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
           </div>
+          <h3 className="font-bold text-white text-base">Join Queue</h3>
+          <p className="text-sm text-amber-100 mt-1">Join a doctor's queue</p>
         </Link>
 
         <Link 
           to="/patient/appointments/book" 
-          className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
+          className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl p-6 hover:shadow-xl hover:-translate-y-0.5 transition-all text-white group"
         >
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition">
-              <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Book Appointment</h3>
-              <p className="text-sm text-gray-600">Schedule with a doctor</p>
-            </div>
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-white/30 transition">
+            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
           </div>
+          <h3 className="font-bold text-white text-base">Book Appointment</h3>
+          <p className="text-sm text-indigo-100 mt-1">Schedule with a doctor</p>
         </Link>
-      </div>
 
-      {/* Quick Action Cards */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Health Records Quick Action */}
         <Link 
           to="/patient/records" 
-          className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
+          className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-6 hover:shadow-xl hover:-translate-y-0.5 transition-all text-white group"
         >
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Health Records</h3>
-              <p className="text-sm text-gray-600">View your medical history</p>
-            </div>
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-white/30 transition">
+            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
           </div>
+          <h3 className="font-bold text-white text-base">Health Records</h3>
+          <p className="text-sm text-emerald-100 mt-1">View your medical history</p>
         </Link>
 
-        {/* Prescriptions Quick Action */}
         <Link 
           to="/patient/prescriptions" 
-          className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition group"
+          className="bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl p-6 hover:shadow-xl hover:-translate-y-0.5 transition-all text-white group"
         >
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">My Prescriptions</h3>
-              <p className="text-sm text-gray-600">View all prescriptions</p>
-            </div>
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4 group-hover:bg-white/30 transition">
+            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
           </div>
+          <h3 className="font-bold text-white text-base">My Prescriptions</h3>
+          <p className="text-sm text-rose-100 mt-1">View all prescriptions</p>
         </Link>
       </div>
     </div>

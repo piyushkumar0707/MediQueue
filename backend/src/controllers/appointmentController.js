@@ -72,11 +72,6 @@ export const bookAppointment = asyncHandler(async (req, res) => {
   }
 
   // Create appointment
-  console.log('=== BOOK APPOINTMENT DEBUG ===');
-  console.log('Patient ID from token:', req.user.userId);
-  console.log('Doctor ID:', doctorId);
-  console.log('Appointment Date:', appointmentDate);
-  
   const appointment = await Appointment.create({
     patient: req.user.userId,
     doctor: doctorId,
@@ -86,9 +81,6 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     symptoms: symptoms || [],
     type: type || 'consultation'
   });
-
-  console.log('Created appointment ID:', appointment._id);
-  console.log('Appointment patient field:', appointment.patient);
 
   await appointment.populate([
     { path: 'patient', select: 'personalInfo phoneNumber email firstName lastName' },
@@ -172,10 +164,6 @@ export const bookAppointment = asyncHandler(async (req, res) => {
 export const getMyAppointments = asyncHandler(async (req, res) => {
   const { status, upcoming } = req.query;
 
-  console.log('=== GET MY APPOINTMENTS DEBUG ===');
-  console.log('User ID from token:', req.user.userId);
-  console.log('Query params:', { status, upcoming });
-
   const query = { patient: req.user.userId };
   
   if (status) {
@@ -187,15 +175,10 @@ export const getMyAppointments = asyncHandler(async (req, res) => {
     query.status = { $in: ['scheduled', 'confirmed'] };
   }
 
-  console.log('MongoDB query:', JSON.stringify(query));
-
   const appointments = await Appointment.find(query)
     .populate('doctor', 'personalInfo professionalInfo')
     .populate('queueEntry')
     .sort({ appointmentDate: -1 });
-
-  console.log('Found appointments count:', appointments.length);
-  console.log('Appointments:', JSON.stringify(appointments, null, 2));
 
   res.json({
     success: true,
@@ -209,10 +192,6 @@ export const getMyAppointments = asyncHandler(async (req, res) => {
 // @access  Private (Doctor)
 export const getDoctorAppointments = asyncHandler(async (req, res) => {
   const { date, status } = req.query;
-
-  console.log('=== GET DOCTOR APPOINTMENTS DEBUG ===');
-  console.log('User ID from token:', req.user.userId);
-  console.log('Query params:', { date, status });
 
   const query = { doctor: req.user.userId };
 
@@ -229,14 +208,10 @@ export const getDoctorAppointments = asyncHandler(async (req, res) => {
   }
   // Note: No date filter means get all appointments for this doctor
 
-  console.log('MongoDB query:', JSON.stringify(query));
-
   const appointments = await Appointment.find(query)
     .populate('patient', 'personalInfo phoneNumber email')
     .populate('queueEntry')
     .sort({ appointmentDate: 1, 'timeSlot.startTime': 1 });
-
-  console.log('Found appointments count:', appointments.length);
 
   res.json({
     success: true,

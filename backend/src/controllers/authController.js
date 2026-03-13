@@ -1,15 +1,28 @@
 import User from '../models/User.js';
+import crypto from 'crypto';
 import { generateTokenPair, verifyRefreshToken, generateOTP, hashOTP, verifyOTP, generateTempToken, verifyTempToken } from '../utils/jwt.js';
 import { logger } from '../utils/logger.js';
 import AuditLog from '../models/AuditLog.js';
 import { logFailedAuth } from '../middleware/auditLogger.js';
 import { activityTypes, emitStatsUpdate } from '../utils/adminEvents.js';
+import { setOTP, getOTP, deleteOTP } from '../utils/otpStore.js';
+import emailService from '../services/emailService.js';
 
-// Store OTPs temporarily (In production, use Redis)
-const otpStore = new Map();
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'Strict',
+};
 
-// Export for use in other controllers
-export { otpStore };
+const setAuthCookies = (res, accessToken, refreshToken) => {
+  res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: 2 * 60 * 60 * 1000 }); // 2h
+  res.cookie('refreshToken', refreshToken, { ...COOKIE_OPTIONS, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7d
+};
+
+const clearAuthCookies = (res) => {
+  res.clearCookie('accessToken', COOKIE_OPTIONS);
+  res.clearCookie('refreshToken', COOKIE_OPTIONS);
+};
 
 /**
  * @desc    Initiate user registration (send OTP)
@@ -45,27 +58,16 @@ export const initiateRegistration = async (req, res) => {
     const hashedOTP = hashOTP(otp);
     const sessionId = `reg_${Date.now()}_${phoneNumber}`;
     
-    // Store OTP with expiry (5 minutes)
-    otpStore.set(sessionId, {
+    // Store OTP in Redis with 5-minute TTL
+    await setOTP(sessionId, {
       otp: hashedOTP,
       phoneNumber,
       email,
       countryCode: countryCode || '+91',
-      expiresAt: Date.now() + 5 * 60 * 1000
-    });
+    }, 5 * 60);
     
     // TODO: Send OTP via SMS (integrate Twilio)
-    logger.info(`OTP generated for registration: ${otp} (phone: ${phoneNumber})`);
-    
-    // Console log for easy testing
-    console.log('\n' + '='.repeat(60));
-    console.log('📱 REGISTRATION OTP');
-    console.log('='.repeat(60));
-    console.log(`Phone: ${phoneNumber}`);
-    console.log(`OTP: ${otp}`);
-    console.log(`Session ID: ${sessionId}`);
-    console.log(`Expires in: 5 minutes`);
-    console.log('='.repeat(60) + '\n');
+    logger.info(`OTP generated for registration (phone: ${phoneNumber}, session: ${sessionId})`);
     
     // In development, return OTP (REMOVE IN PRODUCTION)
     const response = {
@@ -75,8 +77,9 @@ export const initiateRegistration = async (req, res) => {
       otpSent: true
     };
     
+    // OTP is logged server-side for dev inspection; never sent in response
     if (process.env.NODE_ENV === 'development') {
-      response.otp = otp; // Only for testing
+      logger.debug(`[DEV] Registration OTP for session ${sessionId}: ${otp}`);
     }
     
     res.status(200).json(response);
@@ -109,20 +112,12 @@ export const completeRegistration = async (req, res) => {
     }
     
     // Verify OTP
-    const otpData = otpStore.get(sessionId);
+    const otpData = await getOTP(sessionId);
     
     if (!otpData) {
       return res.status(400).json({
         success: false,
         message: 'Invalid or expired session'
-      });
-    }
-    
-    if (Date.now() > otpData.expiresAt) {
-      otpStore.delete(sessionId);
-      return res.status(400).json({
-        success: false,
-        message: 'OTP has expired'
       });
     }
     
@@ -155,7 +150,7 @@ export const completeRegistration = async (req, res) => {
     });
     
     // Clear OTP
-    otpStore.delete(sessionId);
+    await deleteOTP(sessionId);
     
     // Generate tokens
     const { accessToken, refreshToken } = generateTokenPair(user);
@@ -172,6 +167,19 @@ export const completeRegistration = async (req, res) => {
     await user.save();
     
     logger.info(`User registered successfully: ${user.email}`);
+    
+    // Send email verification link
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+    await user.save({ validateBeforeSave: false });
+    
+    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${verificationToken}`;
+    const userName = user.personalInfo?.firstName || user.email;
+    const { subject, html } = emailService.verificationEmail(userName, verificationUrl);
+    emailService.sendEmail(user.email, subject, html).catch(err =>
+      logger.error('Failed to send verification email:', err)
+    );
     
     // Emit real-time event to admin dashboard
     const io = req.app.get('io');
@@ -191,6 +199,9 @@ export const completeRegistration = async (req, res) => {
     user.password = undefined;
     user.mfaSecret = undefined;
     
+    // Set httpOnly cookies (secure token storage)
+    setAuthCookies(res, accessToken, refreshToken);
+
     res.status(201).json({
       success: true,
       message: 'Registration completed successfully',
@@ -220,10 +231,6 @@ export const login = async (req, res) => {
   try {
     const { phoneOrEmail, password } = req.body;
     
-    console.log('=== LOGIN ATTEMPT ===');
-    console.log('Phone/Email:', phoneOrEmail);
-    console.log('Password length:', password?.length);
-    
     // Validate input
     if (!phoneOrEmail || !password) {
       return res.status(400).json({
@@ -234,14 +241,6 @@ export const login = async (req, res) => {
     
     // Find user (includes password field)
     const user = await User.findByPhoneOrEmail(phoneOrEmail);
-    
-    console.log('User found:', !!user);
-    if (user) {
-      console.log('User email:', user.email);
-      console.log('User role:', user.role);
-      console.log('Password hash exists:', !!user.password);
-      console.log('Password hash length:', user.password?.length);
-    }
     
     if (!user) {
       await logFailedAuth(phoneOrEmail, 'User not found', req);
@@ -268,9 +267,7 @@ export const login = async (req, res) => {
     }
     
     // Verify password
-    console.log('Attempting password comparison...');
     const isPasswordValid = await user.comparePassword(password);
-    console.log('Password valid:', isPasswordValid);
     
     if (!isPasswordValid) {
       // Increment failed attempts
@@ -289,9 +286,22 @@ export const login = async (req, res) => {
       await user.resetLoginAttempts();
     }
     
-    // TODO: If MFA is enabled, return mfaRequired: true and sessionId
-    // For now, skip MFA
-    
+    // If MFA is enabled, issue a short-lived MFA session token instead of full tokens
+    if (user.mfaEnabled) {
+      const jwt = await import('jsonwebtoken');
+      const mfaSessionToken = jwt.default.sign(
+        { userId: user._id, type: 'mfa_session' },
+        process.env.JWT_ACCESS_SECRET,
+        { expiresIn: '5m' }
+      );
+      return res.status(200).json({
+        success: true,
+        mfaRequired: true,
+        mfaSessionToken,
+        message: 'MFA verification required. Submit your TOTP code to /api/auth/mfa/validate.'
+      });
+    }
+
     // Generate tokens
     const { accessToken, refreshToken } = generateTokenPair(user);
     
@@ -324,6 +334,9 @@ export const login = async (req, res) => {
     user.password = undefined;
     user.mfaSecret = undefined;
     
+    // Set httpOnly cookies (secure token storage)
+    setAuthCookies(res, accessToken, refreshToken);
+
     res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -351,9 +364,10 @@ export const login = async (req, res) => {
  */
 export const refreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    // Support both body and cookie (cookie preferred for security)
+    const tokenValue = req.cookies?.refreshToken || req.body.refreshToken;
     
-    if (!refreshToken) {
+    if (!tokenValue) {
       return res.status(400).json({
         success: false,
         message: 'Refresh token is required'
@@ -363,7 +377,7 @@ export const refreshToken = async (req, res) => {
     // Verify refresh token
     let decoded;
     try {
-      decoded = verifyRefreshToken(refreshToken);
+      decoded = verifyRefreshToken(tokenValue);
     } catch (error) {
       return res.status(401).json({
         success: false,
@@ -382,7 +396,7 @@ export const refreshToken = async (req, res) => {
     }
     
     // Check if refresh token exists in user's tokens
-    const tokenExists = user.refreshTokens.some(t => t.token === refreshToken);
+    const tokenExists = user.refreshTokens.some(t => t.token === tokenValue);
     
     if (!tokenExists) {
       return res.status(401).json({
@@ -395,7 +409,7 @@ export const refreshToken = async (req, res) => {
     const { accessToken, refreshToken: newRefreshToken } = generateTokenPair(user);
     
     // Remove old refresh token and add new one
-    await user.removeRefreshToken(refreshToken);
+    await user.removeRefreshToken(tokenValue);
     await user.addRefreshToken(
       newRefreshToken,
       req.headers['user-agent'],
@@ -404,6 +418,9 @@ export const refreshToken = async (req, res) => {
     
     logger.info(`Token refreshed for user: ${user.email}`);
     
+    // Set new httpOnly cookies
+    setAuthCookies(res, accessToken, newRefreshToken);
+
     res.status(200).json({
       success: true,
       message: 'Token refreshed successfully',
@@ -430,13 +447,14 @@ export const refreshToken = async (req, res) => {
  */
 export const logout = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const tokenValue = req.cookies?.refreshToken || req.body.refreshToken;
     const user = await User.findById(req.user.userId);
     
-    if (user && refreshToken) {
-      await user.removeRefreshToken(refreshToken);
+    if (user && tokenValue) {
+      await user.removeRefreshToken(tokenValue);
     }
     
+    clearAuthCookies(res);
     logger.info(`User logged out: ${user?.email}`);
     
     res.status(200).json({
@@ -467,6 +485,7 @@ export const logoutAll = async (req, res) => {
       await user.removeAllRefreshTokens();
     }
     
+    clearAuthCookies(res);
     logger.info(`User logged out from all devices: ${user?.email}`);
     
     res.status(200).json({
@@ -547,25 +566,14 @@ export const forgotPassword = async (req, res) => {
     const hashedOTP = hashOTP(otp);
     const sessionId = `reset_${Date.now()}_${user._id}`;
     
-    // Store OTP
-    otpStore.set(sessionId, {
+    // Store OTP in Redis with 10-minute TTL
+    await setOTP(sessionId, {
       otp: hashedOTP,
       userId: user._id.toString(),
-      expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
-    });
+    }, 10 * 60);
     
     // TODO: Send OTP via SMS/Email
-    logger.info(`Password reset OTP generated: ${otp} (user: ${user.email})`);
-    
-    // Console log for easy testing
-    console.log('\n' + '='.repeat(60));
-    console.log('🔐 PASSWORD RESET OTP');
-    console.log('='.repeat(60));
-    console.log(`User: ${user.email || user.phoneNumber}`);
-    console.log(`OTP: ${otp}`);
-    console.log(`Session ID: ${sessionId}`);
-    console.log(`Expires in: 10 minutes`);
-    console.log('='.repeat(60) + '\n');
+    logger.info(`Password reset OTP generated (user: ${user.email}, session: ${sessionId})`);
     
     const response = {
       success: true,
@@ -573,8 +581,9 @@ export const forgotPassword = async (req, res) => {
       sessionId
     };
     
+    // OTP is logged server-side for dev inspection; never sent in response
     if (process.env.NODE_ENV === 'development') {
-      response.otp = otp;
+      logger.debug(`[DEV] Password reset OTP for session ${sessionId}: ${otp}`);
     }
     
     res.status(200).json(response);
@@ -606,20 +615,12 @@ export const resetPassword = async (req, res) => {
     }
     
     // Verify OTP
-    const otpData = otpStore.get(sessionId);
+    const otpData = await getOTP(sessionId);
     
     if (!otpData) {
       return res.status(400).json({
         success: false,
         message: 'Invalid or expired session'
-      });
-    }
-    
-    if (Date.now() > otpData.expiresAt) {
-      otpStore.delete(sessionId);
-      return res.status(400).json({
-        success: false,
-        message: 'OTP has expired'
       });
     }
     
@@ -656,7 +657,7 @@ export const resetPassword = async (req, res) => {
     await user.removeAllRefreshTokens();
     
     // Clear OTP
-    otpStore.delete(sessionId);
+    await deleteOTP(sessionId);
     
     logger.info(`Password reset successful for user: ${user.email}`);
     
@@ -672,5 +673,44 @@ export const resetPassword = async (req, res) => {
       message: 'Failed to reset password',
       error: error.message
     });
+  }
+};
+
+/**
+ * @desc    Verify email address via token link
+ * @route   GET /api/auth/verify-email?token=...
+ * @access  Public
+ */
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Verification token is required' });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired verification token' });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    logger.info(`Email verified for user: ${user.email}`);
+
+    res.status(200).json({ success: true, message: 'Email verified successfully. You can now log in.' });
+
+  } catch (error) {
+    logger.error('Email verification error:', error);
+    res.status(500).json({ success: false, message: 'Email verification failed', error: error.message });
   }
 };

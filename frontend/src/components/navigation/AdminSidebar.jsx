@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import logo from '../../assets/logo.png';
 import {
   LayoutDashboard,
   ScrollText,
@@ -28,16 +29,24 @@ const AdminSidebar = ({ onNavigate }) => {
 
   return (
     <aside className="w-full h-full bg-white flex flex-col">
-      <div className="p-4 sm:p-6">
-        <h1 className="text-lg sm:text-xl font-bold text-primary-600 mb-1">CareQueue</h1>
-        <p className="text-xs sm:text-sm text-gray-500">Admin Portal</p>
-        {user?.personalInfo?.fullName && (
-          <p className="text-xs text-gray-400 mt-1 truncate">
-            {user.personalInfo.fullName}
-          </p>
+      <div className="p-4 sm:p-5 border-b border-gray-100">
+        <div className="flex items-center gap-3 mb-3">
+          <img src={logo} alt="MediQueue" className="h-9 w-auto flex-shrink-0" />
+          <div>
+            <h1 className="text-base font-bold text-gray-900">MediQueue</h1>
+            <p className="text-xs text-gray-500">Admin Portal</p>
+          </div>
+        </div>
+        {user?.personalInfo?.firstName && (
+          <div className="bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-100 rounded-lg px-3 py-2">
+            <p className="text-sm font-semibold text-gray-900 truncate">
+              {user.personalInfo.firstName} {user.personalInfo.lastName}
+            </p>
+            <p className="text-xs text-violet-500 truncate">System Administrator</p>
+          </div>
         )}
       </div>
-      <nav className="mt-4 sm:mt-6 flex-1 overflow-y-auto">
+      <nav className="flex-1 overflow-y-auto py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import logo from '../../assets/logo.png';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -46,7 +47,8 @@ const PatientNavbar = () => {
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-            <h1 className="text-xl font-bold text-primary-600">CareQueue</h1>
+            <img src={logo} alt="MediQueue" className="h-8 w-auto" />
+            <h1 className="text-xl font-bold text-primary-600">MediQueue</h1>
           </div>
 
           {/* Desktop nav tabs */}

@@ -39,7 +39,7 @@ const Help = () => {
         </svg>
       ),
       title: 'Email Support',
-      detail: 'support@carequeue.com',
+      detail: 'support@mediqueue.com',
       description: 'We\'ll respond within 24 hours'
     },
     {
@@ -216,7 +216,7 @@ const Help = () => {
             </svg>
             <div>
               <p className="font-medium text-gray-900">User Guide</p>
-              <p className="text-sm text-gray-600">Complete guide to using CareQueue</p>
+              <p className="text-sm text-gray-600">Complete guide to using MediQueue</p>
             </div>
           </a>
 

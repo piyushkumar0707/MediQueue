@@ -134,8 +134,8 @@ function ErrorFallback({ error, errorInfo, errorCount, onReset }) {
         <div className="mt-8 pt-6 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-500">
             Need help? Contact support at{' '}
-            <a href="mailto:support@carequeue.com" className="text-indigo-600 hover:underline">
-              support@carequeue.com
+            <a href="mailto:support@mediqueue.com" className="text-indigo-600 hover:underline">
+              support@mediqueue.com
             </a>
           </p>
         </div>

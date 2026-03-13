@@ -141,7 +141,7 @@ const generateSecureFilename = (extension) => {
  */
 const validateEncryptionKey = () => {
   if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
-    console.warn('⚠️  ENCRYPTION_KEY not properly configured. Using temporary key (NOT SECURE FOR PRODUCTION)');
+    process.stderr.write('⚠️  ENCRYPTION_KEY not properly configured. Using temporary key (NOT SECURE FOR PRODUCTION)\n');
     return false;
   }
   return true;

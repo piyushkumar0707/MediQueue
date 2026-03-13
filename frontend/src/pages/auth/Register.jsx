@@ -443,7 +443,7 @@ const RoleSelectionStep = ({ handleRoleSelect }) => (
   <div className="bg-white rounded-2xl shadow-xl p-8">
     <div className="text-center mb-8">
       <h2 className="text-2xl font-bold text-gray-900">Choose Your Role</h2>
-      <p className="text-gray-600 mt-2">Select how you'll be using CareQueue</p>
+      <p className="text-gray-600 mt-2">Select how you'll be using MediQueue</p>
     </div>
 
     <div className="space-y-4">
@@ -654,7 +654,7 @@ const SuccessStep = ({ navigate, role }) => {
         </svg>
       </div>
       
-      <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to CareQueue!</h2>
+      <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to MediQueue!</h2>
       <p className="text-gray-600 mb-8">
         Your account has been created successfully. You're all set to get started.
       </p>

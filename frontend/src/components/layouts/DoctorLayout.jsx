@@ -42,7 +42,7 @@ const DoctorLayout = () => {
               </button>
               <div>
                 <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
-                  Welcome, Dr. {user?.personalInfo?.fullName || 'Doctor'}
+                  Welcome, Dr. {user?.personalInfo?.firstName || 'Doctor'}
                 </h2>
                 <p className="text-sm text-gray-500">
                   {user?.professionalInfo?.specialization || 'Medical Professional'}

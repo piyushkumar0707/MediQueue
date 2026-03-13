@@ -1,6 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import AuditLog from '../models/AuditLog.js';
 import User from '../models/User.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * @desc    Get all audit logs with filters
@@ -247,7 +248,7 @@ export const createAuditLog = async (logData) => {
   try {
     await AuditLog.create(logData);
   } catch (error) {
-    console.error('Error creating audit log:', error);
+    logger.error('Error creating audit log:', error);
   }
 };
 
