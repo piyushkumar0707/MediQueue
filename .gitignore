@@ -53,10 +53,31 @@ logs/
 .eslintcache
 .stylelintcache
 
-# Status and documentation files (excluded from repository)
+# ── Dev/debug scripts (not production code) ──────────────────────────────────
+backend/scripts/
+
+# ── Generated / tool output ──────────────────────────────────────────────────
+repomix-output.xml
+
+# ── One-off setup scripts ─────────────────────────────────────────────────────
+install_ioredis.bat
+
+# ── Internal project-management docs (not for public repo) ───────────────────
+ISSUES_TODO.md
+REVIEW_NOTES.md
+SCREENS.md
 ACCURATE_STATUS_REPORT.md
 CURRENT_STATUS.md
 EMERGENCY_ACCESS_TESTING.md
 PROFILE_IMPLEMENTATION.md
 PROJECT_OVERVIEW.md
 PROJECT_STRUCTURE.md
+
+# ── Duplicate / superseded API collection ────────────────────────────────────
+CareQueue-API.postman_collection.json
+
+# ── Low-level per-screen docs (too granular for public repo) ─────────────────
+docs/screens/
+
+# ── Consolidated/deleted service files ───────────────────────────────────────
+frontend/src/services/apiService.js
