@@ -64,11 +64,10 @@ backend/src/
   server.js            # Entry point — middleware order: helmet→compression→cors→JSON→morgan
   config/
     database.js        # Mongoose connection
-    multer.js          # File upload config (disk storage → uploads/medical-records/)
+    cloudinary.js      # Cloudinary SDK config (file storage)
   controllers/         # Request handlers (one per feature domain)
   middleware/
-    auth.js            # JWT-only protect() + authorize(...roles) — does NOT hit DB
-    authMiddleware.js  # protect() that hits DB on every request (used only in authRoutes.js)
+    auth.js            # protect() + authorize(...roles) — JWT verify + DB lookup
     auditLogger.js     # Wraps specific admin routes; not global
   models/              # Mongoose schemas
   routes/              # Express routers registered in server.js
@@ -92,10 +91,10 @@ frontend/src/
 
 ### Backend
 - **ES Modules only**: use `import`/`export`, never `require()`. Include `.js` in relative imports.
-- **Route protection**: import `protect` and `authorize` from `../middleware/auth.js` (not `authMiddleware.js`) for all routes except auth.
+- **Route protection**: import `protect` and `authorize` from `../middleware/auth.js` for all routes.
 - **Real-time events**: emit via `req.app.get('io').to('user:<id>').emit(...)` or via `notificationService`.
 - **Audit logging**: use `auditLogger` middleware on admin routes that create/update/delete/change-status users.
-- **File uploads**: Multer config is in `config/multer.js`. Max 5 files, 10 MB each. Stored at `uploads/medical-records/`.
+- **File uploads**: Multer + Cloudinary via `middleware/upload.js`. Max 5 files, 10 MB each. Stored in Cloudinary `medical-records/` folder; `fileUrl` is a Cloudinary HTTPS URL, `cloudinaryPublicId` is stored for deletion.
 - **Error handling**: controllers should `try/catch` and call `next(err)`, or return `res.status(4xx/5xx).json({ message: '...' })`.
 
 ### Frontend
@@ -108,11 +107,7 @@ frontend/src/
 
 ## Known Pitfalls
 
-1. **Duplicate auth files**: `middleware/auth.js` (JWT-only) vs `middleware/authMiddleware.js` (DB lookup). Routes should use `auth.js` unless you need a live DB check. The extra `auth.routes.js` is **not** registered by the server — only `authRoutes.js` is.
-
-2. **Duplicate store files**: `store/useAuthStore.js` is primary; `store/authStore.js` may be legacy. Do not add logic to `authStore.js`.
-
-3. **Token parsing fragility**: Axios interceptor parses `JSON.parse(localStorage.getItem('auth-storage')).state.accessToken`. Changing the Zustand persist shape silently breaks all authenticated requests.
+1. **Token parsing fragility**: Axios interceptor in `services/api.js` parses `JSON.parse(localStorage.getItem('auth-storage')).state.accessToken`. On 401 it attempts a silent token refresh before redirecting to `/login`. Changing the Zustand persist shape silently breaks all authenticated requests.
 
 4. **Rate limiting**: configured via env (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX_REQUESTS`), but `express-rate-limit` must be explicitly applied to routes — verify coverage before adding new public endpoints.
 

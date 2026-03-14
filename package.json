@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "ioredis": "^5.10.0"
+    "ioredis": "^5.10.0",
+    "repomix": "^1.12.0"
   }
 }
