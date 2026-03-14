@@ -70,7 +70,13 @@ export const handleUploadErrors = (err, req, res, next) => {
     return res.status(400).json({ success: false, message: err.message });
   }
   if (err) {
-    return res.status(400).json({ success: false, message: err.message });
+    // Cloudinary errors arrive as { error: { message, http_code } } objects
+    const msg = err.message
+      || err?.error?.message
+      || (typeof err === 'string' ? err : null)
+      || 'File upload failed. Please try again.';
+    logger.error('Upload error:', err);
+    return res.status(400).json({ success: false, message: msg });
   }
   next();
 };

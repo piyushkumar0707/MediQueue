@@ -40,7 +40,9 @@ These are the engineering decisions worth talking about:
 | Authorization | Stateless `protect()` + `authorize(...roles)` middleware; no DB hit on every request |
 | Audit compliance | Immutable `AuditLog` model; middleware wraps every sensitive admin action automatically |
 | Emergency access | Doctors can request override access; all overrides are logged and surfaced to admins for review |
-| File uploads | Multer disk storage, 5-file / 10 MB limit, served via authenticated static route |
+| File uploads | Multer → Cloudinary storage; signed URLs for viewing — raw CDN URLs are never exposed to clients |
+| AI triage | Groq LLaMA 3.1 suggests priority from symptoms — human override always preserved, AI is advisory only |
+| AI summarization | On-demand PDF text extraction + LLaMA summary — quota-limited, PII-stripped before Groq sees any text |
 
 ---
 
@@ -102,7 +104,10 @@ These are the engineering decisions worth talking about:
 | `GET/PUT /api/users` | Profile management |
 | `GET/POST/DELETE /api/appointments` | Booking lifecycle |
 | `GET/POST /api/queue` | Join queue, call-next, queue stats |
+| `POST /api/queue/triage` | AI symptom triage — advisory suggestion only, never sets priority automatically |
 | `GET/POST/DELETE /api/records` | Encrypted file upload, list, download, share, PDF export |
+| `POST /api/records/:id/summarize` | On-demand AI summary of a text-based PDF record |
+| `GET /api/records/:id/view-file` | Generate short-lived signed URL to view an attached file |
 | `GET/POST/DELETE /api/consent` | Grant, revoke, and query consent grants |
 | `GET/POST /api/emergency-access` | Doctor override requests |
 | `GET/POST /api/prescriptions` | Create and view prescriptions |
@@ -160,6 +165,9 @@ npm run dev                 # → http://localhost:5173
 | `ENCRYPTION_KEY` | Exactly 32 characters — AES-256 key for medical records |
 | `TWILIO_*` | SMS OTP delivery |
 | `EMAIL_*` | Email OTP delivery |
+| `GROQ_API_KEY` | Groq LLaMA 3.1 API key — get free key at [console.groq.com](https://console.groq.com). If omitted, AI features degrade silently and the app still starts |
+| `AI_FEATURE_TRIAGE` | `true` / `false` — toggle symptom triage without a redeploy (default: `true`) |
+| `AI_FEATURE_SUMMARIZE` | `true` / `false` — toggle record summarization without a redeploy (default: `true`) |
 
 > ⚠️ Never change `ENCRYPTION_KEY` after records are stored — existing records become unreadable.
 
@@ -188,6 +196,46 @@ npm run dev                 # → http://localhost:5173
     │   └── admin/             # Dashboard, UserManagement, AuditLogs, Analytics, EmergencyReview
     └── components/            # Shared UI: layouts, navigation, common
 ```
+
+---
+
+## AI Safety Design
+
+MediQueue integrates Groq LLaMA 3.1 for two advisory features. The design follows a strict **human-in-the-loop** model.
+
+### Principles
+
+| Principle | Implementation |
+|---|---|
+| AI is never a hard dependency | Every AI call is `try/catch` wrapped. Queue join and record view work with Groq completely down or rate-limited |
+| Raw medical text never leaves the platform unredacted | A PII redaction pass strips names, emails, phone numbers, and IDs before any text is sent to Groq |
+| Final decision always belongs to the user | The backend never reads AI output to set queue priority — it only stores the AI suggestion for audit purposes |
+| Every AI action is auditable | `AuditLog` entries are written for every summarize call: who, which record, model, latency, success/fail |
+| Features can be toggled independently | `AI_FEATURE_TRIAGE` and `AI_FEATURE_SUMMARIZE` env flags disable either feature without a redeploy |
+| Prompt versioning | Every AI call carries a `promptVersion` field (e.g. `triage-v1`, `summary-v1`) for future auditability |
+
+### Symptom Triage Flow
+
+1. Patient types symptoms in the Join Queue form
+2. "Suggest priority" button calls `POST /api/queue/triage` (rate-limited: 5 req/min)
+3. Groq returns `{ priority, reason, confidence }` — pre-fills the priority selector
+4. Patient can override — if they do, `aiOverridden: true` is stored on the queue entry
+5. A non-dismissable disclaimer is always shown: *"AI suggests a priority level based on symptoms. This is not a medical diagnosis. A doctor will confirm."*
+
+### Record Summarization Flow
+
+1. Patient opens a PDF record and clicks "Summarize with AI"
+2. Backend fetches the PDF from Cloudinary via signed URL, extracts text with `pdf-parse`
+3. PII is stripped, text is capped at 12,000 chars, then sent to Groq
+4. Response: `{ summary, keyFindings, followUpNeeded }` — displayed in the UI, never stored
+5. Per-user quota: max 10 requests/hour (Redis counter)
+6. Non-dismissable disclaimer: *"AI-generated summary. Always consult your doctor for medical advice."*
+
+### Graceful Degradation
+
+- `GROQ_API_KEY` missing → app starts normally, AI endpoints return `503` with a clear message
+- Groq timeout (8 s) → one automatic retry, then fallback response — core feature still completes
+- `AI_FEATURE_*=false` → endpoint returns `503`, no Groq call is made
 
 ---
 

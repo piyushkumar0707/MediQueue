@@ -54,7 +54,8 @@ const auditLogSchema = new mongoose.Schema({
       'RECORD_UPLOADED',
       'RECORD_SHARED',
       
-      // Consent Management (HIPAA Critical)
+      // AI Actions
+      'AI_RECORD_SUMMARIZED',
       'CONSENT_REQUESTED',
       'CONSENT_GRANTED',
       'CONSENT_REVOKED',

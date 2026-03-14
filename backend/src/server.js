@@ -1,10 +1,10 @@
+import 'dotenv/config'; // Must be first — loads .env before any other module initializes
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
@@ -35,9 +35,6 @@ import auditRoutes from './routes/audit.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
-
-// Load environment variables
-dotenv.config();
 
 // Validate environment variables before starting
 validateEnv();

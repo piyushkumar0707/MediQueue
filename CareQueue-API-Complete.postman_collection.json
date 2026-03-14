@@ -105,18 +105,30 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"phoneNumber\": \"9876543210\",\n  \"email\": \"newuser@example.com\",\n  \"countryCode\": \"+91\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register/initiate",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register", "initiate"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register",
+                "initiate"
+              ]
             }
           }
         },
@@ -136,18 +148,29 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"otp\": \"123456\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/verify-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "verify-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-otp"
+              ]
             }
           }
         },
@@ -170,18 +193,30 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"personalInfo\": {\n    \"fullName\": \"John Doe\",\n    \"dateOfBirth\": \"1990-01-15\",\n    \"gender\": \"male\",\n    \"bloodGroup\": \"O+\",\n    \"address\": \"123 Main St, City\"\n  },\n  \"password\": \"SecurePass123!\",\n  \"role\": \"patient\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register/complete",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register", "complete"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register",
+                "complete"
+              ]
             }
           }
         },
@@ -209,54 +244,87 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"doctor1@gmail.com\",\n  \"password\": \"password123\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             }
           }
         },
         {
           "name": "Forgot Password",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"user@example.com\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/forgot-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "forgot-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
             }
           }
         },
         {
           "name": "Reset Password",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"token\": \"reset-token-here\",\n  \"newPassword\": \"NewSecurePass123!\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/reset-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "reset-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
             }
           }
         },
@@ -277,18 +345,29 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/auth/refresh-token",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh-token"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh-token"
+              ]
             }
           }
         },
@@ -299,8 +378,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             }
           }
         }
@@ -316,8 +400,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/users/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "profile"
+              ]
             }
           }
         },
@@ -329,12 +418,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"personalInfo\": {\n    \"fullName\": \"John Updated\",\n    \"phoneNumber\": \"9876543210\",\n    \"address\": \"456 New Street\"\n  }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/users/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "profile"
+              ]
             }
           }
         },
@@ -346,28 +444,52 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"currentPassword\": \"oldPassword123\",\n  \"newPassword\": \"newPassword456!\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/users/change-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "change-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "change-password"
+              ]
             }
           }
         },
         {
           "name": "Get All Doctors",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/users/doctors?specialization=cardiology&department=emergency",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "doctors"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "doctors"
+              ],
               "query": [
-                { "key": "specialization", "value": "cardiology", "disabled": true },
-                { "key": "department", "value": "emergency", "disabled": true }
+                {
+                  "key": "specialization",
+                  "value": "cardiology",
+                  "disabled": true
+                },
+                {
+                  "key": "department",
+                  "value": "emergency",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -375,13 +497,21 @@
         {
           "name": "Get Doctor By ID",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/users/doctors/{{doctorId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "doctors", "{{doctorId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "doctors",
+                "{{doctorId}}"
+              ]
             }
           }
         },
@@ -392,8 +522,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/users/patients/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "patients", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "patients",
+                "{{patientId}}"
+              ]
             }
           }
         },
@@ -404,8 +540,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "{{userId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
             }
           }
         }
@@ -435,12 +576,20 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"appointmentDate\": \"2026-02-10\",\n  \"timeSlot\": \"10:00 AM - 10:30 AM\",\n  \"reasonForVisit\": \"Regular checkup\",\n  \"symptoms\": \"Mild fever\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/appointments",
-              "host": ["{{baseUrl}}"],
-              "path": ["appointments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments"
+              ]
             }
           }
         },
@@ -451,10 +600,18 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/appointments/my-appointments?upcoming=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["appointments", "my-appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "my-appointments"
+              ],
               "query": [
-                { "key": "upcoming", "value": "true" }
+                {
+                  "key": "upcoming",
+                  "value": "true"
+                }
               ]
             }
           }
@@ -466,11 +623,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/appointments/doctor-appointments?date=2026-02-10&status=scheduled",
-              "host": ["{{baseUrl}}"],
-              "path": ["appointments", "doctor-appointments"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "doctor-appointments"
+              ],
               "query": [
-                { "key": "date", "value": "2026-02-10", "disabled": true },
-                { "key": "status", "value": "scheduled", "disabled": true }
+                {
+                  "key": "date",
+                  "value": "2026-02-10",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "scheduled",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -482,23 +652,40 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/appointments/patient/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["appointments", "patient", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "patient",
+                "{{patientId}}"
+              ]
             }
           }
         },
         {
           "name": "Get Available Slots",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/appointments/available-slots/{{doctorId}}?date=2026-02-10",
-              "host": ["{{baseUrl}}"],
-              "path": ["appointments", "available-slots", "{{doctorId}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "available-slots",
+                "{{doctorId}}"
+              ],
               "query": [
-                { "key": "date", "value": "2026-02-10" }
+                {
+                  "key": "date",
+                  "value": "2026-02-10"
+                }
               ]
             }
           }
@@ -510,8 +697,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/appointments/{{appointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["appointments", "{{appointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointmentId}}"
+              ]
             }
           }
         },
@@ -523,12 +715,22 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"confirmed\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/appointments/{{appointmentId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["appointments", "{{appointmentId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointmentId}}",
+                "status"
+              ]
             }
           }
         },
@@ -540,12 +742,22 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"newDate\": \"2026-02-15\",\n  \"newTimeSlot\": \"11:00 AM - 11:30 AM\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/appointments/{{appointmentId}}/reschedule",
-              "host": ["{{baseUrl}}"],
-              "path": ["appointments", "{{appointmentId}}", "reschedule"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointmentId}}",
+                "reschedule"
+              ]
             }
           }
         },
@@ -556,8 +768,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/appointments/{{appointmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["appointments", "{{appointmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "{{appointmentId}}"
+              ]
             }
           }
         }
@@ -587,12 +804,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"department\": \"general\",\n  \"reasonForVisit\": \"Consultation\",\n  \"priority\": \"normal\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/queue/join",
-              "host": ["{{baseUrl}}"],
-              "path": ["queue", "join"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "queue",
+                "join"
+              ]
             }
           }
         },
@@ -603,8 +829,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/queue/my-status",
-              "host": ["{{baseUrl}}"],
-              "path": ["queue", "my-status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "queue",
+                "my-status"
+              ]
             }
           }
         },
@@ -615,8 +846,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/queue/my-history",
-              "host": ["{{baseUrl}}"],
-              "path": ["queue", "my-history"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "queue",
+                "my-history"
+              ]
             }
           }
         },
@@ -627,11 +863,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/queue/doctor-queue?status=waiting&department=general",
-              "host": ["{{baseUrl}}"],
-              "path": ["queue", "doctor-queue"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "queue",
+                "doctor-queue"
+              ],
               "query": [
-                { "key": "status", "value": "waiting", "disabled": true },
-                { "key": "department", "value": "general", "disabled": true }
+                {
+                  "key": "status",
+                  "value": "waiting",
+                  "disabled": true
+                },
+                {
+                  "key": "department",
+                  "value": "general",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -644,12 +893,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"department\": \"general\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/queue/call-next",
-              "host": ["{{baseUrl}}"],
-              "path": ["queue", "call-next"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "queue",
+                "call-next"
+              ]
             }
           }
         },
@@ -660,8 +918,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/queue/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["queue", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "queue",
+                "stats"
+              ]
             }
           }
         },
@@ -673,12 +936,22 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"in-consultation\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/queue/{{queueId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["queue", "{{queueId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "queue",
+                "{{queueId}}",
+                "status"
+              ]
             }
           }
         },
@@ -689,9 +962,41 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/queue/{{queueId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["queue", "{{queueId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "queue",
+                "{{queueId}}"
+              ]
             }
+          }
+        },
+        {
+          "name": "AI - Symptom Triage",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"symptoms\": \"chest pain, left arm numb, heavy sweating\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/queue/triage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "queue",
+                "triage"
+              ]
+            },
+            "description": "AI symptom triage. Returns priority, reason, confidence. Advisory only - never sets priority automatically."
           }
         }
       ]
@@ -720,12 +1025,20 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"appointmentId\": \"{{appointmentId}}\",\n  \"diagnosis\": \"Common Cold\",\n  \"medicines\": [\n    {\n      \"name\": \"Paracetamol\",\n      \"dosage\": \"500mg\",\n      \"frequency\": \"3 times a day\",\n      \"duration\": \"5 days\",\n      \"timing\": \"After meals\",\n      \"instructions\": \"Take with warm water\"\n    }\n  ],\n  \"tests\": [\"Blood test\", \"X-Ray\"],\n  \"notes\": \"Rest for 3 days\",\n  \"followUpDate\": \"2026-02-15\",\n  \"followUpInstructions\": \"Visit if fever persists\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/prescriptions",
-              "host": ["{{baseUrl}}"],
-              "path": ["prescriptions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prescriptions"
+              ]
             }
           }
         },
@@ -736,11 +1049,22 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/prescriptions/doctor-prescriptions?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["prescriptions", "doctor-prescriptions"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prescriptions",
+                "doctor-prescriptions"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           }
@@ -752,8 +1076,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/prescriptions/patient/{{patientId}}/history",
-              "host": ["{{baseUrl}}"],
-              "path": ["prescriptions", "patient", "{{patientId}}", "history"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prescriptions",
+                "patient",
+                "{{patientId}}",
+                "history"
+              ]
             }
           }
         },
@@ -764,8 +1095,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/prescriptions/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["prescriptions", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prescriptions",
+                "stats"
+              ]
             }
           }
         },
@@ -776,10 +1112,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/prescriptions/my-prescriptions?status=active",
-              "host": ["{{baseUrl}}"],
-              "path": ["prescriptions", "my-prescriptions"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prescriptions",
+                "my-prescriptions"
+              ],
               "query": [
-                { "key": "status", "value": "active", "disabled": true }
+                {
+                  "key": "status",
+                  "value": "active",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -791,8 +1136,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/prescriptions/{{prescriptionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["prescriptions", "{{prescriptionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prescriptions",
+                "{{prescriptionId}}"
+              ]
             }
           }
         },
@@ -804,12 +1154,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"notes\": \"Updated notes\",\n  \"status\": \"completed\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/prescriptions/{{prescriptionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["prescriptions", "{{prescriptionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prescriptions",
+                "{{prescriptionId}}"
+              ]
             }
           }
         },
@@ -820,8 +1179,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/prescriptions/{{prescriptionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["prescriptions", "{{prescriptionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "prescriptions",
+                "{{prescriptionId}}"
+              ]
             }
           }
         }
@@ -851,17 +1215,41 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "title", "value": "Blood Test Report", "type": "text" },
-                { "key": "recordType", "value": "Lab Report", "type": "text" },
-                { "key": "description", "value": "Annual blood work", "type": "text" },
-                { "key": "recordDate", "value": "2026-01-30", "type": "text" },
-                { "key": "file", "type": "file", "src": [] }
+                {
+                  "key": "title",
+                  "value": "Blood Test Report",
+                  "type": "text"
+                },
+                {
+                  "key": "recordType",
+                  "value": "Lab Report",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Annual blood work",
+                  "type": "text"
+                },
+                {
+                  "key": "recordDate",
+                  "value": "2026-01-30",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
             "url": {
               "raw": "{{baseUrl}}/records",
-              "host": ["{{baseUrl}}"],
-              "path": ["records"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records"
+              ]
             }
           }
         },
@@ -872,10 +1260,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/records/my-records?recordType=Lab Report",
-              "host": ["{{baseUrl}}"],
-              "path": ["records", "my-records"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "my-records"
+              ],
               "query": [
-                { "key": "recordType", "value": "Lab Report", "disabled": true }
+                {
+                  "key": "recordType",
+                  "value": "Lab Report",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -887,8 +1284,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/records/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["records", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "stats"
+              ]
             }
           }
         },
@@ -899,8 +1301,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/records/shared-with-me",
-              "host": ["{{baseUrl}}"],
-              "path": ["records", "shared-with-me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "shared-with-me"
+              ]
             }
           }
         },
@@ -911,8 +1318,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/records/patient/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["records", "patient", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "patient",
+                "{{patientId}}"
+              ]
             }
           }
         },
@@ -923,8 +1336,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/records/{{recordId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["records", "{{recordId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "{{recordId}}"
+              ]
             }
           }
         },
@@ -936,12 +1354,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"title\": \"Updated Title\",\n  \"description\": \"Updated description\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/records/{{recordId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["records", "{{recordId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "{{recordId}}"
+              ]
             }
           }
         },
@@ -952,8 +1379,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/records/{{recordId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["records", "{{recordId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "{{recordId}}"
+              ]
             }
           }
         },
@@ -965,12 +1397,22 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"expiresAt\": \"2026-12-31\",\n  \"canDownload\": true\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/records/{{recordId}}/share",
-              "host": ["{{baseUrl}}"],
-              "path": ["records", "{{recordId}}", "share"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "{{recordId}}",
+                "share"
+              ]
             }
           }
         },
@@ -981,9 +1423,69 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/records/{{recordId}}/share/{{doctorId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["records", "{{recordId}}", "share", "{{doctorId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "{{recordId}}",
+                "share",
+                "{{doctorId}}"
+              ]
             }
+          }
+        },
+        {
+          "name": "AI - Summarize Record (PDF)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/records/{{recordId}}/summarize",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "{{recordId}}",
+                "summarize"
+              ]
+            },
+            "description": "On-demand AI summary of a text-based PDF. Returns summary, keyFindings, followUpNeeded. Not stored in DB. Quota: 10/hour per user."
+          }
+        },
+        {
+          "name": "Get File View URL (signed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/records/{{recordId}}/view-file?fileIndex=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "{{recordId}}",
+                "view-file"
+              ],
+              "query": [
+                {
+                  "key": "fileIndex",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Returns a short-lived (5 min) signed Cloudinary URL to view an attached file."
           }
         }
       ]
@@ -998,10 +1500,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/consent/my-consents?status=active",
-              "host": ["{{baseUrl}}"],
-              "path": ["consent", "my-consents"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "consent",
+                "my-consents"
+              ],
               "query": [
-                { "key": "status", "value": "active", "disabled": true }
+                {
+                  "key": "status",
+                  "value": "active",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1027,12 +1538,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"doctorId\": \"{{doctorId}}\",\n  \"purpose\": \"Treatment and consultation\",\n  \"scope\": [\"medical-history\", \"lab-reports\", \"prescriptions\"],\n  \"expiresAt\": \"2026-12-31\",\n  \"canDownload\": true,\n  \"canShare\": false\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/consent/grant",
-              "host": ["{{baseUrl}}"],
-              "path": ["consent", "grant"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "consent",
+                "grant"
+              ]
             }
           }
         },
@@ -1044,12 +1564,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"scope\": [\"medical-history\", \"lab-reports\"],\n  \"canDownload\": false\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/consent/{{consentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["consent", "{{consentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "consent",
+                "{{consentId}}"
+              ]
             }
           }
         },
@@ -1060,8 +1589,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/consent/{{consentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["consent", "{{consentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "consent",
+                "{{consentId}}"
+              ]
             }
           }
         },
@@ -1072,8 +1606,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/consent/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["consent", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "consent",
+                "stats"
+              ]
             }
           }
         },
@@ -1084,8 +1623,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/consent/for-my-patients",
-              "host": ["{{baseUrl}}"],
-              "path": ["consent", "for-my-patients"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "consent",
+                "for-my-patients"
+              ]
             }
           }
         },
@@ -1096,8 +1640,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/consent/check/{{patientId}}/{{recordId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["consent", "check", "{{patientId}}", "{{recordId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "consent",
+                "check",
+                "{{patientId}}",
+                "{{recordId}}"
+              ]
             }
           }
         },
@@ -1108,8 +1659,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/consent/{{consentId}}/history",
-              "host": ["{{baseUrl}}"],
-              "path": ["consent", "{{consentId}}", "history"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "consent",
+                "{{consentId}}",
+                "history"
+              ]
             }
           }
         }
@@ -1126,12 +1683,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"reason\": \"Patient unconscious, immediate access needed\",\n  \"emergencyType\": \"critical\",\n  \"location\": \"Emergency Room 3\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/emergency-access/request",
-              "host": ["{{baseUrl}}"],
-              "path": ["emergency-access", "request"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency-access",
+                "request"
+              ]
             }
           }
         },
@@ -1142,8 +1708,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/emergency-access/my-requests",
-              "host": ["{{baseUrl}}"],
-              "path": ["emergency-access", "my-requests"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency-access",
+                "my-requests"
+              ]
             }
           }
         },
@@ -1154,8 +1725,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/emergency-access/check/{{patientId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["emergency-access", "check", "{{patientId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency-access",
+                "check",
+                "{{patientId}}"
+              ]
             }
           }
         },
@@ -1166,10 +1743,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/emergency-access/for-review?status=pending",
-              "host": ["{{baseUrl}}"],
-              "path": ["emergency-access", "for-review"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency-access",
+                "for-review"
+              ],
               "query": [
-                { "key": "status", "value": "pending", "disabled": true }
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1182,12 +1768,22 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"reviewStatus\": \"approved\",\n  \"reviewNotes\": \"Emergency verified, access granted\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/emergency-access/{{recordId}}/review",
-              "host": ["{{baseUrl}}"],
-              "path": ["emergency-access", "{{recordId}}", "review"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency-access",
+                "{{recordId}}",
+                "review"
+              ]
             }
           }
         },
@@ -1198,8 +1794,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/emergency-access/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["emergency-access", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency-access",
+                "stats"
+              ]
             }
           }
         },
@@ -1210,8 +1811,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/emergency-access/{{recordId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["emergency-access", "{{recordId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency-access",
+                "{{recordId}}"
+              ]
             }
           }
         }
@@ -1227,14 +1833,36 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/notifications?page=1&limit=20&type=appointment&priority=high&isRead=false",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" },
-                { "key": "type", "value": "appointment", "disabled": true },
-                { "key": "priority", "value": "high", "disabled": true },
-                { "key": "isRead", "value": "false", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "type",
+                  "value": "appointment",
+                  "disabled": true
+                },
+                {
+                  "key": "priority",
+                  "value": "high",
+                  "disabled": true
+                },
+                {
+                  "key": "isRead",
+                  "value": "false",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1246,8 +1874,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/notifications/unread-count",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications", "unread-count"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "unread-count"
+              ]
             }
           }
         },
@@ -1258,8 +1891,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/notifications/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "stats"
+              ]
             }
           }
         },
@@ -1270,8 +1908,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/notifications/{{notificationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications", "{{notificationId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "{{notificationId}}"
+              ]
             }
           }
         },
@@ -1283,12 +1926,20 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"recipientId\": \"{{userId}}\",\n  \"type\": \"system_alert\",\n  \"title\": \"System Maintenance\",\n  \"message\": \"Scheduled maintenance tonight\",\n  \"priority\": \"medium\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/notifications",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ]
             }
           }
         },
@@ -1299,8 +1950,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/notifications/{{notificationId}}/read",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications", "{{notificationId}}", "read"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "{{notificationId}}",
+                "read"
+              ]
             }
           }
         },
@@ -1311,8 +1968,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/notifications/{{notificationId}}/unread",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications", "{{notificationId}}", "unread"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "{{notificationId}}",
+                "unread"
+              ]
             }
           }
         },
@@ -1323,8 +1986,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/notifications/mark-all-read",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications", "mark-all-read"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "mark-all-read"
+              ]
             }
           }
         },
@@ -1335,8 +2003,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/notifications/{{notificationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications", "{{notificationId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "{{notificationId}}"
+              ]
             }
           }
         },
@@ -1347,8 +2020,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/notifications/clear-read",
-              "host": ["{{baseUrl}}"],
-              "path": ["notifications", "clear-read"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "clear-read"
+              ]
             }
           }
         }
@@ -1364,8 +2042,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "stats"
+              ]
             }
           }
         },
@@ -1376,10 +2059,18 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/recent-users?limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "recent-users"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "recent-users"
+              ],
               "query": [
-                { "key": "limit", "value": "10" }
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           }
@@ -1391,13 +2082,32 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/users?role=patient&status=active&page=1&limit=20",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "users"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ],
               "query": [
-                { "key": "role", "value": "patient", "disabled": true },
-                { "key": "status", "value": "active", "disabled": true },
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" }
+                {
+                  "key": "role",
+                  "value": "patient",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
               ]
             }
           }
@@ -1410,12 +2120,21 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"newdoctor@example.com\",\n  \"phoneNumber\": \"9876543210\",\n  \"password\": \"TempPass123!\",\n  \"role\": \"doctor\",\n  \"personalInfo\": {\n    \"fullName\": \"Dr. Jane Smith\",\n    \"gender\": \"female\"\n  },\n  \"professionalInfo\": {\n    \"specialization\": \"Cardiology\",\n    \"licenseNumber\": \"DOC12345\",\n    \"department\": \"cardiology\"\n  }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/admin/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "users"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ]
             }
           }
         },
@@ -1427,12 +2146,22 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"personalInfo\": {\n    \"fullName\": \"Updated Name\"\n  },\n  \"status\": \"active\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/admin/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "users", "{{userId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}"
+              ]
             }
           }
         },
@@ -1444,12 +2173,23 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"suspended\",\n  \"reason\": \"Policy violation\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/admin/users/{{userId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "users", "{{userId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}",
+                "status"
+              ]
             }
           }
         },
@@ -1460,8 +2200,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "users", "{{userId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{userId}}"
+              ]
             }
           }
         }
@@ -1477,11 +2223,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/emergency?status=active&priority=high",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "emergency"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "emergency"
+              ],
               "query": [
-                { "key": "status", "value": "active", "disabled": true },
-                { "key": "priority", "value": "high", "disabled": true }
+                {
+                  "key": "status",
+                  "value": "active",
+                  "disabled": true
+                },
+                {
+                  "key": "priority",
+                  "value": "high",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1493,8 +2252,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/emergency/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "emergency", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "emergency",
+                "stats"
+              ]
             }
           }
         },
@@ -1505,10 +2270,20 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/admin/emergency/available-doctors?specialization=emergency",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "emergency", "available-doctors"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "emergency",
+                "available-doctors"
+              ],
               "query": [
-                { "key": "specialization", "value": "emergency", "disabled": true }
+                {
+                  "key": "specialization",
+                  "value": "emergency",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1521,12 +2296,23 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"priority\": \"critical\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/admin/emergency/{{recordId}}/priority",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "emergency", "{{recordId}}", "priority"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "emergency",
+                "{{recordId}}",
+                "priority"
+              ]
             }
           }
         },
@@ -1538,12 +2324,23 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"doctorId\": \"{{doctorId}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/admin/emergency/{{recordId}}/assign",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "emergency", "{{recordId}}", "assign"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "emergency",
+                "{{recordId}}",
+                "assign"
+              ]
             }
           }
         },
@@ -1555,12 +2352,23 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"resolved\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/admin/emergency/{{recordId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["admin", "emergency", "{{recordId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "emergency",
+                "{{recordId}}",
+                "status"
+              ]
             }
           }
         }
@@ -1576,11 +2384,24 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/analytics/overview?startDate=2026-01-01&endDate=2026-02-28",
-              "host": ["{{baseUrl}}"],
-              "path": ["analytics", "overview"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "overview"
+              ],
               "query": [
-                { "key": "startDate", "value": "2026-01-01", "disabled": true },
-                { "key": "endDate", "value": "2026-02-28", "disabled": true }
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-02-28",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1592,10 +2413,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/analytics/user-growth?period=monthly",
-              "host": ["{{baseUrl}}"],
-              "path": ["analytics", "user-growth"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "user-growth"
+              ],
               "query": [
-                { "key": "period", "value": "monthly", "disabled": true }
+                {
+                  "key": "period",
+                  "value": "monthly",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1607,10 +2437,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/analytics/appointment-trends?period=weekly",
-              "host": ["{{baseUrl}}"],
-              "path": ["analytics", "appointment-trends"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "appointment-trends"
+              ],
               "query": [
-                { "key": "period", "value": "weekly", "disabled": true }
+                {
+                  "key": "period",
+                  "value": "weekly",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1622,10 +2461,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/analytics/queue-performance?department=general",
-              "host": ["{{baseUrl}}"],
-              "path": ["analytics", "queue-performance"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "queue-performance"
+              ],
               "query": [
-                { "key": "department", "value": "general", "disabled": true }
+                {
+                  "key": "department",
+                  "value": "general",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1637,10 +2485,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/analytics/doctor-performance?doctorId={{doctorId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["analytics", "doctor-performance"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "doctor-performance"
+              ],
               "query": [
-                { "key": "doctorId", "value": "{{doctorId}}", "disabled": true }
+                {
+                  "key": "doctorId",
+                  "value": "{{doctorId}}",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1657,14 +2514,37 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/audit/logs?action=LOGIN&category=AUTHENTICATION&startDate=2026-01-01&page=1&limit=50",
-              "host": ["{{baseUrl}}"],
-              "path": ["audit", "logs"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit",
+                "logs"
+              ],
               "query": [
-                { "key": "action", "value": "LOGIN", "disabled": true },
-                { "key": "category", "value": "AUTHENTICATION", "disabled": true },
-                { "key": "startDate", "value": "2026-01-01", "disabled": true },
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "50" }
+                {
+                  "key": "action",
+                  "value": "LOGIN",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "AUTHENTICATION",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
               ]
             }
           }
@@ -1676,8 +2556,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/audit/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["audit", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit",
+                "stats"
+              ]
             }
           }
         },
@@ -1688,10 +2573,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/audit/security?severity=high",
-              "host": ["{{baseUrl}}"],
-              "path": ["audit", "security"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit",
+                "security"
+              ],
               "query": [
-                { "key": "severity", "value": "high", "disabled": true }
+                {
+                  "key": "severity",
+                  "value": "high",
+                  "disabled": true
+                }
               ]
             }
           }
@@ -1703,10 +2597,19 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/audit/user/{{userId}}?limit=100",
-              "host": ["{{baseUrl}}"],
-              "path": ["audit", "user", "{{userId}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "audit",
+                "user",
+                "{{userId}}"
+              ],
               "query": [
-                { "key": "limit", "value": "100" }
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
               ]
             }
           }

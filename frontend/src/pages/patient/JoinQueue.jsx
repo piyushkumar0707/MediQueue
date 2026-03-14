@@ -3,6 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
+const CONFIDENCE_COLORS = {
+  high:   'bg-red-100 text-red-700 border-red-300',
+  medium: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+  low:    'bg-gray-100 text-gray-600 border-gray-300',
+};
+
+const PRIORITY_BADGE = {
+  emergency: 'bg-red-100 text-red-700',
+  urgent:    'bg-yellow-100 text-yellow-700',
+  normal:    'bg-green-100 text-green-700',
+};
+
 const JoinQueue = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -15,6 +27,12 @@ const JoinQueue = () => {
   const [joining, setJoining] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // AI triage state
+  const [triaging, setTriaging] = useState(false);
+  const [triageResult, setTriageResult] = useState(null);  // { priority, confidence, reason }
+  const [triageError, setTriageError] = useState(null);
+  const [aiOverridden, setAiOverridden] = useState(false);
+
   useEffect(() => {
     fetchDoctors();
   }, []);
@@ -23,20 +41,44 @@ const JoinQueue = () => {
     try {
       setLoading(true);
       const response = await api.get('/users/doctors');
-      console.log('Doctors API Response:', response);
       if (response.success) {
-        console.log('Doctors data:', response.data);
-        console.log('First doctor sample:', response.data[0]);
         setDoctors(response.data);
       }
     } catch (error) {
-      console.error('Error fetching doctors:', error);
-      if (error.response) {
-        console.error('Error response:', error.response.data);
-      }
       toast.error('Failed to load doctors');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSuggestPriority = async () => {
+    if (!formData.reasonForVisit.trim()) {
+      toast.error('Please describe your symptoms first');
+      return;
+    }
+    setTriaging(true);
+    setTriageError(null);
+    setTriageResult(null);
+    try {
+      const response = await api.post('/queue/triage', { symptoms: formData.reasonForVisit });
+      if (response.success) {
+        setTriageResult(response);
+        setFormData(prev => ({ ...prev, priority: response.priority }));
+        setAiOverridden(false);
+      } else {
+        setTriageError(response.message || 'AI suggestion unavailable. Please select priority manually.');
+      }
+    } catch {
+      setTriageError('AI suggestion unavailable. Please select priority manually.');
+    } finally {
+      setTriaging(false);
+    }
+  };
+
+  const handlePriorityChange = (value) => {
+    setFormData(prev => ({ ...prev, priority: value }));
+    if (triageResult && value !== triageResult.priority) {
+      setAiOverridden(true);
     }
   };
 
@@ -55,10 +97,19 @@ const JoinQueue = () => {
 
     try {
       setJoining(true);
+      const aiMetadata = triageResult ? {
+        aiSuggestedPriority: triageResult.priority,
+        aiConfidence:        triageResult.confidence,
+        aiReason:            triageResult.reason,
+        aiOverridden,
+        promptVersion:       triageResult.promptVersion,
+      } : undefined;
+
       const response = await api.post('/queue/join', {
         doctorId: selectedDoctor._id,
         reasonForVisit: formData.reasonForVisit,
-        priority: formData.priority
+        priority: formData.priority,
+        ...(aiMetadata && { aiMetadata }),
       });
 
       if (response.success) {
@@ -66,7 +117,6 @@ const JoinQueue = () => {
         navigate('/patient/queue');
       }
     } catch (error) {
-      console.error('Error joining queue:', error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -82,7 +132,6 @@ const JoinQueue = () => {
     doctor.professionalInfo?.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doctor.professionalInfo?.department?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
 
   if (loading) {
     return (
@@ -191,30 +240,10 @@ const JoinQueue = () => {
                 </div>
               )}
 
-              {/* Priority */}
+              {/* Reason for Visit + AI triage button */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority
-                </label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  required
-                >
-                  <option value="normal">Normal</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="emergency">Emergency</option>
-                </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Choose priority based on urgency
-                </p>
-              </div>
-
-              {/* Reason for Visit */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason for Visit *
+                  Symptoms / Reason for Visit *
                 </label>
                 <textarea
                   value={formData.reasonForVisit}
@@ -224,6 +253,89 @@ const JoinQueue = () => {
                   placeholder="Describe your symptoms or reason for visit..."
                   required
                 />
+                {/* AI Suggest button */}
+                <button
+                  type="button"
+                  onClick={handleSuggestPriority}
+                  disabled={triaging || !formData.reasonForVisit.trim()}
+                  className={`mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition ${
+                    triaging || !formData.reasonForVisit.trim()
+                      ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                      : 'bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100'
+                  }`}
+                >
+                  {triaging ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Analysing symptoms…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                      Suggest priority with AI
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* AI triage result */}
+              {triageResult && !triageError && (
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">AI Suggestion</span>
+                    <div className="flex items-center gap-1">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize border ${PRIORITY_BADGE[triageResult.priority]}`}>
+                        {triageResult.priority}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs border capitalize ${CONFIDENCE_COLORS[triageResult.confidence]}`}>
+                        {triageResult.confidence} confidence
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-700">{triageResult.reason}</p>
+                  {aiOverridden && (
+                    <p className="text-xs text-amber-600 font-medium">⚠ You changed the AI suggestion</p>
+                  )}
+                </div>
+              )}
+
+              {triageError && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-xs text-amber-700">{triageError}</p>
+                </div>
+              )}
+
+              {/* Priority selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Priority
+                </label>
+                <select
+                  value={formData.priority}
+                  onChange={(e) => handlePriorityChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  required
+                >
+                  <option value="normal">Normal</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="emergency">Emergency</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  {triageResult ? 'AI pre-filled — you can change this' : 'Choose priority based on urgency'}
+                </p>
+              </div>
+
+              {/* Non-dismissable AI disclaimer */}
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-xs text-yellow-800">
+                  <span className="font-semibold">⚕ Note: </span>
+                  AI suggests a priority level based on symptoms. This is not a medical diagnosis. A doctor will confirm.
+                </p>
               </div>
 
               {/* Submit Button */}

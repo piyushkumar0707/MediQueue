@@ -8,6 +8,12 @@ import { generateEncryptionKey } from '../services/encryption.service.js';
 import { getFileInfo, deleteFile } from '../middleware/upload.js';
 import path from 'path';
 import { generateMedicalRecordPDF } from '../services/pdfGenerators.js';
+import AuditLog from '../models/AuditLog.js';
+import redisClient from '../config/redis.js';
+import { callAI, redactPII, AI_FEATURES } from '../services/aiService.js';
+import { extractTextFromPDF } from '../services/pdfTextExtractor.js';
+import axios from 'axios';
+import cloudinary from '../config/cloudinary.js';
 
 // @desc    Upload medical record
 // @route   POST /api/records
@@ -770,4 +776,167 @@ export const downloadRecordReport = asyncHandler(async (req, res) => {
       message: 'Error generating PDF'
     });
   }
+});
+
+// ─── Summarization constants ──────────────────────────────────────────────────
+const SUMMARY_SYSTEM_PROMPT = `You are a medical assistant helping patients understand their own health records.
+Summarize the following document in plain English that a non-medical person can understand.
+Return ONLY valid JSON:
+{
+  "summary": "2-3 sentence overview",
+  "keyFindings": ["finding 1", "finding 2"],
+  "followUpNeeded": true
+}
+Do not include the patient's name or any identifying information in the output.
+Never diagnose. Never recommend treatment.`;
+
+const SUMMARY_SCHEMA = { summary: 'string', keyFindings: 'array', followUpNeeded: 'boolean' };
+const SUMMARIZE_QUOTA = 10; // per user per hour
+// @desc    Get a short-lived signed URL to view a file attachment
+// @route   GET /api/records/:id/view-file?fileIndex=0
+// @access  Private
+export const getFileViewUrl = asyncHandler(async (req, res) => {
+  const record = await MedicalRecord.findById(req.params.id);
+  if (!record) return res.status(404).json({ success: false, message: 'Record not found' });
+
+  if (!record.canUserAccess(req.user.userId, req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Access denied' });
+  }
+
+  const fileIndex = parseInt(req.query.fileIndex ?? '0', 10);
+  const file = record.files?.[fileIndex];
+  if (!file?.cloudinaryPublicId) {
+    return res.status(404).json({ success: false, message: 'File not found' });
+  }
+
+  const signedUrl = cloudinary.utils.private_download_url(file.cloudinaryPublicId, null, {
+    resource_type: 'raw',
+    type: 'upload',
+    expires_at: Math.floor(Date.now() / 1000) + 300, // 5 min
+  });
+
+  res.json({ success: true, url: signedUrl });
+});
+
+const SUMMARIZE_WINDOW = 3600; // seconds
+
+// @desc    AI summarize a medical record (on-demand, not persisted)
+// @route   POST /api/records/:id/summarize
+// @access  Private (patient who owns it, or doctor with consent)
+export const summarizeRecord = asyncHandler(async (req, res) => {
+  if (!AI_FEATURES.summarize) {
+    return res.status(503).json({ success: false, message: 'AI summarization is currently disabled' });
+  }
+
+  // ── Authorization: reuse existing record access check ────────────────────
+  const record = await MedicalRecord.findById(req.params.id);
+  if (!record) {
+    return res.status(404).json({ success: false, message: 'Record not found' });
+  }
+
+  const isOwner  = record.patient.toString() === req.user.userId;
+  const isDoctor = req.user.role === 'doctor';
+  const isAdmin  = req.user.role === 'admin';
+
+  if (!isOwner && !isDoctor && !isAdmin) {
+    return res.status(403).json({ success: false, message: 'Access denied' });
+  }
+
+  // ── Only summarize PDF files ──────────────────────────────────────────────
+  const pdfFile = record.files?.find(f =>
+    f.fileType === 'application/pdf' || f.fileName?.toLowerCase().endsWith('.pdf')
+  );
+  if (!pdfFile) {
+    return res.status(400).json({
+      success: false,
+      message: 'This record has no PDF file. AI summarization requires a PDF.',
+    });
+  }
+
+  // ── Fetch PDF bytes from Cloudinary URL ───────────────────────────────────
+  let pdfBuffer;
+  try {
+    const publicId = pdfFile.cloudinaryPublicId;
+    // private_download_url generates a signed API download URL (api.cloudinary.com)
+    // Pass null format to avoid double-extension (.pdf.pdf) on raw resources
+    const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
+      resource_type: 'raw',
+      type: 'upload',
+    });
+    logger.info(`[AI] Fetching PDF publicId=${publicId} via signed URL`);
+    const response = await axios.get(signedUrl, { responseType: 'arraybuffer', timeout: 15000 });
+    pdfBuffer = Buffer.from(response.data);
+  } catch (fetchErr) {
+    logger.error(`[AI] PDF fetch failed for record ${req.params.id}: ${fetchErr.message}`);
+    return res.status(502).json({ success: false, message: `Failed to fetch PDF from storage: ${fetchErr.message}` });
+  }
+
+  // ── Per-user rate quota (10/hour via Redis) — checked after fetch so failures don't burn quota ──
+  const quotaKey = `ai:summarize:quota:${req.user.userId}`;
+  const current  = await redisClient.incr(quotaKey);
+  if (current === 1) await redisClient.expire(quotaKey, SUMMARIZE_WINDOW);
+
+  if (current > SUMMARIZE_QUOTA) {
+    return res.status(429).json({
+      success: false,
+      message: `Summarization limit reached (${SUMMARIZE_QUOTA}/hour). Please try again later.`,
+    });
+  }
+
+  // ── Extract text ──────────────────────────────────────────────────────────
+  let extracted;
+  try {
+    extracted = await extractTextFromPDF(pdfBuffer);
+  } catch (err) {
+    if (err.code === 'IMAGE_ONLY') {
+      return res.status(422).json({ success: false, code: 'IMAGE_ONLY', message: err.message });
+    }
+    return res.status(422).json({ success: false, code: 'PARSE_ERROR', message: err.message || 'Could not read PDF text.' });
+  }
+
+  // ── Call AI ───────────────────────────────────────────────────────────────
+  const userPrompt = `Record type: ${record.recordType}\n\n${redactPII(extracted.text)}`;
+  const result = await callAI(SUMMARY_SYSTEM_PROMPT, userPrompt, SUMMARY_SCHEMA, {
+    promptVersion: 'summary-v1',
+    temperature: 0.2,
+  });
+
+  if (!result.success) {
+    return res.status(200).json({
+      success: false,
+      code: 'AI_UNAVAILABLE',
+      message: 'AI summarization is currently unavailable.',
+    });
+  }
+
+  // ── Audit log ─────────────────────────────────────────────────────────────
+  await AuditLog.create({
+    userId:           req.user.userId,
+    action:           'AI_RECORD_SUMMARIZED',
+    description:      `AI summary generated for record ${record._id}`,
+    targetUserId:     record.patient,
+    targetResource:   'MedicalRecord',
+    targetResourceId: record._id,
+    category:         'RECORD',
+    severity:         'LOW',
+    isHIPAARelevant:  true,
+    status:           'SUCCESS',
+    ipAddress:        req.ip,
+    userAgent:        req.headers['user-agent'],
+    metadata: {
+      promptVersion: result.promptVersion,
+      latencyMs:     result.latencyMs,
+      model:         result.model,
+      pages:         extracted.pages,
+    },
+  }).catch(e => logger.warn(`[AI] audit log failed: ${e.message}`));
+
+  return res.status(200).json({
+    success:       true,
+    summary:       result.data.summary,
+    keyFindings:   result.data.keyFindings,
+    followUpNeeded: result.data.followUpNeeded,
+    promptVersion: result.promptVersion,
+    generatedAt:   new Date().toISOString(),
+  });
 });

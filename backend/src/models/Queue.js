@@ -52,6 +52,24 @@ const queueSchema = new mongoose.Schema({
   },
   consultationRoom: {
     type: String
+  },
+  // AI triage metadata — all optional, only set when AI was used
+  aiSuggestedPriority: {
+    type: String,
+    enum: ['normal', 'urgent', 'emergency']
+  },
+  aiConfidence: {
+    type: String,
+    enum: ['low', 'medium', 'high']
+  },
+  aiReason: {
+    type: String
+  },
+  aiOverridden: {
+    type: Boolean
+  },
+  promptVersion: {
+    type: String
   }
 }, {
   timestamps: true

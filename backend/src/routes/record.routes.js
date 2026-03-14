@@ -12,7 +12,9 @@ import {
   updateRecord,
   deleteRecord,
   getRecordStats,
-  downloadRecordReport
+  downloadRecordReport,
+  summarizeRecord,
+  getFileViewUrl
 } from '../controllers/recordController.js';
 
 const router = express.Router();
@@ -31,6 +33,10 @@ router.get('/stats', protect, authorize('patient'), getRecordStats);
 // Doctor routes
 router.get('/shared-with-me', protect, authorize('doctor'), getSharedRecords);
 router.get('/patient/:patientId', protect, authorize('doctor', 'admin'), getPatientRecords);
+
+// AI routes
+router.post('/:id/summarize', protect, summarizeRecord);
+router.get('/:id/view-file', protect, getFileViewUrl);
 
 // Shared routes
 router.get('/:id/download-report', protect, downloadRecordReport);

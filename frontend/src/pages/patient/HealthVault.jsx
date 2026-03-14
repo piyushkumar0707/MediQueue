@@ -18,6 +18,11 @@ const HealthVault = () => {
     expiresAt: '',
     canDownload: true
   });
+
+  // AI summary state
+  const [summarizing, setSummarizing] = useState(false);
+  const [aiSummary, setAiSummary] = useState(null);   // { summary, keyFindings, followUpNeeded, generatedAt }
+  const [summaryError, setSummaryError] = useState(null);
   
   const [uploadForm, setUploadForm] = useState({
     title: '',
@@ -228,11 +233,24 @@ const HealthVault = () => {
     }
   };
 
+  const handleViewFile = async (recordId, fileIndex = 0) => {
+    try {
+      const response = await api.get(`/records/${recordId}/view-file?fileIndex=${fileIndex}`);
+      if (response.success) {
+        window.open(response.url, '_blank');
+      }
+    } catch (error) {
+      toast.error('Failed to get file URL');
+    }
+  };
+
   const handleViewDetails = async (record) => {
     try {
       const response = await api.get(`/records/${record._id}`);
       if (response.success) {
         setSelectedRecord(response.data);
+        setAiSummary(null);
+        setSummaryError(null);
         setShowDetailModal(true);
       }
     } catch (error) {
@@ -267,6 +285,41 @@ const HealthVault = () => {
       toast.success('Medical record report downloaded');
     } catch (error) {
       toast.error('Failed to download report');
+    }
+  };
+
+  const handleSummarize = async () => {
+    setSummarizing(true);
+    setSummaryError(null);
+    setAiSummary(null);
+    try {
+      const response = await api.post(`/records/${selectedRecord._id}/summarize`);
+      if (response.success) {
+        setAiSummary(response);
+      } else {
+        const msg =
+          response.code === 'IMAGE_ONLY'
+            ? 'This PDF appears to be a scanned image. AI summarization requires a text-based PDF.'
+            : response.code === 'AI_UNAVAILABLE'
+            ? 'AI summarization is currently unavailable.'
+            : response.message || 'Summarization failed.';
+        setSummaryError(msg);
+      }
+    } catch (err) {
+      const code = err.response?.data?.code || err.code;
+      const msg =
+        code === 'IMAGE_ONLY'
+          ? 'This PDF appears to be a scanned image. AI summarization requires a text-based PDF.'
+          : err.response?.status === 429
+          ? 'Summarization limit reached (10/hour). Please try again later.'
+          : err.response?.status === 408
+          ? 'Summary took too long. Please try again.'
+          : err.response?.status === 502
+          ? (err.response?.data?.message || 'Failed to fetch PDF from storage.')
+          : err.message || 'AI summarization is currently unavailable.';
+      setSummaryError(msg);
+    } finally {
+      setSummarizing(false);
     }
   };
 
@@ -430,7 +483,7 @@ const HealthVault = () => {
                       Share
                     </button>
                     <button
-                      onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${record.files[0].fileUrl}`, '_blank')}
+                      onClick={() => handleViewFile(record._id, 0)}
                       className="px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg font-medium text-sm"
                     >
                       View
@@ -512,18 +565,107 @@ const HealthVault = () => {
                             <p className="text-xs text-gray-500">{(file.fileSize / 1024).toFixed(2)} KB</p>
                           </div>
                         </div>
-                        <a
-                          href={`${import.meta.env.VITE_API_URL.replace('/api', '')}${file.fileUrl}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => handleViewFile(selectedRecord._id, index)}
                           className="px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium"
                         >
                           View
-                        </a>
+                        </button>
                       </div>
                     ))}
                   </div>
                 </div>
+
+                {/* AI Summary section — only shown if record has a PDF */}
+                {selectedRecord.files?.some(f =>
+                  f.fileType === 'application/pdf' || f.fileName?.toLowerCase().endsWith('.pdf')
+                ) && (
+                  <div className="border border-purple-200 rounded-xl p-4 bg-purple-50">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        <span className="text-sm font-semibold text-purple-700">AI Summary</span>
+                      </div>
+                      {!aiSummary && (
+                        <button
+                          onClick={handleSummarize}
+                          disabled={summarizing}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                            summarizing
+                              ? 'bg-purple-100 text-purple-400 cursor-not-allowed'
+                              : 'bg-purple-600 text-white hover:bg-purple-700'
+                          }`}
+                        >
+                          {summarizing ? (
+                            <>
+                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              Summarizing…
+                            </>
+                          ) : (
+                            'Summarize with AI'
+                          )}
+                        </button>
+                      )}
+                      {aiSummary && (
+                        <button
+                          onClick={handleSummarize}
+                          disabled={summarizing}
+                          className="text-xs text-purple-600 hover:underline"
+                        >
+                          Regenerate
+                        </button>
+                      )}
+                    </div>
+
+                    {summaryError && (
+                      <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">{summaryError}</p>
+                    )}
+
+                    {aiSummary && (
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-800">{aiSummary.summary}</p>
+                        {aiSummary.keyFindings?.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-gray-600 mb-1">Key Findings</p>
+                            <ul className="space-y-1">
+                              {aiSummary.keyFindings.map((f, i) => (
+                                <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                                  <span className="text-purple-500 mt-0.5">•</span>
+                                  {f}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {aiSummary.followUpNeeded && (
+                          <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            </svg>
+                            Follow-up with your doctor is recommended.
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400">Generated {new Date(aiSummary.generatedAt).toLocaleString()}</p>
+                        {/* Non-dismissable disclaimer */}
+                        <div className="border-t border-purple-200 pt-3">
+                          <p className="text-xs text-purple-700">
+                            <span className="font-semibold">⚕ Disclaimer: </span>
+                            AI-generated summary. Always consult your doctor for medical advice.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {!aiSummary && !summaryError && !summarizing && (
+                      <p className="text-xs text-gray-500">Click "Summarize with AI" to get a plain-English summary of this PDF.</p>
+                    )}
+                  </div>
+                )}
 
                 <div>
                   <div className="flex items-center justify-between mb-2">

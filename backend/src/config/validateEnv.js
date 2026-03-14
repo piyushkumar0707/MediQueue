@@ -37,4 +37,9 @@ export const validateEnv = () => {
       logger.warn('[ENV] FRONTEND_URL not set — defaulting to http://localhost:5173');
     }
   }
+
+  // AI features — optional; warn so the developer knows AI is disabled
+  if (!process.env.GROQ_API_KEY) {
+    logger.warn('[ENV] GROQ_API_KEY not set — AI triage and summarization features will be disabled');
+  }
 };

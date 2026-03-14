@@ -9,12 +9,75 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 import Notification from '../models/Notification.js';
 import notificationService from '../services/notificationService.js';
+import { callAI, redactPII, AI_FEATURES } from '../services/aiService.js';
+
+// ─── Triage prompt (v1) ───────────────────────────────────────────────────────
+const TRIAGE_SYSTEM_PROMPT = `You are a medical triage assistant. Based on the patient's symptoms, return ONLY valid JSON:
+{
+  "priority": "normal | urgent | emergency",
+  "reason": "one sentence explanation",
+  "confidence": "low | medium | high"
+}
+
+Emergency = potentially life-threatening (chest pain, difficulty breathing, severe bleeding, stroke symptoms).
+Urgent = needs attention soon but not immediately life-threatening (high fever, persistent vomiting, moderate pain).
+Normal = routine, can wait (mild headache, minor cold, prescription refill).
+Never explain your reasoning outside the JSON object.`;
+
+const TRIAGE_SCHEMA = { priority: 'string', reason: 'string', confidence: 'string' };
+const VALID_PRIORITIES = ['normal', 'urgent', 'emergency'];
+const VALID_CONFIDENCES = ['low', 'medium', 'high'];
+
+// @desc    AI symptom triage — advisory only, never sets priority automatically
+// @route   POST /api/queue/triage
+// @access  Private (Patient)
+export const triageSymptoms = asyncHandler(async (req, res) => {
+  if (!AI_FEATURES.triage) {
+    return res.status(503).json({ success: false, message: 'AI triage is currently disabled' });
+  }
+
+  const { symptoms } = req.body;
+  if (!symptoms || typeof symptoms !== 'string' || symptoms.trim().length === 0) {
+    return res.status(400).json({ success: false, message: 'symptoms field is required' });
+  }
+  if (symptoms.trim().length > 2000) {
+    return res.status(400).json({ success: false, message: 'symptoms must be 2000 characters or less' });
+  }
+
+  const redacted = redactPII(symptoms.trim());
+  const result = await callAI(TRIAGE_SYSTEM_PROMPT, redacted, TRIAGE_SCHEMA, {
+    promptVersion: 'triage-v1',
+    temperature: 0.1,
+  });
+
+  if (!result.success) {
+    return res.status(200).json({
+      success: false,
+      message: 'AI suggestion unavailable. Please select priority manually.',
+      fallback: true,
+    });
+  }
+
+  // Sanitize AI output — only allow known enum values
+  const priority   = VALID_PRIORITIES.includes(result.data.priority)   ? result.data.priority   : 'normal';
+  const confidence = VALID_CONFIDENCES.includes(result.data.confidence) ? result.data.confidence : 'low';
+  const reason     = typeof result.data.reason === 'string' ? result.data.reason.slice(0, 300) : '';
+
+  return res.status(200).json({
+    success:       true,
+    priority,
+    confidence,
+    reason,
+    promptVersion: result.promptVersion,
+    latencyMs:     result.latencyMs,
+  });
+});
 
 // @desc    Join queue (walk-in or from appointment)
 // @route   POST /api/queue/join
 // @access  Private (Patient)
 export const joinQueue = asyncHandler(async (req, res) => {
-  const { doctorId, reasonForVisit, priority, appointmentId } = req.body;
+  const { doctorId, reasonForVisit, priority, appointmentId, aiMetadata } = req.body;
 
   // Validate doctor exists
   const doctor = await User.findById(doctorId);
@@ -53,7 +116,15 @@ export const joinQueue = asyncHandler(async (req, res) => {
     queueNumber: queueCount + 1,
     reasonForVisit,
     priority: priority || 'normal',
-    estimatedWaitTime: queueCount * 15 // 15 min per patient estimate
+    estimatedWaitTime: queueCount * 15, // 15 min per patient estimate
+    // AI metadata — stored as-is; backend never reads it to determine priority
+    ...(aiMetadata?.aiSuggestedPriority && {
+      aiSuggestedPriority: VALID_PRIORITIES.includes(aiMetadata.aiSuggestedPriority) ? aiMetadata.aiSuggestedPriority : undefined,
+      aiConfidence:        ['low', 'medium', 'high'].includes(aiMetadata.aiConfidence) ? aiMetadata.aiConfidence : undefined,
+      aiReason:            typeof aiMetadata.aiReason === 'string' ? aiMetadata.aiReason.slice(0, 300) : undefined,
+      aiOverridden:        typeof aiMetadata.aiOverridden === 'boolean' ? aiMetadata.aiOverridden : undefined,
+      promptVersion:       typeof aiMetadata.promptVersion === 'string' ? aiMetadata.promptVersion : undefined,
+    }),
   });
 
   // Update appointment if exists
