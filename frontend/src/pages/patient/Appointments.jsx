@@ -97,7 +97,7 @@ const Appointments = () => {
       setCancellingId(null);
       fetchAppointments();
     } catch (error) {
-      toast.error(error.message || 'Failed to cancel appointment');
+      toast.error(error.response?.data?.message || 'Failed to cancel appointment. Please try again.');
     }
   };
 

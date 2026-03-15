@@ -260,14 +260,14 @@ const BookAppointment = () => {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg text-gray-900">
-                          Dr. {doctor.firstName} {doctor.lastName}
+                          Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName}
                         </h3>
                         <p className="text-sm text-indigo-600 font-medium">
-                          {doctor.specialization || 'General Physician'}
+                          {doctor.professionalInfo?.specialization || 'General Physician'}
                         </p>
-                        {doctor.experience && (
+                        {doctor.professionalInfo?.experience && (
                           <p className="text-sm text-gray-600 mt-1">
-                            {doctor.experience} years experience
+                            {doctor.professionalInfo.experience} years experience
                           </p>
                         )}
                         {doctor.professionalInfo?.qualification && (
@@ -309,7 +309,7 @@ const BookAppointment = () => {
               </button>
               <h2 className="text-2xl font-bold text-gray-900">Select Date & Time</h2>
               <p className="text-gray-600 mt-1">
-                Booking with Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}
+                Booking with Dr. {selectedDoctor.personalInfo?.firstName} {selectedDoctor.personalInfo?.lastName}
               </p>
             </div>
 
@@ -467,8 +467,8 @@ const BookAppointment = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}</h3>
-                  <p className="text-sm text-indigo-600">{selectedDoctor.specialization}</p>
+                  <h3 className="font-semibold text-lg">Dr. {selectedDoctor.personalInfo?.firstName} {selectedDoctor.personalInfo?.lastName}</h3>
+                  <p className="text-sm text-indigo-600">{selectedDoctor.professionalInfo?.specialization}</p>
                 </div>
               </div>
 

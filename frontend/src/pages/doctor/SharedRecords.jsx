@@ -194,11 +194,11 @@ const SharedRecords = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
-                      {patient.firstName?.[0]}{patient.lastName?.[0]}
+                      {patient.personalInfo?.firstName?.[0]}{patient.personalInfo?.lastName?.[0]}
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold">
-                        {patient.firstName} {patient.lastName}
+                        {patient.personalInfo?.firstName} {patient.personalInfo?.lastName}
                       </h2>
                       <p className="text-indigo-100">{patient.email}</p>
                       <p className="text-indigo-100 text-sm">{patientRecords.length} record(s) shared</p>
@@ -293,7 +293,7 @@ const SharedRecords = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-700">Patient</label>
                     <p className="mt-1 text-gray-900">
-                      {selectedRecord.patient.firstName} {selectedRecord.patient.lastName}
+                      {selectedRecord.patient.personalInfo?.firstName} {selectedRecord.patient.personalInfo?.lastName}
                     </p>
                   </div>
                   <div>

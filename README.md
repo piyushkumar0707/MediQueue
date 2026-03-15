@@ -43,6 +43,7 @@ These are the engineering decisions worth talking about:
 | File uploads | Multer → Cloudinary storage; signed URLs for viewing — raw CDN URLs are never exposed to clients |
 | AI triage | Groq LLaMA 3.1 suggests priority from symptoms — human override always preserved, AI is advisory only |
 | AI summarization | On-demand PDF text extraction + LLaMA summary — quota-limited, PII-stripped before Groq sees any text |
+| AI image analysis | Groq LLaMA 4 Scout (multimodal) reads consultation note images — confidence scoring flags unclear handwriting |
 
 ---
 
@@ -168,6 +169,7 @@ npm run dev                 # → http://localhost:5173
 | `GROQ_API_KEY` | Groq LLaMA 3.1 API key — get free key at [console.groq.com](https://console.groq.com). If omitted, AI features degrade silently and the app still starts |
 | `AI_FEATURE_TRIAGE` | `true` / `false` — toggle symptom triage without a redeploy (default: `true`) |
 | `AI_FEATURE_SUMMARIZE` | `true` / `false` — toggle record summarization without a redeploy (default: `true`) |
+| `AI_FEATURE_IMAGE_ANALYSIS` | `true` / `false` — toggle image analysis independently of PDF summarization (default: `true`) |
 
 > ⚠️ Never change `ENCRYPTION_KEY` after records are stored — existing records become unreadable.
 
@@ -224,12 +226,24 @@ MediQueue integrates Groq LLaMA 3.1 for two advisory features. The design follow
 
 ### Record Summarization Flow
 
-1. Patient opens a PDF record and clicks "Summarize with AI"
-2. Backend fetches the PDF from Cloudinary via signed URL, extracts text with `pdf-parse`
-3. PII is stripped, text is capped at 12,000 chars, then sent to Groq
-4. Response: `{ summary, keyFindings, followUpNeeded }` — displayed in the UI, never stored
-5. Per-user quota: max 10 requests/hour (Redis counter)
-6. Non-dismissable disclaimer: *"AI-generated summary. Always consult your doctor for medical advice."*
+1. Patient opens a PDF or image record and clicks "Summarize with AI"
+2. Backend fetches the file from Cloudinary via signed URL
+3. **PDF path:** `pdf-parse` extracts text → PII stripped → sent to `llama-3.1-8b-instant`
+4. **Image path:** file base64-encoded server-side (Cloudinary URL never sent to Groq) → sent to `meta-llama/llama-4-scout-17b-16e-instruct` (multimodal)
+5. Response: `{ summary, keyFindings, followUpNeeded, transcriptionConfidence }` — displayed in the UI, never stored
+6. `transcriptionConfidence` — `high | medium | low` — drives UI warnings for unclear handwriting
+7. Per-user quota: max 10 requests/hour (Redis counter, shared across PDF + image)
+8. Non-dismissable disclaimer: *"AI-generated summary. Always consult your doctor for medical advice."*
+
+### `transcriptionConfidence` field
+
+Included in all image analysis responses. Not present for PDF summaries.
+
+| Value | Meaning | UI behaviour |
+|---|---|---|
+| `high` | Text printed or clearly legible | No additional warning |
+| `medium` | Some words unclear, overall meaning confident | Soft amber note: *"Review key findings against your original document"* |
+| `low` | Significant portions illegible | Red warning: *"Handwriting was difficult to read. Key details may be incomplete"* |
 
 ### Graceful Degradation
 

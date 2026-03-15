@@ -115,7 +115,7 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     recipient: req.user.userId,
     type: 'appointment_booked',
     title: 'Appointment Confirmed',
-    message: `Your appointment with Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime} has been confirmed.`,
+    message: `Your appointment with Dr. ${appointment.doctor.personalInfo?.firstName} ${appointment.doctor.personalInfo?.lastName} on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime} has been confirmed.`,
     priority: 'medium',
     relatedEntity: {
       entityType: 'appointment',
@@ -383,7 +383,7 @@ export const cancelAppointment = asyncHandler(async (req, res) => {
       message: `${appointment.patient.firstName} ${appointment.patient.lastName} has cancelled their appointment scheduled for ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot.startTime}. Reason: ${cancelReason || 'No reason provided'}`,
       priority: 'high',
       relatedEntity: {
-        entityType: 'Appointment',
+        entityType: 'appointment',
         entityId: appointment._id
       },
       actionUrl: `/doctor/appointments`,
@@ -401,10 +401,10 @@ export const cancelAppointment = asyncHandler(async (req, res) => {
       sender: req.user.userId,
       type: 'appointment_cancelled',
       title: 'Appointment Cancelled',
-      message: `Your appointment with Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} scheduled for ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot.startTime} has been cancelled. Reason: ${cancelReason || 'No reason provided'}`,
+      message: `Your appointment with Dr. ${appointment.doctor.personalInfo?.firstName} ${appointment.doctor.personalInfo?.lastName} scheduled for ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot.startTime} has been cancelled. Reason: ${cancelReason || 'No reason provided'}`,
       priority: 'high',
       relatedEntity: {
-        entityType: 'Appointment',
+        entityType: 'appointment',
         entityId: appointment._id
       },
       actionUrl: `/patient/appointments`,
@@ -499,10 +499,10 @@ export const rescheduleAppointment = asyncHandler(async (req, res) => {
     recipient: req.user.userId,
     type: 'appointment_rescheduled',
     title: 'Appointment Rescheduled',
-    message: `Your appointment with Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} has been rescheduled to ${newAppointmentDate.toLocaleDateString()} at ${timeSlot.startTime}.`,
+    message: `Your appointment with Dr. ${appointment.doctor.personalInfo?.firstName} ${appointment.doctor.personalInfo?.lastName} has been rescheduled to ${newAppointmentDate.toLocaleDateString()} at ${timeSlot.startTime}.`,
     priority: 'medium',
     relatedEntity: {
-      entityType: 'Appointment',
+      entityType: 'appointment',
       entityId: appointment._id
     },
     actionUrl: `/patient/appointments`,
@@ -523,7 +523,7 @@ export const rescheduleAppointment = asyncHandler(async (req, res) => {
     message: `${appointment.patient.firstName} ${appointment.patient.lastName} has rescheduled their appointment to ${newAppointmentDate.toLocaleDateString()} at ${timeSlot.startTime}.`,
     priority: 'medium',
     relatedEntity: {
-      entityType: 'Appointment',
+      entityType: 'appointment',
       entityId: appointment._id
     },
     actionUrl: `/doctor/appointments`,

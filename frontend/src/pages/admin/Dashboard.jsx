@@ -56,6 +56,7 @@ const AdminDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   
   const socketRef = useRef(null);
+  const unmountingRef = useRef(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -68,6 +69,7 @@ const AdminDashboard = () => {
     const healthInterval = setInterval(fetchSystemHealth, 10000);
     
     return () => {
+      unmountingRef.current = true;
       clearInterval(statsInterval);
       clearInterval(healthInterval);
       if (socketRef.current) {
@@ -97,7 +99,9 @@ const AdminDashboard = () => {
 
     socketRef.current.on('disconnect', () => {
       setSocketConnected(false);
-      toast.error('Real-time monitoring disconnected', { duration: 2000 });
+      if (!unmountingRef.current) {
+        toast.error('Real-time monitoring disconnected', { duration: 2000 });
+      }
     });
 
     // Listen for stats updates

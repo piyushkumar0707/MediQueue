@@ -300,6 +300,8 @@ const HealthVault = () => {
         const msg =
           response.code === 'IMAGE_ONLY'
             ? 'This PDF appears to be a scanned image. AI summarization requires a text-based PDF.'
+            : response.code === 'UNSUPPORTED_TYPE'
+            ? 'This file type is not supported for AI analysis.'
             : response.code === 'AI_UNAVAILABLE'
             ? 'AI summarization is currently unavailable.'
             : response.message || 'Summarization failed.';
@@ -310,6 +312,8 @@ const HealthVault = () => {
       const msg =
         code === 'IMAGE_ONLY'
           ? 'This PDF appears to be a scanned image. AI summarization requires a text-based PDF.'
+          : code === 'UNSUPPORTED_TYPE'
+          ? 'This file type is not supported for AI analysis.'
           : err.response?.status === 429
           ? 'Summarization limit reached (10/hour). Please try again later.'
           : err.response?.status === 408
@@ -576,9 +580,13 @@ const HealthVault = () => {
                   </div>
                 </div>
 
-                {/* AI Summary section — only shown if record has a PDF */}
+                {/* AI Summary section — shown for PDF, PNG, and JPEG records */}
                 {selectedRecord.files?.some(f =>
-                  f.fileType === 'application/pdf' || f.fileName?.toLowerCase().endsWith('.pdf')
+                  f.fileType === 'application/pdf' ||
+                  f.fileType === 'image/png' ||
+                  f.fileType === 'image/jpeg' ||
+                  f.fileType === 'image/jpg' ||
+                  f.fileName?.toLowerCase().endsWith('.pdf')
                 ) && (
                   <div className="border border-purple-200 rounded-xl p-4 bg-purple-50">
                     <div className="flex items-center justify-between mb-3">
@@ -628,6 +636,23 @@ const HealthVault = () => {
 
                     {aiSummary && (
                       <div className="space-y-3">
+                        {/* Transcription confidence warnings for image-based records */}
+                        {aiSummary.transcriptionConfidence === 'low' && (
+                          <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            </svg>
+                            <span><strong>Handwriting was difficult to read.</strong> Key details may be incomplete — verify with your original document.</span>
+                          </div>
+                        )}
+                        {aiSummary.transcriptionConfidence === 'medium' && (
+                          <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                            <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Some text was unclear. Review key findings against your original document.</span>
+                          </div>
+                        )}
                         <p className="text-sm text-gray-800">{aiSummary.summary}</p>
                         {aiSummary.keyFindings?.length > 0 && (
                           <div>
@@ -662,7 +687,7 @@ const HealthVault = () => {
                     )}
 
                     {!aiSummary && !summaryError && !summarizing && (
-                      <p className="text-xs text-gray-500">Click "Summarize with AI" to get a plain-English summary of this PDF.</p>
+                      <p className="text-xs text-gray-500">Click "Summarize with AI" to get a plain-English summary of this document.</p>
                     )}
                   </div>
                 )}
@@ -686,7 +711,7 @@ const HealthVault = () => {
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              Dr. {share.doctor.firstName} {share.doctor.lastName}
+                              Dr. {share.doctor.personalInfo?.firstName} {share.doctor.personalInfo?.lastName}
                             </p>
                             <p className="text-xs text-gray-500">
                               Shared on {new Date(share.sharedAt).toLocaleDateString()}
@@ -743,7 +768,7 @@ const HealthVault = () => {
                     <option value="">Choose a doctor...</option>
                     {doctors.map(doctor => (
                       <option key={doctor._id} value={doctor._id}>
-                        Dr. {doctor.firstName} {doctor.lastName} 
+                        Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName} 
                         {doctor.professionalInfo?.specialization && ` - ${doctor.professionalInfo.specialization}`}
                       </option>
                     ))}

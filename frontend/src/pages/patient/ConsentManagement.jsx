@@ -369,7 +369,7 @@ const ConsentManagement = () => {
                     <option value="">Choose a doctor</option>
                     {doctors.map((doctor) => (
                       <option key={doctor._id} value={doctor._id}>
-                        Dr. {doctor.firstName} {doctor.lastName} - {doctor.specialization || 'General'}
+                        Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName} - {doctor.professionalInfo?.specialization || 'General'}
                       </option>
                     ))}
                   </select>

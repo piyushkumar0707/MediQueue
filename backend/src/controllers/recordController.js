@@ -10,8 +10,9 @@ import path from 'path';
 import { generateMedicalRecordPDF } from '../services/pdfGenerators.js';
 import AuditLog from '../models/AuditLog.js';
 import redisClient from '../config/redis.js';
-import { callAI, redactPII, AI_FEATURES } from '../services/aiService.js';
+import { callAI, redactPII, AI_FEATURES, analyzeImage } from '../services/aiService.js';
 import { extractTextFromPDF } from '../services/pdfTextExtractor.js';
+import { fetchFileAsBuffer } from '../utils/fileUtils.js';
 import axios from 'axios';
 import cloudinary from '../config/cloudinary.js';
 
@@ -132,6 +133,7 @@ export const getMyRecords = asyncHandler(async (req, res) => {
   
   const records = await MedicalRecord.find(query)
     .populate('uploadedBy', 'personalInfo role')
+    .populate('sharedWith.doctor', 'personalInfo professionalInfo')
     .sort(sortOptions)
     .limit(limit * 1)
     .skip((page - 1) * limit);
@@ -792,6 +794,11 @@ Never diagnose. Never recommend treatment.`;
 
 const SUMMARY_SCHEMA = { summary: 'string', keyFindings: 'array', followUpNeeded: 'boolean' };
 const SUMMARIZE_QUOTA = 10; // per user per hour
+
+// Returns the Cloudinary resource_type for a given MIME type
+const getCloudinaryResourceType = (fileType = '') =>
+  fileType.startsWith('image/') ? 'image' : 'raw';
+
 // @desc    Get a short-lived signed URL to view a file attachment
 // @route   GET /api/records/:id/view-file?fileIndex=0
 // @access  Private
@@ -810,7 +817,7 @@ export const getFileViewUrl = asyncHandler(async (req, res) => {
   }
 
   const signedUrl = cloudinary.utils.private_download_url(file.cloudinaryPublicId, null, {
-    resource_type: 'raw',
+    resource_type: getCloudinaryResourceType(file.fileType),
     type: 'upload',
     expires_at: Math.floor(Date.now() / 1000) + 300, // 5 min
   });
@@ -828,7 +835,7 @@ export const summarizeRecord = asyncHandler(async (req, res) => {
     return res.status(503).json({ success: false, message: 'AI summarization is currently disabled' });
   }
 
-  // ── Authorization: reuse existing record access check ────────────────────
+  // ── Authorization ────────────────────────────────────────────────────────
   const record = await MedicalRecord.findById(req.params.id);
   if (!record) {
     return res.status(404).json({ success: false, message: 'Record not found' });
@@ -842,36 +849,33 @@ export const summarizeRecord = asyncHandler(async (req, res) => {
     return res.status(403).json({ success: false, message: 'Access denied' });
   }
 
-  // ── Only summarize PDF files ──────────────────────────────────────────────
-  const pdfFile = record.files?.find(f =>
-    f.fileType === 'application/pdf' || f.fileName?.toLowerCase().endsWith('.pdf')
-  );
-  if (!pdfFile) {
-    return res.status(400).json({
+  // ── Pick the first analysable file ────────────────────────────────────────
+  const SUPPORTED_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+  const fileIndex = parseInt(req.query.fileIndex ?? '0', 10);
+  const targetFile = record.files?.[fileIndex] ?? record.files?.[0];
+
+  if (!targetFile) {
+    return res.status(400).json({ success: false, message: 'This record has no attached files.' });
+  }
+
+  const fileType = targetFile.fileType || '';
+  const isImage = fileType.startsWith('image/');
+  const isPDF   = fileType === 'application/pdf' || targetFile.fileName?.toLowerCase().endsWith('.pdf');
+
+  if (!isPDF && !SUPPORTED_TYPES.includes(fileType)) {
+    return res.status(422).json({
       success: false,
-      message: 'This record has no PDF file. AI summarization requires a PDF.',
+      code: 'UNSUPPORTED_TYPE',
+      message: 'This file type is not supported for AI analysis.',
     });
   }
 
-  // ── Fetch PDF bytes from Cloudinary URL ───────────────────────────────────
-  let pdfBuffer;
-  try {
-    const publicId = pdfFile.cloudinaryPublicId;
-    // private_download_url generates a signed API download URL (api.cloudinary.com)
-    // Pass null format to avoid double-extension (.pdf.pdf) on raw resources
-    const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
-      resource_type: 'raw',
-      type: 'upload',
-    });
-    logger.info(`[AI] Fetching PDF publicId=${publicId} via signed URL`);
-    const response = await axios.get(signedUrl, { responseType: 'arraybuffer', timeout: 15000 });
-    pdfBuffer = Buffer.from(response.data);
-  } catch (fetchErr) {
-    logger.error(`[AI] PDF fetch failed for record ${req.params.id}: ${fetchErr.message}`);
-    return res.status(502).json({ success: false, message: `Failed to fetch PDF from storage: ${fetchErr.message}` });
+  // ── Image analysis: check feature flag ──────────────────────────────────
+  if (isImage && !AI_FEATURES.imageAnalysis) {
+    return res.status(503).json({ success: false, message: 'Image analysis is currently unavailable' });
   }
 
-  // ── Per-user rate quota (10/hour via Redis) — checked after fetch so failures don't burn quota ──
+  // ── Per-user quota (10/hour shared across PDF + image) ───────────────────
   const quotaKey = `ai:summarize:quota:${req.user.userId}`;
   const current  = await redisClient.incr(quotaKey);
   if (current === 1) await redisClient.expire(quotaKey, SUMMARIZE_WINDOW);
@@ -883,23 +887,59 @@ export const summarizeRecord = asyncHandler(async (req, res) => {
     });
   }
 
-  // ── Extract text ──────────────────────────────────────────────────────────
-  let extracted;
-  try {
-    extracted = await extractTextFromPDF(pdfBuffer);
-  } catch (err) {
-    if (err.code === 'IMAGE_ONLY') {
-      return res.status(422).json({ success: false, code: 'IMAGE_ONLY', message: err.message });
-    }
-    return res.status(422).json({ success: false, code: 'PARSE_ERROR', message: err.message || 'Could not read PDF text.' });
-  }
-
-  // ── Call AI ───────────────────────────────────────────────────────────────
-  const userPrompt = `Record type: ${record.recordType}\n\n${redactPII(extracted.text)}`;
-  const result = await callAI(SUMMARY_SYSTEM_PROMPT, userPrompt, SUMMARY_SCHEMA, {
-    promptVersion: 'summary-v1',
-    temperature: 0.2,
+  // ── Get signed download URL ───────────────────────────────────────────────
+  const signedUrl = cloudinary.utils.private_download_url(targetFile.cloudinaryPublicId, null, {
+    resource_type: getCloudinaryResourceType(fileType),
+    type: 'upload',
   });
+
+  let result;
+  let auditExtra = {};
+
+  if (isPDF) {
+    // ── PDF path ────────────────────────────────────────────────────────────
+    let pdfBuffer;
+    try {
+      logger.info(`[AI] Fetching PDF publicId=${targetFile.cloudinaryPublicId} via signed URL`);
+      const response = await axios.get(signedUrl, { responseType: 'arraybuffer', timeout: 15000 });
+      pdfBuffer = Buffer.from(response.data);
+    } catch (fetchErr) {
+      logger.error(`[AI] PDF fetch failed for record ${req.params.id}: ${fetchErr.message}`);
+      return res.status(502).json({ success: false, message: `Failed to fetch PDF from storage: ${fetchErr.message}` });
+    }
+
+    let extracted;
+    try {
+      extracted = await extractTextFromPDF(pdfBuffer);
+    } catch (err) {
+      if (err.code === 'IMAGE_ONLY') {
+        return res.status(422).json({ success: false, code: 'IMAGE_ONLY', message: err.message });
+      }
+      return res.status(422).json({ success: false, code: 'PARSE_ERROR', message: err.message || 'Could not read PDF text.' });
+    }
+
+    const userPrompt = `Record type: ${record.recordType}\n\n${redactPII(extracted.text)}`;
+    result = await callAI(SUMMARY_SYSTEM_PROMPT, userPrompt, SUMMARY_SCHEMA, {
+      promptVersion: 'summary-v1',
+      temperature: 0.2,
+    });
+    auditExtra = { pages: extracted.pages };
+
+  } else {
+    // ── Image path ──────────────────────────────────────────────────────────
+    let imageBuffer;
+    try {
+      logger.info(`[AI] Fetching image publicId=${targetFile.cloudinaryPublicId} via signed URL`);
+      imageBuffer = await fetchFileAsBuffer(signedUrl);
+    } catch (fetchErr) {
+      logger.error(`[AI] Image fetch failed for record ${req.params.id}: ${fetchErr.message}`);
+      return res.status(502).json({ success: false, message: `Failed to fetch image from storage: ${fetchErr.message}` });
+    }
+
+    const base64 = imageBuffer.toString('base64');
+    result = await analyzeImage(base64, fileType, record.recordType);
+    auditExtra = { transcriptionConfidence: result.data?.transcriptionConfidence };
+  }
 
   if (!result.success) {
     return res.status(200).json({
@@ -927,16 +967,18 @@ export const summarizeRecord = asyncHandler(async (req, res) => {
       promptVersion: result.promptVersion,
       latencyMs:     result.latencyMs,
       model:         result.model,
-      pages:         extracted.pages,
+      fileType,
+      ...auditExtra,
     },
   }).catch(e => logger.warn(`[AI] audit log failed: ${e.message}`));
 
   return res.status(200).json({
-    success:       true,
-    summary:       result.data.summary,
-    keyFindings:   result.data.keyFindings,
-    followUpNeeded: result.data.followUpNeeded,
-    promptVersion: result.promptVersion,
-    generatedAt:   new Date().toISOString(),
+    success:                true,
+    summary:                result.data.summary,
+    keyFindings:            result.data.keyFindings,
+    followUpNeeded:         result.data.followUpNeeded,
+    transcriptionConfidence: result.data.transcriptionConfidence ?? null,
+    promptVersion:          result.promptVersion,
+    generatedAt:            new Date().toISOString(),
   });
 });

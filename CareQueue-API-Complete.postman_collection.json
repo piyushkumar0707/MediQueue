@@ -1436,7 +1436,7 @@
           }
         },
         {
-          "name": "AI - Summarize Record (PDF)",
+          "name": "AI - Summarize Record (PDF or Image)",
           "request": {
             "method": "POST",
             "header": [],
@@ -1460,7 +1460,7 @@
                 "summarize"
               ]
             },
-            "description": "On-demand AI summary of a text-based PDF. Returns summary, keyFindings, followUpNeeded. Not stored in DB. Quota: 10/hour per user."
+            "description": "On-demand AI summary. PDFs use llama-3.1-8b-instant (text extraction). PNG/JPEG use llama-4-scout-17b (multimodal vision). Response includes transcriptionConfidence for images. Not stored in DB. Quota: 10/hour per user."
           }
         },
         {
@@ -1486,6 +1486,40 @@
               ]
             },
             "description": "Returns a short-lived (5 min) signed Cloudinary URL to view an attached file."
+          }
+        },
+        {
+          "name": "AI - Summarize Record (Image - confidence demo)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/records/{{recordId}}/summarize?fileIndex=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "records",
+                "{{recordId}}",
+                "summarize"
+              ],
+              "query": [
+                {
+                  "key": "fileIndex",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Same endpoint for image files (PNG/JPEG). Response includes transcriptionConfidence: high|medium|low. Use fileIndex query param to target a specific file in the record."
           }
         }
       ]

@@ -158,7 +158,7 @@ const UserManagement = () => {
       dateOfBirth: user.personalInfo?.dateOfBirth ? new Date(user.personalInfo.dateOfBirth).toISOString().split('T')[0] : '',
       gender: user.personalInfo?.gender || '',
       bloodGroup: user.personalInfo?.bloodGroup || '',
-      address: user.personalInfo?.address || '',
+      address: (() => { const a = user.personalInfo?.address; if (!a || typeof a === 'string') return a || ''; return [a.street, a.city, a.state, a.pincode].filter(Boolean).join(', '); })(),
       specialization: user.professionalInfo?.specialization || '',
       licenseNumber: user.professionalInfo?.licenseNumber || '',
       experience: user.professionalInfo?.experience || ''
@@ -314,13 +314,14 @@ const UserManagement = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">Create New User</h2>
-            <form onSubmit={handleCreateUser} className="space-y-4">
+            <form onSubmit={handleCreateUser} className="space-y-4" autoComplete="off">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                   <input
                     type="email"
                     required
+                    autoComplete="off"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -331,6 +332,7 @@ const UserManagement = () => {
                   <input
                     type="password"
                     required
+                    autoComplete="new-password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

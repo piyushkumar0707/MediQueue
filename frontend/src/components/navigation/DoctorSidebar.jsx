@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom';
-import logo from '../../assets/logo.png';
 import {
   LayoutDashboard,
   Clock,
@@ -31,7 +30,6 @@ const DoctorSidebar = ({ onNavigate }) => {
     <aside className="h-full flex flex-col bg-white">
       <div className="p-5 border-b border-gray-100">
         <div className="flex items-center gap-3 mb-3">
-          <img src={logo} alt="MediQueue" className="h-9 w-auto flex-shrink-0" />
           <div>
             <h1 className="text-base font-bold text-gray-900">MediQueue</h1>
             <p className="text-xs text-gray-500">Doctor Portal</p>
