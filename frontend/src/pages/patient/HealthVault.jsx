@@ -711,7 +711,7 @@ const HealthVault = () => {
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              Dr. {share.doctor.personalInfo?.firstName} {share.doctor.personalInfo?.lastName}
+                              Dr. {share.doctor?.firstName} {share.doctor?.lastName}
                             </p>
                             <p className="text-xs text-gray-500">
                               Shared on {new Date(share.sharedAt).toLocaleDateString()}

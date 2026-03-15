@@ -95,8 +95,27 @@ const PatientRecords = () => {
     return colors[type] || colors.other;
   };
 
-  const downloadRecord = async (recordId, filename) => {
+  const handleViewFile = async (record, fileIndex = 0) => {
     try {
+      const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
+      const token = authStorage?.state?.accessToken;
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/records/${record._id}/view-file?fileIndex=${fileIndex}`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      const data = await response.json();
+      if (response.ok && data?.url) {
+        window.open(data.url, '_blank');
+      } else {
+        toast.error(data?.message || 'Failed to open file. Please try downloading instead.');
+      }
+    } catch (error) {
+      console.error('Failed to get view URL:', error);
+      toast.error('Failed to open file. Please try downloading instead.');
+    }
+  };
+
+  const downloadRecord = async (recordId, filename) => {    try {
       const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
       const token = authStorage?.state?.accessToken;
       
@@ -333,7 +352,7 @@ const PatientRecords = () => {
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${record.files[0]?.fileUrl}`, '_blank')}
+                          onClick={() => handleViewFile(record, 0)}
                           className="px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-medium transition"
                         >
                           View

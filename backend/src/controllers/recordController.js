@@ -806,17 +806,49 @@ export const getFileViewUrl = asyncHandler(async (req, res) => {
   const record = await MedicalRecord.findById(req.params.id);
   if (!record) return res.status(404).json({ success: false, message: 'Record not found' });
 
-  if (!record.canUserAccess(req.user.userId, req.user.role)) {
+  // Check basic access first
+  let hasAccess = record.canUserAccess(req.user.userId, req.user.role);
+
+  // If doctor without explicit share, check consent
+  if (!hasAccess && req.user.role === 'doctor') {
+    const activeConsent = await Consent.findOne({
+      patient: record.patient._id ? record.patient._id : record.patient,
+      doctor: req.user.userId,
+      status: 'active',
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }]
+    });
+    if (activeConsent) hasAccess = true;
+
+    // Also check emergency access
+    if (!hasAccess) {
+      const emergencyAccess = await EmergencyAccess.getActiveAccess(req.user.userId, record.patient._id ? record.patient._id : record.patient);
+      if (emergencyAccess) hasAccess = true;
+    }
+  }
+
+  if (!hasAccess) {
     return res.status(403).json({ success: false, message: 'Access denied' });
   }
 
   const fileIndex = parseInt(req.query.fileIndex ?? '0', 10);
   const file = record.files?.[fileIndex];
-  if (!file?.cloudinaryPublicId) {
+  if (!file) {
     return res.status(404).json({ success: false, message: 'File not found' });
   }
 
-  const signedUrl = cloudinary.utils.private_download_url(file.cloudinaryPublicId, null, {
+  // Derive publicId from cloudinaryPublicId or extract from fileUrl
+  let publicId = file.cloudinaryPublicId;
+  if (!publicId && file.fileUrl) {
+    // Extract public ID from URL: .../upload/v123456/medical-records/filename.pdf
+    const match = file.fileUrl.match(/\/upload\/(?:v\d+\/)?(.+)$/);
+    if (match) publicId = match[1];
+  }
+
+  if (!publicId) {
+    return res.status(404).json({ success: false, message: 'File not found in storage' });
+  }
+
+  const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
     resource_type: getCloudinaryResourceType(file.fileType),
     type: 'upload',
     expires_at: Math.floor(Date.now() / 1000) + 300, // 5 min

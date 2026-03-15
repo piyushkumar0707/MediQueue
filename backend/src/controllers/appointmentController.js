@@ -136,7 +136,7 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     sender: req.user.userId,
     type: 'appointment_booked',
     title: 'New Appointment Booked',
-    message: `${appointment.patient.firstName} ${appointment.patient.lastName} has booked an appointment on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime}. Reason: ${reasonForVisit}`,
+    message: `${appointment.patient.personalInfo?.firstName} ${appointment.patient.personalInfo?.lastName} has booked an appointment on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime}. Reason: ${reasonForVisit}`,
     priority: 'medium',
     relatedEntity: {
       entityType: 'appointment',
@@ -380,7 +380,7 @@ export const cancelAppointment = asyncHandler(async (req, res) => {
       sender: req.user.userId,
       type: 'appointment_cancelled',
       title: 'Appointment Cancelled',
-      message: `${appointment.patient.firstName} ${appointment.patient.lastName} has cancelled their appointment scheduled for ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot.startTime}. Reason: ${cancelReason || 'No reason provided'}`,
+      message: `${appointment.patient.personalInfo?.firstName} ${appointment.patient.personalInfo?.lastName} has cancelled their appointment scheduled for ${appointment.appointmentDate.toLocaleDateString()} at ${appointment.timeSlot.startTime}. Reason: ${cancelReason || 'No reason provided'}`,
       priority: 'high',
       relatedEntity: {
         entityType: 'appointment',
@@ -520,7 +520,7 @@ export const rescheduleAppointment = asyncHandler(async (req, res) => {
     sender: req.user.userId,
     type: 'appointment_rescheduled',
     title: 'Appointment Rescheduled',
-    message: `${appointment.patient.firstName} ${appointment.patient.lastName} has rescheduled their appointment to ${newAppointmentDate.toLocaleDateString()} at ${timeSlot.startTime}.`,
+    message: `${appointment.patient.personalInfo?.firstName} ${appointment.patient.personalInfo?.lastName} has rescheduled their appointment to ${newAppointmentDate.toLocaleDateString()} at ${timeSlot.startTime}.`,
     priority: 'medium',
     relatedEntity: {
       entityType: 'appointment',
