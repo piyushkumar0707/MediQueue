@@ -49,6 +49,7 @@ class PDFService {
     
     // Reset position and color
     doc.fillColor('#000000');
+    doc.x = 50;
     doc.y = 120;
     
     return doc;
@@ -88,14 +89,16 @@ class PDFService {
    */
   addSectionTitle(doc, title, y = null) {
     if (y) doc.y = y;
+    doc.x = 50;
     
     doc.fontSize(14)
        .fillColor('#1F2937')
        .font('Helvetica-Bold')
-       .text(title, { underline: true })
+       .text(title, 50, doc.y, { underline: true, width: doc.page.width - 100 })
        .moveDown(0.5);
     
     doc.font('Helvetica').fillColor('#000000');
+    doc.x = 50;
     
     return doc;
   }
@@ -104,11 +107,12 @@ class PDFService {
    * Add key-value pair
    */
   addKeyValue(doc, key, value, inline = false) {
+    doc.x = 50;
     if (inline) {
       doc.fontSize(10)
          .font('Helvetica-Bold')
          .fillColor('#374151')
-         .text(key + ': ', { continued: true })
+         .text(key + ': ', 50, doc.y, { continued: true, width: doc.page.width - 100 })
          .font('Helvetica')
          .fillColor('#000000')
          .text(value || 'N/A');
@@ -116,13 +120,13 @@ class PDFService {
       doc.fontSize(10)
          .font('Helvetica-Bold')
          .fillColor('#374151')
-         .text(key)
+         .text(key + ': ', 50, doc.y, { continued: true, width: doc.page.width - 100 })
          .font('Helvetica')
          .fillColor('#000000')
          .text(value || 'N/A')
          .moveDown(0.3);
     }
-    
+    doc.x = 50;
     return doc;
   }
 
@@ -269,6 +273,7 @@ class PDFService {
    * Add disclaimer/terms
    */
   addDisclaimer(doc, text) {
+    doc.x = 50;
     doc.fontSize(7)
        .fillColor('#9CA3AF')
        .text(text, 50, doc.y + 10, {

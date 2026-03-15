@@ -242,8 +242,12 @@ export const generateMedicalRecordPDF = async (record, patient, uploader) => {
     }
     
     // QR Code for record
-    doc.text('Scan QR Code to view record online:', 50, doc.y);
-    await pdfService.addQRCode(doc, `${process.env.FRONTEND_URL || 'https://carequeue.com'}/records/${record._id}`, 50, doc.y + 5, 80);
+    doc.x = 50;
+    doc.fontSize(9).fillColor('#6B7280').text('Scan QR Code to view record online:', 50, doc.y);
+    const qrY = doc.y + 5;
+    await pdfService.addQRCode(doc, `${process.env.FRONTEND_URL || 'https://carequeue.com'}/records/${record._id}`, 50, qrY, 80);
+    doc.y = qrY + 90;
+    doc.moveDown(1);
     
     // Disclaimer
     pdfService.addDisclaimer(
