@@ -180,6 +180,37 @@ export const changePassword = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Search patients by name or email (for doctors)
+// @route   GET /api/users/patients/search?q=...
+// @access  Private (Doctor)
+export const searchPatients = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+  if (!q || q.trim().length < 2) {
+    return res.json({ success: true, data: [] });
+  }
+
+  const terms = q.trim().split(/\s+/).map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const termRegexes = terms.map(t => new RegExp(t, 'i'));
+
+  // Each word must match at least one of: email, firstName, or lastName
+  const wordConditions = termRegexes.map(r => ({
+    $or: [
+      { email: r },
+      { 'personalInfo.firstName': r },
+      { 'personalInfo.lastName': r },
+    ],
+  }));
+
+  const patients = await User.find({
+    role: 'patient',
+    $and: wordConditions,
+  })
+    .select('personalInfo email phoneNumber _id')
+    .limit(10);
+
+  res.json({ success: true, data: patients });
+});
+
 // @desc    Get patient by ID (for doctors)
 // @route   GET /api/users/patients/:id
 // @access  Private (Doctor)

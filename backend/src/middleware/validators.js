@@ -102,10 +102,13 @@ export const validateEmergencyAccess = [
     .trim()
     .notEmpty().withMessage('Patient ID is required')
     .isMongoId().withMessage('Invalid patient ID format'),
-  body('reason')
+  body('emergencyType')
     .trim()
-    .notEmpty().withMessage('Reason is required')
-    .isLength({ min: 10, max: 500 }).withMessage('Reason must be 10-500 characters'),
+    .notEmpty().withMessage('Emergency type is required'),
+  body('justification')
+    .trim()
+    .notEmpty().withMessage('Justification is required')
+    .isLength({ min: 20, max: 1000 }).withMessage('Justification must be at least 20 characters (describe the emergency in detail)'),
 ];
 
 // MFA validators

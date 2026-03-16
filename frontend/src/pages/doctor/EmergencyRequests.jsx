@@ -1,14 +1,39 @@
-import { useState, useEffect } from 'react';
-import { ShieldAlert, Clock, CheckCircle, XCircle, Calendar, User, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ShieldAlert, Clock, CheckCircle, XCircle, Calendar, User, AlertTriangle, Plus, X, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getMyEmergencyRequests, revokeEmergencyAccess } from '../../services/api';
+import { getMyEmergencyRequests, revokeEmergencyAccess, requestEmergencyAccess } from '../../services/api';
+import api from '../../services/api';
+
+const EMERGENCY_TYPES = [
+  { value: 'life-threatening', label: 'Life Threatening' },
+  { value: 'critical-care', label: 'Critical Care' },
+  { value: 'trauma', label: 'Trauma' },
+  { value: 'cardiac-emergency', label: 'Cardiac Emergency' },
+  { value: 'stroke', label: 'Stroke' },
+  { value: 'severe-allergic-reaction', label: 'Severe Allergic Reaction' },
+  { value: 'unconscious-patient', label: 'Unconscious Patient' },
+  { value: 'other-emergency', label: 'Other Emergency' },
+];
 
 const EmergencyRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // all, active, expired, revoked
+  const [filter, setFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({});
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [patientSearch, setPatientSearch] = useState('');
+  const [patientResults, setPatientResults] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const searchTimeout = useRef(null);
+  const [form, setForm] = useState({
+    patientId: '',
+    emergencyType: '',
+    justification: '',
+    location: '',
+    facilityName: '',
+  });
 
   useEffect(() => {
     fetchRequests();
@@ -47,6 +72,67 @@ const EmergencyRequests = () => {
       fetchRequests();
     } catch (error) {
       toast.error(error.message || 'Failed to revoke emergency access');
+    }
+  };
+
+  const [searching, setSearching] = useState(false);
+
+  const handlePatientSearch = (value) => {
+    setPatientSearch(value);
+    setSelectedPatient(null);
+    setForm(f => ({ ...f, patientId: '' }));
+    clearTimeout(searchTimeout.current);
+    if (value.trim().length < 2) { setPatientResults([]); setSearching(false); return; }
+    setSearching(true);
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const res = await api.get(`/users/patients/search?q=${encodeURIComponent(value.trim())}`);
+        console.log('[PatientSearch] results:', res.data);
+        setPatientResults(res.data || []);
+      } catch (err) {
+        toast.error('Patient search failed: ' + (err.response?.data?.message || err.message));
+        setPatientResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+  };
+
+  const handleSelectPatient = (patient) => {
+    setSelectedPatient(patient);
+    setPatientSearch(`${patient.personalInfo?.firstName} ${patient.personalInfo?.lastName} — ${patient.email}`);
+    setPatientResults([]);
+    setForm(f => ({ ...f, patientId: patient._id }));
+  };
+
+  const handleSubmitRequest = async (e) => {
+    e.preventDefault();
+    if (!form.patientId || !form.emergencyType || !form.justification.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    if (form.justification.trim().length < 20) {
+      toast.error('Justification must be at least 20 characters — please describe the emergency in more detail');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      await requestEmergencyAccess(form);
+      toast.success('Emergency access request submitted. Pending admin approval.');
+      setShowForm(false);
+      setForm({ patientId: '', emergencyType: '', justification: '', location: '', facilityName: '' });
+      setPatientSearch('');
+      setSelectedPatient(null);
+      setPatientResults([]);
+      fetchRequests();
+    } catch (error) {
+      const msg = error.response?.data?.errors?.map(e => e.msg).join(', ')
+        || error.response?.data?.message
+        || error.message
+        || 'Failed to submit emergency access request';
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -111,12 +197,162 @@ const EmergencyRequests = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">My Emergency Access Requests</h1>
-        <p className="mt-2 text-gray-600">
-          View and manage your emergency break-glass access requests
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Emergency Access Requests</h1>
+          <p className="mt-2 text-gray-600">
+            View and manage your emergency break-glass access requests
+          </p>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+        >
+          <Plus className="w-4 h-4" />
+          Request Emergency Access
+        </button>
       </div>
+
+      {/* Request Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <ShieldAlert className="w-5 h-5 text-red-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">Request Emergency Access</h2>
+              </div>
+              <button onClick={() => { setShowForm(false); setPatientSearch(''); setSelectedPatient(null); setPatientResults([]); }} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitRequest} className="p-6 space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                This request will be logged and reviewed by an administrator. Use only in genuine emergencies.
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Patient <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={patientSearch}
+                    onChange={e => handlePatientSearch(e.target.value)}
+                    placeholder="Search by name or email..."
+                    className={`w-full border rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${selectedPatient ? 'border-green-400 bg-green-50' : 'border-gray-300'}`}
+                    autoComplete="off"
+                  />
+                  {searching && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+                      Searching...
+                    </div>
+                  )}
+                  {!searching && patientSearch.trim().length >= 2 && !selectedPatient && patientResults.length === 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+                      No patients found for "{patientSearch}"
+                    </div>
+                  )}
+                  {!searching && patientResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {patientResults.map(p => (
+                        <button
+                          key={p._id}
+                          type="button"
+                          onClick={() => handleSelectPatient(p)}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 border-b last:border-0"
+                        >
+                          <span className="font-medium text-gray-900">
+                            {p.personalInfo?.firstName} {p.personalInfo?.lastName}
+                          </span>
+                          <span className="text-gray-500 ml-2">{p.email}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedPatient && (
+                  <p className="text-xs text-green-600 mt-1">✓ Patient selected</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Type <span className="text-red-500">*</span></label>
+                <select
+                  value={form.emergencyType}
+                  onChange={e => setForm(f => ({ ...f, emergencyType: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  required
+                >
+                  <option value="">Select type...</option>
+                  {EMERGENCY_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Justification <span className="text-red-500">*</span></label>
+                <textarea
+                  value={form.justification}
+                  onChange={e => setForm(f => ({ ...f, justification: e.target.value }))}
+                  rows={3}
+                  placeholder="Describe the emergency situation in detail (min 20 characters)..."
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                    form.justification.length > 0 && form.justification.length < 20 ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  required
+                />
+                <p className={`text-xs mt-1 ${form.justification.length < 20 ? 'text-red-500' : 'text-green-600'}`}>
+                  {form.justification.length}/20 min characters
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={form.location}
+                    onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+                    placeholder="e.g. ER Room 3"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Facility</label>
+                  <input
+                    type="text"
+                    value={form.facilityName}
+                    onChange={e => setForm(f => ({ ...f, facilityName: e.target.value }))}
+                    placeholder="e.g. City Hospital"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowForm(false); setPatientSearch(''); setSelectedPatient(null); setPatientResults([]); }}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {submitting ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4">

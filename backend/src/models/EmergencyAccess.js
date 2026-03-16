@@ -179,7 +179,13 @@ emergencyAccessSchema.methods.markReviewed = function(reviewerId, decision, note
   this.reviewDecision = decision;
   this.reviewNotes = notes;
   
-  if (decision === 'revoked') {
+  if (decision === 'approved' || decision === 'legitimate') {
+    this.status = 'active';
+  } else if (decision === 'flagged') {
+    this.status = 'active'; // Still active but flagged for monitoring
+    this.flaggedForReview = true;
+    this.flaggedReason = notes || 'Flagged by administrator';
+  } else if (decision === 'revoked') {
     this.status = 'revoked';
     this.revokedAt = new Date();
     this.revokedBy = reviewerId;

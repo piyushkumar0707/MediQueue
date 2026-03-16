@@ -55,19 +55,20 @@ export const requestEmergencyAccess = asyncHandler(async (req, res) => {
     { path: 'patient', select: 'personalInfo email phoneNumber' }
   ]);
 
-  // Notify patient about emergency access
+  // Notify patient — status is 'pending', access has NOT been granted yet
+  const doctorName = `Dr. ${req.userDoc?.personalInfo?.firstName || 'Unknown'} ${req.userDoc?.personalInfo?.lastName || ''}`.trim();
   const patientNotification = await Notification.create({
     recipient: patientId,
     sender: req.user.userId,
     type: 'emergency_access',
-    title: 'Emergency Access Granted',
-    message: `Dr. ${req.user.firstName} ${req.user.lastName} has requested emergency access to your medical records due to: ${emergencyType}`,
+    title: 'Emergency Access Requested',
+    message: `${doctorName} has requested emergency access to your medical records due to: ${emergencyType}. This request is pending administrator review.`,
     priority: 'urgent',
     relatedEntity: {
-      entityType: 'EmergencyAccess',
+      entityType: 'emergency_access',
       entityId: emergencyAccess._id
     },
-    actionUrl: `/patient/emergency-access`,
+    actionUrl: `/patient/consent`,
     channels: {
       inApp: true,
       email: true,
@@ -77,56 +78,34 @@ export const requestEmergencyAccess = asyncHandler(async (req, res) => {
 
   await notificationService.sendNotification(patientNotification);
 
-  // Always notify admins about new emergency access requests
-  if (!emergencyAccess.flaggedForReview) {
-    const admins = await User.find({ role: 'admin' });
-    for (const admin of admins) {
-      const adminNotification = await Notification.create({
-        recipient: admin._id,
-        sender: req.user.userId,
-        type: 'emergency_access_pending',
-        title: '🚨 New Emergency Access Request',
-        message: `Dr. ${req.user.firstName} ${req.user.lastName} has requested emergency access for patient. Type: ${emergencyType}. Location: ${location || 'Not specified'}. Requires approval.`,
-        priority: 'urgent',
-        relatedEntity: {
-          entityType: 'EmergencyAccess',
-          entityId: emergencyAccess._id
-        },
-        actionUrl: `/admin/emergency-review`,
-        channels: {
-          inApp: true,
-          email: true
-        }
-      });
-      await notificationService.sendNotification(adminNotification);
-    }
-  }
+  // Notify all admins — merge both flagged/non-flagged into a single parallel block
+  const admins = await User.find({ role: 'admin' });
+  const notifType = emergencyAccess.flaggedForReview ? 'emergency_flagged' : 'emergency_access_pending';
+  const notifTitle = emergencyAccess.flaggedForReview ? 'Emergency Access Flagged for Review' : 'New Emergency Access Request';
+  const notifMessage = emergencyAccess.flaggedForReview
+    ? `Emergency access request from ${doctorName} has been flagged. Reason: ${emergencyType}. Location: ${location || 'Not specified'}`
+    : `${doctorName} has requested emergency access for a patient. Type: ${emergencyType}. Location: ${location || 'Not specified'}. Requires approval.`;
 
-  // If flagged, notify admin
-  if (emergencyAccess.flaggedForReview) {
-    const admins = await User.find({ role: 'admin' });
-    for (const admin of admins) {
-      const adminNotification = await Notification.create({
-        recipient: admin._id,
-        sender: req.user.userId,
-        type: 'emergency_flagged',
-        title: '🚨 Emergency Access Flagged for Review',
-        message: `Emergency access request from Dr. ${req.user.firstName} ${req.user.lastName} has been flagged. Reason: ${emergencyType}. Location: ${location || 'Not specified'}`,
-        priority: 'urgent',
-        relatedEntity: {
-          entityType: 'EmergencyAccess',
-          entityId: emergencyAccess._id
-        },
-        actionUrl: `/admin/emergency-review`,
-        channels: {
-          inApp: true,
-          email: true
-        }
-      });
-
-      await notificationService.sendNotification(adminNotification);
-    }
-  }
+  await Promise.all(admins.map(async (admin) => {
+    const adminNotification = await Notification.create({
+      recipient: admin._id,
+      sender: req.user.userId,
+      type: notifType,
+      title: notifTitle,
+      message: notifMessage,
+      priority: 'urgent',
+      relatedEntity: {
+        entityType: 'emergency_access',
+        entityId: emergencyAccess._id
+      },
+      actionUrl: `/admin/emergency-review`,
+      channels: {
+        inApp: true,
+        email: true
+      }
+    });
+    await notificationService.sendNotification(adminNotification);
+  }));
 
   // Audit log - HIPAA CRITICAL
   const hashString = JSON.stringify({
@@ -162,7 +141,7 @@ export const requestEmergencyAccess = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     success: true,
-    message: 'Emergency access granted. Admin will review this request.',
+    message: 'Emergency access request submitted. Pending administrator approval.',
     data: emergencyAccess
   });
 });
@@ -315,7 +294,7 @@ export const reviewEmergencyAccess = asyncHandler(async (req, res) => {
     message: notificationMessage,
     priority: notificationPriority,
     relatedEntity: {
-      entityType: 'EmergencyAccess',
+      entityType: 'emergency_access',
       entityId: emergencyAccess._id
     },
     actionUrl: `/doctor/emergency-access`,
@@ -326,6 +305,32 @@ export const reviewEmergencyAccess = asyncHandler(async (req, res) => {
   });
 
   await notificationService.sendNotification(doctorNotification);
+
+  // Notify patient about the review outcome
+  const patientStatusMessage = (decision === 'approved' || decision === 'legitimate')
+    ? `Emergency access to your medical records by a doctor has been approved by an administrator.`
+    : decision === 'revoked'
+    ? `Emergency access to your medical records has been revoked by an administrator.`
+    : `Emergency access to your medical records has been flagged for additional review.`;
+
+  const patientReviewNotification = await Notification.create({
+    recipient: emergencyAccess.patient._id,
+    sender: req.user.userId,
+    type: 'emergency_reviewed',
+    title: `Emergency Access ${decision.charAt(0).toUpperCase() + decision.slice(1)}`,
+    message: patientStatusMessage,
+    priority: decision === 'revoked' ? 'high' : 'medium',
+    relatedEntity: {
+      entityType: 'emergency_access',
+      entityId: emergencyAccess._id
+    },
+    actionUrl: `/patient/consent`,
+    channels: {
+      inApp: true,
+      email: true
+    }
+  });
+  await notificationService.sendNotification(patientReviewNotification);
 
   // Audit log - HIPAA CRITICAL
   const hashString = JSON.stringify({
@@ -414,7 +419,7 @@ export const revokeEmergencyAccess = asyncHandler(async (req, res) => {
     message: `Your emergency access to patient ${emergencyAccess.patient.firstName} ${emergencyAccess.patient.lastName} has been revoked. Reason: ${reason || 'Not specified'}`,
     priority: 'high',
     relatedEntity: {
-      entityType: 'EmergencyAccess',
+      entityType: 'emergency_access',
       entityId: emergencyAccess._id
     },
     actionUrl: `/doctor/emergency-access`,
@@ -435,10 +440,10 @@ export const revokeEmergencyAccess = asyncHandler(async (req, res) => {
     message: `Emergency access to your medical records by Dr. ${emergencyAccess.doctor.firstName} ${emergencyAccess.doctor.lastName} has been revoked.`,
     priority: 'medium',
     relatedEntity: {
-      entityType: 'EmergencyAccess',
+      entityType: 'emergency_access',
       entityId: emergencyAccess._id
     },
-    actionUrl: `/patient/emergency-access`,
+    actionUrl: `/patient/consent`,
     channels: {
       inApp: true,
       email: true

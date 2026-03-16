@@ -1,5 +1,15 @@
 import mongoose from 'mongoose';
 
+// Atomic counter helper — avoids race condition in prescriptionNumber generation
+const getNextPrescriptionSequence = async (prefix) => {
+  const result = await mongoose.connection.collection('counters').findOneAndUpdate(
+    { _id: `prescription_${prefix}` },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: 'after' }
+  );
+  return result.seq;
+};
+
 const medicineSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -103,31 +113,16 @@ prescriptionSchema.index({ doctor: 1, createdAt: -1 });
 prescriptionSchema.index({ prescriptionNumber: 1 });
 prescriptionSchema.index({ appointment: 1 });
 
-// Pre-save hook to generate prescription number
+// Pre-save hook to generate prescription number atomically
 prescriptionSchema.pre('save', async function(next) {
   if (this.isNew && !this.prescriptionNumber) {
     const date = new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const prefix = `RX-${year}${month}`;
-    
-    // Find the highest prescription number for this month
-    const lastPrescription = await this.constructor
-      .findOne({ prescriptionNumber: new RegExp(`^${prefix}`) })
-      .sort({ prescriptionNumber: -1 })
-      .select('prescriptionNumber');
-    
-    let nextNumber = 1;
-    if (lastPrescription && lastPrescription.prescriptionNumber) {
-      // Extract the number part and increment
-      const match = lastPrescription.prescriptionNumber.match(/-(\d{4})$/);
-      if (match) {
-        nextNumber = parseInt(match[1], 10) + 1;
-      }
-    }
-    
-    // Format: RX-YYYYMM-XXXX
-    this.prescriptionNumber = `${prefix}-${String(nextNumber).padStart(4, '0')}`;
+
+    const seq = await getNextPrescriptionSequence(prefix);
+    this.prescriptionNumber = `${prefix}-${String(seq).padStart(4, '0')}`;
   }
   
   // Set default valid until date (30 days from creation)

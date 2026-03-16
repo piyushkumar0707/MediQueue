@@ -6,7 +6,8 @@ import {
   getProfile,
   updateProfile,
   changePassword,
-  getPatientById
+  getPatientById,
+  searchPatients
 } from '../controllers/userController.js';
 
 const router = express.Router();
@@ -20,7 +21,8 @@ router.put('/change-password', protect, changePassword);
 router.get('/doctors', getDoctors);
 router.get('/doctors/:id', getDoctorById);
 
-// Doctor routes - Get patient/user by ID (dynamic routes come last)
+// Doctor routes - search and get patients (search must be before :id)
+router.get('/patients/search', protect, authorize('doctor'), searchPatients);
 router.get('/patients/:id', protect, authorize('doctor'), getPatientById);
 router.get('/:id', protect, getPatientById); // General user lookup
 
