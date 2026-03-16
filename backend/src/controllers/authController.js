@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { generateTokenPair, verifyRefreshToken, generateOTP, hashOTP, verifyOTP, generateTempToken, verifyTempToken } from '../utils/jwt.js';
 import { logger } from '../utils/logger.js';
 import AuditLog from '../models/AuditLog.js';
@@ -286,10 +287,9 @@ export const login = async (req, res) => {
     
     // If MFA is enabled, issue a short-lived MFA session token instead of full tokens
     if (user.mfaEnabled) {
-      const jwt = await import('jsonwebtoken');
-      const mfaSessionToken = jwt.default.sign(
+      const mfaSessionToken = jwt.sign(
         { userId: user._id, type: 'mfa_session' },
-        process.env.JWT_ACCESS_SECRET,
+        process.env.JWT_MFA_SECRET,
         { expiresIn: '5m' }
       );
       return res.status(200).json({

@@ -126,7 +126,7 @@ export const validateMfa = async (req, res) => {
     // Decode session token (signed, 5-min TTL)
     let payload;
     try {
-      payload = jwt.verify(mfaSessionToken, process.env.JWT_ACCESS_SECRET);
+      payload = jwt.verify(mfaSessionToken, process.env.JWT_MFA_SECRET);
       if (payload.type !== 'mfa_session') throw new Error('Invalid token type');
     } catch {
       return res.status(401).json({ success: false, message: 'Invalid or expired MFA session' });

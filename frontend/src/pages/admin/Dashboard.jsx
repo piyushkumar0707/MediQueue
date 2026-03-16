@@ -45,14 +45,18 @@ const AdminDashboard = () => {
   });
   const [showSettings, setShowSettings] = useState(false);
   const [widgetSettings, setWidgetSettings] = useState(() => {
-    const saved = localStorage.getItem('dashboardWidgets');
-    return saved ? JSON.parse(saved) : {
-      showStats: true,
-      showActivityFeed: true,
-      showRecentUsers: true,
-      showQuickActions: true,
-      showSystemHealth: true,
-    };
+    try {
+      const saved = localStorage.getItem('dashboardWidgets');
+      return saved ? JSON.parse(saved) : {
+        showStats: true,
+        showActivityFeed: true,
+        showRecentUsers: true,
+        showQuickActions: true,
+        showSystemHealth: true,
+      };
+    } catch {
+      return { showStats: true, showActivityFeed: true, showRecentUsers: true, showQuickActions: true, showSystemHealth: true };
+    }
   });
   const [refreshing, setRefreshing] = useState(false);
   
