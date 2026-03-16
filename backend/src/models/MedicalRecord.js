@@ -222,12 +222,16 @@ medicalRecordSchema.methods.revokeAccess = function(doctorId) {
 // Static method to get records shared with doctor
 medicalRecordSchema.statics.getSharedWithDoctor = function(doctorId) {
   return this.find({
-    'sharedWith.doctor': doctorId,
     status: 'active',
-    $or: [
-      { 'sharedWith.expiresAt': null },
-      { 'sharedWith.expiresAt': { $gt: new Date() } }
-    ]
+    sharedWith: {
+      $elemMatch: {
+        doctor: doctorId,
+        $or: [
+          { expiresAt: null },
+          { expiresAt: { $gt: new Date() } }
+        ]
+      }
+    }
   })
   .populate('patient', 'personalInfo email phoneNumber')
   .populate('uploadedBy', 'personalInfo')
