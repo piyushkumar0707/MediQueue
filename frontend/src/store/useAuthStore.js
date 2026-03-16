@@ -87,6 +87,13 @@ const useAuthStore = create(
           });
           
           const data = response.data || response;
+
+          // MFA required — don't set authenticated yet
+          if (data.mfaRequired) {
+            set({ isLoading: false, error: null });
+            return { mfaRequired: true, mfaSessionToken: data.mfaSessionToken };
+          }
+
           const { user, accessToken, refreshToken } = data.data || data;
           
           set({
@@ -99,7 +106,7 @@ const useAuthStore = create(
           });
           setAuthTokens(accessToken, refreshToken);
           
-          return response.data;
+          return { mfaRequired: false, user };
         } catch (error) {
           const errorMsg = error.response?.data?.message || 'Login failed';
           set({ isLoading: false, error: errorMsg });

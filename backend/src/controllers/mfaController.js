@@ -1,7 +1,10 @@
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import AuditLog from '../models/AuditLog.js';
+import { generateTokenPair } from '../utils/jwt.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -11,7 +14,7 @@ import { logger } from '../utils/logger.js';
  */
 export const setupMfa = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.userId);
 
     if (user.mfaEnabled) {
       return res.status(400).json({
@@ -57,7 +60,7 @@ export const verifyMfaSetup = async (req, res) => {
   try {
     const { token } = req.body;
 
-    const user = await User.findById(req.user.id).select('+mfaSecret +mfaBackupCodes');
+    const user = await User.findById(req.user.userId).select('+mfaSecret +mfaBackupCodes');
 
     if (!user.mfaSecret) {
       return res.status(400).json({
@@ -123,8 +126,7 @@ export const validateMfa = async (req, res) => {
     // Decode session token (signed, 5-min TTL)
     let payload;
     try {
-      const jwt = await import('jsonwebtoken');
-      payload = jwt.default.verify(mfaSessionToken, process.env.JWT_ACCESS_SECRET);
+      payload = jwt.verify(mfaSessionToken, process.env.JWT_ACCESS_SECRET);
       if (payload.type !== 'mfa_session') throw new Error('Invalid token type');
     } catch {
       return res.status(401).json({ success: false, message: 'Invalid or expired MFA session' });
@@ -162,9 +164,6 @@ export const validateMfa = async (req, res) => {
 
     // Attach session data (userId, role) to res.locals for the token generation below
     // Import helpers lazily to avoid circular deps
-    const { generateTokenPair } = await import('../utils/jwt.js');
-    const { default: AuditLog } = await import('../models/AuditLog.js');
-
     const { accessToken, refreshToken } = generateTokenPair(user);
 
     await user.addRefreshToken(refreshToken, req.headers['user-agent'], req.ip);
@@ -174,7 +173,7 @@ export const validateMfa = async (req, res) => {
 
     await AuditLog.create({
       userId: user._id,
-      action: 'LOGIN_MFA',
+      action: 'LOGIN',
       category: 'AUTH',
       description: `User ${user.email} completed MFA login${usedBackup ? ' (backup code)' : ''}`,
       ipAddress: req.ip || req.connection?.remoteAddress,
@@ -219,7 +218,7 @@ export const disableMfa = async (req, res) => {
   try {
     const { token } = req.body;
 
-    const user = await User.findById(req.user.id).select('+mfaSecret +mfaBackupCodes');
+    const user = await User.findById(req.user.userId).select('+mfaSecret +mfaBackupCodes');
 
     if (!user.mfaEnabled) {
       return res.status(400).json({ success: false, message: 'MFA is not enabled.' });

@@ -64,8 +64,17 @@ router.post('/refresh-token', refreshLimiter, authController.refreshToken);
 router.post('/forgot-password', otpLimiter, validateForgotPassword, validate, authController.forgotPassword);
 router.post('/reset-password', authLimiter, validateResetPassword, validate, authController.resetPassword);
 
+// MFA code limiter: 10 attempts per 15 minutes (generous for code entry)
+const mfaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many MFA attempts, please try again later.' },
+});
+
 // MFA login validation (public — user has mfaSessionToken but no full auth yet)
-router.post('/mfa/validate', loginLimiter, validateMfaValidate, validate, validateMfa);
+router.post('/mfa/validate', mfaLimiter, validateMfaValidate, validate, validateMfa);
 
 // Protected routes
 router.use(protect); // All routes below require authentication

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
+import api from '../../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,6 +14,13 @@ const Login = () => {
   
   const [validationErrors, setValidationErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+
+  // MFA step state
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaSessionToken, setMfaSessionToken] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [mfaError, setMfaError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,21 +58,42 @@ const Login = () => {
     if (!validateForm()) return;
     
     try {
-      await login(formData.phoneOrEmail, formData.password);
+      const result = await login(formData.phoneOrEmail, formData.password);
       
-      // Get user role from store and redirect
-      const user = useAuthStore.getState().user;
-      
-      if (user.role === 'patient') {
-        navigate('/patient');
-      } else if (user.role === 'doctor') {
-        navigate('/doctor');
-      } else if (user.role === 'admin') {
-        navigate('/admin');
+      if (result.mfaRequired) {
+        setMfaSessionToken(result.mfaSessionToken);
+        setMfaRequired(true);
+        return;
       }
+
+      // Redirect based on role
+      const user = useAuthStore.getState().user;
+      if (user?.role === 'patient') navigate('/patient');
+      else if (user?.role === 'doctor') navigate('/doctor');
+      else if (user?.role === 'admin') navigate('/admin');
     } catch (err) {
       // Error is already set in store
       console.error('Login failed:', err);
+    }
+  };
+
+  const handleMfaSubmit = async (e) => {
+    e.preventDefault();
+    setMfaError('');
+    setMfaLoading(true);
+    try {
+      const { setUser, setAuthTokens: storeSetTokens } = useAuthStore.getState();
+      const response = await api.post('/auth/mfa/validate', { mfaSessionToken, token: mfaCode });
+      const data = response.data || response;
+      const { user } = data.data || data;
+      useAuthStore.setState({ user, isAuthenticated: true, isLoading: false, error: null });
+      if (user?.role === 'patient') navigate('/patient');
+      else if (user?.role === 'doctor') navigate('/doctor');
+      else if (user?.role === 'admin') navigate('/admin');
+    } catch (err) {
+      setMfaError(err.response?.data?.message || 'Invalid MFA code');
+    } finally {
+      setMfaLoading(false);
     }
   };
 
@@ -84,7 +113,47 @@ const Login = () => {
 
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Error Alert */}
+
+          {/* MFA Step */}
+          {mfaRequired ? (
+            <form onSubmit={handleMfaSubmit} className="space-y-6">
+              <div className="text-center mb-4">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-full mb-3">
+                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Two-Factor Authentication</h2>
+                <p className="text-sm text-gray-500 mt-1">Enter the 6-digit code from your authenticator app</p>
+              </div>
+              {mfaError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{mfaError}</div>
+              )}
+              <div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="000000"
+                  value={mfaCode}
+                  onChange={e => setMfaCode(e.target.value.trim())}
+                  maxLength={6}
+                  required
+                  className="w-full px-4 py-3 text-center text-2xl tracking-widest border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={mfaLoading || mfaCode.length < 6}
+                className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {mfaLoading ? 'Verifying...' : 'Verify Code'}
+              </button>
+              <button type="button" onClick={() => { setMfaRequired(false); setMfaCode(''); setMfaError(''); }} className="w-full text-sm text-gray-500 hover:text-gray-700">
+                ← Back to login
+              </button>
+            </form>
+          ) : (
+          <>{/* Normal login form below */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
               <svg className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -219,6 +288,7 @@ const Login = () => {
               Create a new account
             </Link>
           </div>
+          </>)}
         </div>
 
         {/* Footer */}
