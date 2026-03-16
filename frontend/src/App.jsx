@@ -103,7 +103,6 @@ function App() {
           <Route path="appointments" element={<DoctorAppointments />} />
           <Route path="shared-records" element={<SharedRecords />} />
           <Route path="patients/:patientId/records" element={<PatientRecords />} />
-          <Route path="patient/:patientId" element={<PatientRecords />} />
           <Route path="prescriptions" element={<DoctorPrescriptions />} />
           <Route path="prescriptions/create" element={<CreatePrescription />} />
           <Route path="emergency-requests" element={<EmergencyRequests />} />

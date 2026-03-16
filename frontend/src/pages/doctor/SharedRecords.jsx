@@ -57,7 +57,7 @@ const SharedRecords = () => {
   };
 
   const handleViewPatient = (patientId) => {
-    navigate(`/doctor/patient/${patientId}`);
+    navigate(`/doctor/patients/${patientId}/records`);
   };
 
   const getRecordTypeLabel = (type) => {
