@@ -1,31 +1,29 @@
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
 
-const isTokenExpired = (token) => {
-  if (!token) return true;
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload.exp * 1000 < Date.now();
-  } catch {
-    return true;
-  }
-};
+const Spinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const ProtectedRoute = ({ children, role }) => {
-  const { user, isAuthenticated, accessToken, logout } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const [hydrated, setHydrated] = useState(() => useAuthStore.persist.hasHydrated());
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  useEffect(() => {
+    if (!hydrated) {
+      return useAuthStore.persist.onFinishHydration(() => setHydrated(true));
+    }
+  }, [hydrated]);
 
-  if (isTokenExpired(accessToken)) {
-    logout();
-    return <Navigate to="/login" replace />;
-  }
+  // Wait for Zustand to finish reading from localStorage
+  if (!hydrated) return <Spinner />;
 
-  if (role && user?.role !== role) {
-    return <Navigate to={`/${user?.role}`} replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  if (role && user?.role !== role) return <Navigate to={`/${user?.role}`} replace />;
 
   return children;
 };

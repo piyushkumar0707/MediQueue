@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import useAuthStore from '../../store/useAuthStore';
 import { 
   Activity, 
   Users, 
@@ -79,9 +80,10 @@ const AdminDashboard = () => {
   }, []);
 
   const connectSocket = () => {
-    // Socket.io uses base URL without /api suffix
-    const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+    const BACKEND_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const { accessToken } = useAuthStore.getState();
     socketRef.current = io(BACKEND_URL, {
+      auth: { token: accessToken },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
@@ -92,9 +94,7 @@ const AdminDashboard = () => {
     socketRef.current.on('connect', () => {
       setSocketConnected(true);
       toast.success('Real-time monitoring active', { duration: 2000 });
-      
-      // Join admin room
-      socketRef.current.emit('join', { role: 'admin' });
+      socketRef.current.emit('join');
     });
 
     socketRef.current.on('disconnect', () => {

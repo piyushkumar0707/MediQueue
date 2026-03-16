@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import api from '../services/api';
-import { clearAuthQueue } from '../services/api';
+import api, { clearAuthQueue, setAuthTokens, clearAuthTokens } from '../services/api';
 
 const useAuthStore = create(
   persist(
@@ -66,6 +65,7 @@ const useAuthStore = create(
             isLoading: false,
             error: null
           });
+          setAuthTokens(accessToken, refreshToken);
           
           return response.data;
         } catch (error) {
@@ -97,6 +97,7 @@ const useAuthStore = create(
             isLoading: false,
             error: null
           });
+          setAuthTokens(accessToken, refreshToken);
           
           return response.data;
         } catch (error) {
@@ -120,6 +121,7 @@ const useAuthStore = create(
           // Ignore logout API errors — clear local state regardless
         } finally {
           clearAuthQueue();
+          clearAuthTokens();
           set({
             user: null,
             accessToken: null,
@@ -142,6 +144,7 @@ const useAuthStore = create(
           // Ignore logout API errors — clear local state regardless
         } finally {
           clearAuthQueue();
+          clearAuthTokens();
           set({
             user: null,
             accessToken: null,
@@ -174,6 +177,7 @@ const useAuthStore = create(
             accessToken: newAccessToken,
             refreshToken: newRefreshToken
           });
+          setAuthTokens(newAccessToken, newRefreshToken);
           
           return newAccessToken;
         } catch (error) {
@@ -262,10 +266,8 @@ const useAuthStore = create(
     {
       name: 'auth-storage', // localStorage key
       partialize: (state) => ({
-        // Only persist these fields
+        // Only persist non-sensitive fields — tokens are kept in memory only
         user: state.user,
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated
       })
     }

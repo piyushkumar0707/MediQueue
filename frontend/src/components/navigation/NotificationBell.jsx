@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell, Check, CheckCheck, X, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useNotificationStore from '../../store/notificationStore';
+import useAuthStore from '../../store/useAuthStore';
 import { io } from 'socket.io-client';
 
 const NotificationBell = () => {
@@ -19,26 +20,20 @@ const NotificationBell = () => {
     setUnreadCount,
   } = useNotificationStore();
 
-  // Get user from auth store
-  const authStorage = localStorage.getItem('auth-storage');
-  const user = authStorage ? JSON.parse(authStorage).state.user : null;
+  const { user } = useAuthStore();
 
   // Initialize Socket.io connection
   useEffect(() => {
     if (!user) return;
 
-    const newSocket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000', {
-      auth: {
-        token: JSON.parse(localStorage.getItem('auth-storage')).state.accessToken,
-      },
+    const { accessToken } = useAuthStore.getState();
+    const newSocket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
+      auth: { token: accessToken },
     });
 
     newSocket.on('connect', () => {
-      // Join user-specific room
-      newSocket.emit('join', {
-        userId: user.id,
-        role: user.role,
-      });
+      // Server uses verified token identity — just trigger room join
+      newSocket.emit('join');
     });
 
     // Listen for notifications
@@ -74,7 +69,7 @@ const NotificationBell = () => {
     return () => {
       newSocket.disconnect();
     };
-  }, [user?.id]);
+  }, [user?._id]);
 
   // Fetch notifications on mount
   useEffect(() => {

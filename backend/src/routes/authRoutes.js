@@ -18,6 +18,15 @@ import {
 
 const router = express.Router();
 
+// Brute-force sensitive: 5 attempts per 15 minutes per IP
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts, please try again later.' },
+});
+
 // General auth limiter: 10 requests per 15 minutes per IP
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -25,6 +34,15 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests, please try again later.' },
+});
+
+// Refresh token limiter: generous — triggered on every page load
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many token refresh requests, please try again later.' },
 });
 
 // Strict OTP limiter: 5 requests per 15 minutes per IP
@@ -41,13 +59,13 @@ router.post('/register/initiate', otpLimiter, validateInitiateRegistration, vali
 router.post('/verify-otp', otpLimiter, validateVerifyOtp, validate, verifyOtpOnly);
 router.post('/register/complete', authLimiter, validateCompleteRegistration, validate, authController.completeRegistration);
 router.get('/verify-email', authController.verifyEmail);
-router.post('/login', authLimiter, validateLogin, validate, authController.login);
-router.post('/refresh-token', authLimiter, authController.refreshToken);
+router.post('/login', loginLimiter, validateLogin, validate, authController.login);
+router.post('/refresh-token', refreshLimiter, authController.refreshToken);
 router.post('/forgot-password', otpLimiter, validateForgotPassword, validate, authController.forgotPassword);
 router.post('/reset-password', authLimiter, validateResetPassword, validate, authController.resetPassword);
 
 // MFA login validation (public — user has mfaSessionToken but no full auth yet)
-router.post('/mfa/validate', authLimiter, validateMfaValidate, validate, validateMfa);
+router.post('/mfa/validate', loginLimiter, validateMfaValidate, validate, validateMfa);
 
 // Protected routes
 router.use(protect); // All routes below require authentication

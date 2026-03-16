@@ -2,6 +2,20 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// In-memory token store — never written to localStorage
+let _accessToken = null;
+let _refreshToken = null;
+
+export const setAuthTokens = (accessToken, refreshToken) => {
+  _accessToken = accessToken;
+  _refreshToken = refreshToken;
+};
+
+export const clearAuthTokens = () => {
+  _accessToken = null;
+  _refreshToken = null;
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
@@ -32,20 +46,11 @@ export const clearAuthQueue = () => {
   processQueue(new Error('Logged out'));
 };
 
-// Request interceptor - add auth token
+// Request interceptor - add auth token from memory
 api.interceptors.request.use(
   (config) => {
-    const authStorage = localStorage.getItem('auth-storage');
-    if (authStorage) {
-      try {
-        const { state } = JSON.parse(authStorage);
-        const token = state?.accessToken;
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      } catch (error) {
-        console.error('Error parsing auth storage:', error);
-      }
+    if (_accessToken) {
+      config.headers.Authorization = `Bearer ${_accessToken}`;
     }
     return config;
   },
@@ -84,47 +89,35 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const authStorage = localStorage.getItem('auth-storage');
+      try {
+        // Send no body — backend reads refreshToken from httpOnly cookie automatically
+        const response = await axios.post(
+          `${API_URL}/auth/refresh-token`,
+          {},
+          { withCredentials: true }
+        );
 
-      if (authStorage) {
-        try {
-          const { state } = JSON.parse(authStorage);
-          const { refreshToken } = state;
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
 
-          if (!refreshToken) throw new Error('No refresh token available');
+        setAuthTokens(newAccessToken, newRefreshToken);
 
-          const response = await axios.post(
-            `${API_URL}/auth/refresh-token`,
-            { refreshToken }
-          );
-
-          const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
-
-          const updatedState = { ...state, accessToken: newAccessToken, refreshToken: newRefreshToken };
-          localStorage.setItem('auth-storage', JSON.stringify({ state: updatedState }));
-
-          processQueue(null, newAccessToken);
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          isRefreshing = false;
-
-          return api(originalRequest);
-
-        } catch (refreshError) {
-          processQueue(refreshError, null);
-          isRefreshing = false;
-          localStorage.removeItem('auth-storage');
-          failedQueue = [];
-          // Lazy import to avoid circular deps
-          import('react-hot-toast').then(({ default: toast }) => {
-            toast.error('Session expired. Please log in again.', { id: 'session-expired', duration: 3000 });
-          });
-          setTimeout(() => { window.location.href = '/login'; }, 1500);
-          return Promise.reject(refreshError);
-        }
-      } else {
+        processQueue(null, newAccessToken);
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         isRefreshing = false;
-        window.location.href = '/login';
-        return Promise.reject(error);
+
+        return api(originalRequest);
+
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        isRefreshing = false;
+        clearAuthTokens();
+        failedQueue = [];
+        // Lazy import to avoid circular deps
+        import('react-hot-toast').then(({ default: toast }) => {
+          toast.error('Session expired. Please log in again.', { id: 'session-expired', duration: 3000 });
+        });
+        setTimeout(() => { window.location.href = '/login'; }, 1500);
+        return Promise.reject(refreshError);
       }
     }
 

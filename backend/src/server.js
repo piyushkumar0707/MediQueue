@@ -35,6 +35,7 @@ import auditRoutes from './routes/audit.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
+import { verifyAccessToken } from './utils/jwt.js';
 
 // Validate environment variables before starting
 validateEnv();
@@ -116,21 +117,33 @@ app.use('*', (req, res) => {
 app.use(errorHandler);
 
 // Socket.io connection handling
-io.on('connection', (socket) => {
-  logger.info(`Client connected: ${socket.id}`);
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) {
+    return next(new Error('Unauthorized: no token provided'));
+  }
+  try {
+    const decoded = verifyAccessToken(token);
+    socket.user = decoded; // { userId, role, ... }
+    next();
+  } catch (err) {
+    next(new Error('Unauthorized: invalid token'));
+  }
+});
 
-  // Join room for specific user/role
-  socket.on('join', (data) => {
-    const { userId, role, department } = data;
+io.on('connection', (socket) => {
+  const { userId, role } = socket.user; // from verified token — never trust client
+  logger.info(`Client connected: ${socket.id} user:${userId} role:${role}`);
+
+  // Join rooms using server-verified identity — client-sent values are ignored
+  socket.on('join', () => {
     socket.join(`user:${userId}`);
     socket.join(`role:${role}`);
-    if (department) socket.join(`dept:${department}`);
-    logger.info(`User ${userId} joined rooms`);
+    logger.info(`User ${userId} (${role}) joined rooms`);
   });
 
-  // Handle disconnection
   socket.on('disconnect', () => {
-    logger.info(`Client disconnected: ${socket.id}`);
+    logger.info(`Client disconnected: ${socket.id} user:${userId}`);
   });
 });
 
