@@ -401,7 +401,7 @@ const PatientRecords = () => {
                     <div className="border-t pt-3">
                       <h4 className="text-sm font-medium text-gray-900 mb-2">Medications:</h4>
                       <div className="space-y-2">
-                        {prescription.medications?.map((med, idx) => (
+                        {prescription.medicines?.map((med, idx) => (
                           <div key={idx} className="text-sm bg-gray-50 p-2 rounded">
                             <span className="font-medium">{med.name}</span> - {med.dosage} | {med.frequency} | {med.duration}
                           </div>
