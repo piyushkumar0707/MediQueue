@@ -14,7 +14,7 @@ export const auditLogger = (action, category) => {
       // Only log if request was successful (status < 400)
       if (res.statusCode < 400) {
         const logData = {
-          userId: req.user?._id,
+          userId: req.user?.userId,
           action,
           category,
           description: generateDescription(action, req, data),

@@ -8,12 +8,15 @@ export const errorHandler = (err, req, res, next) => {
     url: req.originalUrl,
     method: req.method,
     ip: req.ip,
-    user: req.user?.id || 'anonymous',
+    user: req.user?.userId || 'anonymous',
   });
 
   // Default error
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
+
+  // In production, never leak internal error details for 5xx responses
+  const isProduction = process.env.NODE_ENV === 'production';
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
@@ -45,7 +48,7 @@ export const errorHandler = (err, req, res, next) => {
   // Send error response
   res.status(statusCode).json({
     success: false,
-    message,
+    message: isProduction && statusCode >= 500 ? 'Internal Server Error' : message,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 };
