@@ -240,7 +240,7 @@ class NotificationService {
         logger.info(`Email sent for notification ${notification._id} to ${recipientEmail}`);
         // Update notification to mark email as sent
         notification.emailSent = true;
-        await notification.save({ validateBeforeSave: false });
+        await notification.save({ validateModifiedOnly: true });
       } else {
         logger.error(`Failed to send email for notification ${notification._id}:`, result.error);
       }

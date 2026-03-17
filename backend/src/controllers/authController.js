@@ -172,7 +172,7 @@ export const completeRegistration = async (req, res) => {
     const verificationToken = crypto.randomBytes(32).toString('hex');
     user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
     user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
-    await user.save({ validateBeforeSave: false });
+    await user.save({ validateModifiedOnly: true });
     
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${verificationToken}`;
     const userName = user.personalInfo?.firstName || user.email;
@@ -325,7 +325,7 @@ export const login = async (req, res) => {
       status: 'SUCCESS'
     });
     
-    await user.save({ validateBeforeSave: false });
+    await user.save({ validateModifiedOnly: true });
     
     logger.info(`User logged in: ${user.email}`);
     
@@ -706,7 +706,7 @@ export const verifyEmail = async (req, res) => {
     user.isEmailVerified = true;
     user.emailVerificationToken = undefined;
     user.emailVerificationExpires = undefined;
-    await user.save({ validateBeforeSave: false });
+    await user.save({ validateModifiedOnly: true });
 
     logger.info(`Email verified for user: ${user.email}`);
 

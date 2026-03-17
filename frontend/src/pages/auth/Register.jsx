@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
+import api from '../../services/api';
 
 // Registration Steps
 const STEPS = {
@@ -121,15 +122,9 @@ const Register = () => {
     
     try {
       // Verify OTP with backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'}/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, otp: formData.otp })
-      });
+      const data = await api.post('/auth/verify-otp', { sessionId, otp: formData.otp });
       
-      const data = await response.json();
-      
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.message || 'OTP verification failed');
       }
       

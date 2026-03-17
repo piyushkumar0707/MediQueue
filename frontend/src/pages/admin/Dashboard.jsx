@@ -190,7 +190,7 @@ const AdminDashboard = () => {
         uptime: uptime,
       }));
     } catch (error) {
-      console.error('Error fetching system health:', error);
+      if (import.meta.env.DEV) console.error('Error fetching system health:', error);
       setSystemHealth(prev => ({
         ...prev,
         serverStatus: 'offline',
