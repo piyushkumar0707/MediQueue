@@ -2,6 +2,7 @@ import EmergencyAccess from '../models/EmergencyAccess.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { parsePagination } from '../utils/pagination.js';
 import notificationService from '../services/notificationService.js';
 import AuditLog from '../models/AuditLog.js';
 import crypto from 'crypto';
@@ -150,7 +151,8 @@ export const requestEmergencyAccess = asyncHandler(async (req, res) => {
 // @route   GET /api/emergency-access/my-requests
 // @access  Private (Doctor)
 export const getMyEmergencyRequests = asyncHandler(async (req, res) => {
-  const { status, page = 1, limit = 10 } = req.query;
+  const { status } = req.query;
+  const { page, limit, skip } = parsePagination(req.query);
 
   const query = { doctor: req.user.userId };
   
@@ -162,8 +164,8 @@ export const getMyEmergencyRequests = asyncHandler(async (req, res) => {
     .populate('patient', 'personalInfo email phoneNumber')
     .populate('reviewedBy', 'personalInfo')
     .sort({ requestedAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .limit(limit)
+    .skip(skip);
 
   const count = await EmergencyAccess.countDocuments(query);
 
@@ -182,7 +184,8 @@ export const getMyEmergencyRequests = asyncHandler(async (req, res) => {
 // @route   GET /api/emergency-access/for-review
 // @access  Private (Admin)
 export const getEmergencyAccessForReview = asyncHandler(async (req, res) => {
-  const { filter = 'all', page = 1, limit = 10 } = req.query;
+  const { filter = 'all' } = req.query;
+  const { page, limit, skip } = parsePagination(req.query);
 
   let query = {};
 
@@ -202,8 +205,8 @@ export const getEmergencyAccessForReview = asyncHandler(async (req, res) => {
     .populate('patient', 'personalInfo email phoneNumber')
     .populate('reviewedBy', 'personalInfo')
     .sort({ requestedAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .limit(limit)
+    .skip(skip);
 
   const count = await EmergencyAccess.countDocuments(query);
 

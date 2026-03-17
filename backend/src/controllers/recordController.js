@@ -4,6 +4,7 @@ import Consent from '../models/Consent.js';
 import EmergencyAccess from '../models/EmergencyAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
+import { parsePagination } from '../utils/pagination.js';
 import { generateEncryptionKey } from '../services/encryption.service.js';
 import { getFileInfo, deleteFile } from '../middleware/upload.js';
 import path from 'path';
@@ -117,7 +118,8 @@ export const uploadRecord = asyncHandler(async (req, res) => {
 // @route   GET /api/records/my-records
 // @access  Private (Patient)
 export const getMyRecords = asyncHandler(async (req, res) => {
-  const { recordType, page = 1, limit = 10, sortBy = 'recordDate', order = 'desc' } = req.query;
+  const { recordType, sortBy = 'recordDate', order = 'desc' } = req.query;
+  const { page, limit, skip } = parsePagination(req.query);
   
   const query = {
     patient: req.user.userId,
@@ -135,8 +137,8 @@ export const getMyRecords = asyncHandler(async (req, res) => {
     .populate('uploadedBy', 'personalInfo role')
     .populate('sharedWith.doctor', 'personalInfo professionalInfo')
     .sort(sortOptions)
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .limit(limit)
+    .skip(skip);
   
   const count = await MedicalRecord.countDocuments(query);
   
@@ -156,7 +158,8 @@ export const getMyRecords = asyncHandler(async (req, res) => {
 // @access  Private (Doctor/Admin)
 export const getPatientRecords = asyncHandler(async (req, res) => {
   const { patientId } = req.params;
-  const { recordType, page = 1, limit = 10 } = req.query;
+  const { recordType } = req.query;
+  const { page, limit, skip } = parsePagination(req.query);
   
   // Validate patient exists
   const patient = await User.findById(patientId);
@@ -184,8 +187,8 @@ export const getPatientRecords = asyncHandler(async (req, res) => {
       .populate('uploadedBy', 'personalInfo role')
       .populate('patient', 'personalInfo email phoneNumber')
       .sort({ recordDate: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+      .limit(limit)
+      .skip(skip);
   } 
   // If doctor, check for explicit shares, active consent, AND emergency access
   else if (req.user.role === 'doctor') {

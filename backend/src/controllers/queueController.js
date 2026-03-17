@@ -10,6 +10,7 @@ import { logger } from '../utils/logger.js';
 import Notification from '../models/Notification.js';
 import notificationService from '../services/notificationService.js';
 import { callAI, redactPII, AI_FEATURES } from '../services/aiService.js';
+import { parsePagination } from '../utils/pagination.js';
 
 // ─── Triage prompt (v1) ───────────────────────────────────────────────────────
 const TRIAGE_SYSTEM_PROMPT = `You are a medical triage assistant. Based on the patient's symptoms, return ONLY valid JSON:
@@ -189,7 +190,7 @@ export const getMyQueueStatus = asyncHandler(async (req, res) => {
 // @route   GET /api/queue/my-history
 // @access  Private (Patient)
 export const getMyQueueHistory = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
+  const { page, limit, skip } = parsePagination(req.query);
 
   const queueHistory = await Queue.find({
     patient: req.user.userId
@@ -197,8 +198,8 @@ export const getMyQueueHistory = asyncHandler(async (req, res) => {
     .populate('doctor', 'personalInfo professionalInfo')
     .populate('appointment')
     .sort({ checkInTime: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .limit(limit)
+    .skip(skip);
 
   const count = await Queue.countDocuments({ patient: req.user.userId });
 

@@ -8,6 +8,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 import notificationService from '../services/notificationService.js';
 import { generatePrescriptionPDF } from '../services/pdfGenerators.js';
+import { parsePagination } from '../utils/pagination.js';
 
 // @desc    Create new prescription
 // @route   POST /api/prescriptions
@@ -175,7 +176,8 @@ export const getPrescription = asyncHandler(async (req, res) => {
 // @route   GET /api/prescriptions/my-prescriptions
 // @access  Private (Patient)
 export const getMyPrescriptions = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, status } = req.query;
+  const { status } = req.query;
+  const { page, limit, skip } = parsePagination(req.query);
 
   const query = { patient: req.user.userId };
   if (status) {
@@ -186,8 +188,8 @@ export const getMyPrescriptions = asyncHandler(async (req, res) => {
     .populate('doctor', 'personalInfo professionalInfo')
     .populate('appointment')
     .sort({ createdAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .limit(limit)
+    .skip(skip);
 
   const count = await Prescription.countDocuments(query);
 
@@ -195,7 +197,7 @@ export const getMyPrescriptions = asyncHandler(async (req, res) => {
     success: true,
     data: prescriptions,
     pagination: {
-      currentPage: parseInt(page),
+      currentPage: page,
       totalPages: Math.ceil(count / limit),
       totalItems: count
     }
@@ -206,7 +208,8 @@ export const getMyPrescriptions = asyncHandler(async (req, res) => {
 // @route   GET /api/prescriptions/doctor-prescriptions
 // @access  Private (Doctor)
 export const getDoctorPrescriptions = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, patientId, status } = req.query;
+  const { patientId, status } = req.query;
+  const { page, limit, skip } = parsePagination(req.query);
 
   const query = { doctor: req.user.userId };
   if (patientId) {
@@ -220,8 +223,8 @@ export const getDoctorPrescriptions = asyncHandler(async (req, res) => {
     .populate('patient', 'personalInfo phoneNumber email')
     .populate('appointment')
     .sort({ createdAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .limit(limit)
+    .skip(skip);
 
   const count = await Prescription.countDocuments(query);
 

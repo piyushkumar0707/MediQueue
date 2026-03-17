@@ -99,7 +99,12 @@ const AuditLogs = () => {
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
+    setFilters(prev => ({
+      ...prev,
+      [key]: value,
+      // Reset to page 1 only when a filter (not page itself) changes
+      ...(key !== 'page' && { page: 1 })
+    }));
   };
 
   const clearFilters = () => {
