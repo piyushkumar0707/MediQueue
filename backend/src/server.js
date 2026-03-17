@@ -1,5 +1,6 @@
 import 'dotenv/config'; // Must be first — loads .env before any other module initializes
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -75,21 +76,39 @@ app.use(morgan('combined', { stream: { write: message => logger.info(message.tri
 app.set('io', io);
 
 // Health check routes (both /health and /api/health for compatibility)
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
+const healthHandler = async (req, res) => {
+  const checks = {
+    mongodb: 'unhealthy',
+    redis: 'unhealthy',
+  };
 
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
+  // MongoDB: readyState 1 = connected
+  try {
+    const { readyState } = mongoose.connection;
+    checks.mongodb = readyState === 1 ? 'healthy' : 'unhealthy';
+  } catch {
+    checks.mongodb = 'unhealthy';
+  }
+
+  // Redis: ping roundtrip
+  try {
+    const pong = await redisClient.ping();
+    checks.redis = pong === 'PONG' ? 'healthy' : 'unhealthy';
+  } catch {
+    checks.redis = 'unhealthy';
+  }
+
+  const allHealthy = Object.values(checks).every((s) => s === 'healthy');
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    checks,
   });
-});
+};
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // API Routes
 app.use('/api/auth', authRoutes);
