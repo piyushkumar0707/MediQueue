@@ -28,8 +28,18 @@ const triageRateLimit = rateLimit({
 // AI triage route
 router.post('/triage', protect, authorize('patient'), triageRateLimit, triageSymptoms);
 
+// Per-user rate limit for queue joins: 5 per hour
+const joinQueueRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => req.user?.userId || req.ip,
+  message: { success: false, message: 'Too many queue join requests. Please wait before trying again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Patient routes
-router.post('/join', protect, authorize('patient'), joinQueue);
+router.post('/join', protect, authorize('patient'), joinQueueRateLimit, joinQueue);
 router.get('/my-status', protect, authorize('patient'), getMyQueueStatus);
 router.get('/my-history', protect, authorize('patient'), getMyQueueHistory);
 

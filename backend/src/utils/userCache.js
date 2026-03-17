@@ -6,6 +6,33 @@ const USER_CACHE_PREFIX = 'user_auth:';
 const USER_CACHE_TTL = 60; // seconds
 
 /**
+ * Generic cache helper — returns cached value or runs fetchFn, stores result.
+ * Falls back to calling fetchFn directly if Redis is unavailable.
+ * @param {string} key - Redis cache key
+ * @param {number} ttlSeconds - time-to-live in seconds
+ * @param {Function} fetchFn - async function that returns the data to cache
+ * @returns {*} cached or freshly fetched data
+ */
+export const getOrSetCache = async (key, ttlSeconds, fetchFn) => {
+  try {
+    const cached = await redisClient.get(key);
+    if (cached) return JSON.parse(cached);
+  } catch (err) {
+    logger.warn(`Cache read failed for key "${key}": ${err.message}`);
+  }
+
+  const data = await fetchFn();
+
+  try {
+    await redisClient.set(key, JSON.stringify(data), 'EX', ttlSeconds);
+  } catch (err) {
+    logger.warn(`Cache write failed for key "${key}": ${err.message}`);
+  }
+
+  return data;
+};
+
+/**
  * Get a user document from Redis cache, falling back to MongoDB on miss.
  * Returns a plain object with a `changedPasswordAfter` method re-attached
  * so auth.js middleware can call it without modification.

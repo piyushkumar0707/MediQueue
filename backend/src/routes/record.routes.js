@@ -1,4 +1,5 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { protect, authorize } from '../middleware/auth.js';
 import { upload, handleUploadErrors } from '../middleware/upload.js';
 import {
@@ -19,10 +20,41 @@ import {
 
 const router = express.Router();
 
+// Per-user rate limit for file uploads: 10 per hour
+const uploadRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.user?.userId || req.ip,
+  message: { success: false, message: 'Too many file uploads. Please wait before uploading again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Per-user rate limit for AI summarization: 10 per minute
+const summarizeRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.user?.userId || req.ip,
+  message: { success: false, message: 'Too many summarization requests. Please wait a minute.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Per-user rate limit for PDF report downloads: 20 per hour
+const downloadReportRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  keyGenerator: (req) => req.user?.userId || req.ip,
+  message: { success: false, message: 'Too many download requests. Please wait before downloading again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Patient routes
 router.post(
   '/',
   protect,
+  uploadRateLimit,
   upload.array('files', 5),
   handleUploadErrors,
   uploadRecord
@@ -35,11 +67,11 @@ router.get('/shared-with-me', protect, authorize('doctor'), getSharedRecords);
 router.get('/patient/:patientId', protect, authorize('doctor', 'admin'), getPatientRecords);
 
 // AI routes
-router.post('/:id/summarize', protect, summarizeRecord);
+router.post('/:id/summarize', protect, summarizeRateLimit, summarizeRecord);
 router.get('/:id/view-file', protect, getFileViewUrl);
 
 // Shared routes
-router.get('/:id/download-report', protect, downloadRecordReport);
+router.get('/:id/download-report', protect, downloadReportRateLimit, downloadRecordReport);
 router.get('/:id', protect, getRecordById);
 router.patch('/:id', protect, updateRecord);
 router.delete('/:id', protect, deleteRecord);
