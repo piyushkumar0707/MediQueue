@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import EmergencyAccess from './EmergencyAccess.js';
 
 const medicalRecordSchema = new mongoose.Schema({
   patient: {
@@ -147,7 +148,7 @@ medicalRecordSchema.methods.logAccess = function(userId, action, ipAddress) {
 };
 
 // Method to check if user has access
-medicalRecordSchema.methods.canUserAccess = function(userId, userRole) {
+medicalRecordSchema.methods.canUserAccess = async function(userId, userRole) {
   // Convert userId to string for comparison
   const userIdStr = userId.toString();
   
@@ -172,15 +173,19 @@ medicalRecordSchema.methods.canUserAccess = function(userId, userRole) {
   
   // Check if doctor has explicit access
   if (userRole === 'doctor') {
-    // Check if shared with this doctor
+    // Check if shared with this doctor (non-expired)
     const sharedAccess = this.sharedWith.find(share => {
       const doctorIdStr = share.doctor._id ? share.doctor._id.toString() : share.doctor.toString();
       const hasAccess = doctorIdStr === userIdStr;
       const notExpired = !share.expiresAt || new Date(share.expiresAt) > new Date();
       return hasAccess && notExpired;
     });
-    
-    return !!sharedAccess;
+    if (sharedAccess) return true;
+
+    // Check for active emergency access
+    const patientId = this.patient._id || this.patient;
+    const emergencyAccess = await EmergencyAccess.getActiveAccess(userId, patientId);
+    if (emergencyAccess) return true;
   }
   
   return false;

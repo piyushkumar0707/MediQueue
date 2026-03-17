@@ -21,7 +21,7 @@ export const auditLogger = (action, category) => {
           targetUserId: req.params?.userId || req.body?.userId,
           targetResource: extractResourceType(action),
           targetResourceId: extractResourceId(req, data),
-          ipAddress: req.ip || req.connection.remoteAddress,
+          ipAddress: req.ip || req.socket?.remoteAddress,
           userAgent: req.get('user-agent'),
           metadata: {
             method: req.method,
@@ -150,7 +150,7 @@ export const logFailedAuth = async (email, reason, req) => {
       action: 'LOGIN',
       category: 'AUTH',
       description: `Failed login attempt for email: ${email}. Reason: ${reason}`,
-      ipAddress: req.ip || req.connection.remoteAddress,
+      ipAddress: req.ip || req.socket?.remoteAddress,
       userAgent: req.get('user-agent'),
       metadata: {
         email,

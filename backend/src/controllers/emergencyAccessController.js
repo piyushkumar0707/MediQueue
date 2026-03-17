@@ -122,7 +122,7 @@ export const requestEmergencyAccess = asyncHandler(async (req, res) => {
     targetUserId: patientId,
     targetResource: 'EmergencyAccess',
     targetResourceId: emergencyAccess._id,
-    ipAddress: req.ip || req.connection?.remoteAddress,
+    ipAddress: req.ip || req.socket?.remoteAddress,
     userAgent: req.get('user-agent'),
     metadata: {
       emergencyType,
@@ -347,7 +347,7 @@ export const reviewEmergencyAccess = asyncHandler(async (req, res) => {
     targetUserId: emergencyAccess.doctor._id,
     targetResource: 'EmergencyAccess',
     targetResourceId: emergencyAccess._id,
-    ipAddress: req.ip || req.connection?.remoteAddress,
+    ipAddress: req.ip || req.socket?.remoteAddress,
     userAgent: req.get('user-agent'),
     metadata: {
       decision,

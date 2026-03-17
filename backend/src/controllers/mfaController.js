@@ -176,7 +176,7 @@ export const validateMfa = async (req, res) => {
       action: 'LOGIN',
       category: 'AUTH',
       description: `User ${user.email} completed MFA login${usedBackup ? ' (backup code)' : ''}`,
-      ipAddress: req.ip || req.connection?.remoteAddress,
+      ipAddress: req.ip || req.socket?.remoteAddress,
       userAgent: req.get('user-agent'),
       status: 'SUCCESS'
     });

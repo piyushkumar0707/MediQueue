@@ -413,7 +413,7 @@ export const getRecordById = asyncHandler(async (req, res) => {
   let accessSource = null; // Track how access was granted
   
   // Check basic access (patient, uploader, admin, explicitly shared)
-  if (record.canUserAccess(req.user.userId, req.user.role)) {
+  if (await record.canUserAccess(req.user.userId, req.user.role)) {
     hasAccess = true;
     accessSource = 'basic';
   }
@@ -807,7 +807,7 @@ export const getFileViewUrl = asyncHandler(async (req, res) => {
   if (!record) return res.status(404).json({ success: false, message: 'Record not found' });
 
   // Check basic access first
-  let hasAccess = record.canUserAccess(req.user.userId, req.user.role);
+  let hasAccess = await record.canUserAccess(req.user.userId, req.user.role);
 
   // If doctor without explicit share, check consent
   if (!hasAccess && req.user.role === 'doctor') {
@@ -818,12 +818,6 @@ export const getFileViewUrl = asyncHandler(async (req, res) => {
       $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }]
     });
     if (activeConsent) hasAccess = true;
-
-    // Also check emergency access
-    if (!hasAccess) {
-      const emergencyAccess = await EmergencyAccess.getActiveAccess(req.user.userId, record.patient._id ? record.patient._id : record.patient);
-      if (emergencyAccess) hasAccess = true;
-    }
   }
 
   if (!hasAccess) {

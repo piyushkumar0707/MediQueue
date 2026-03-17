@@ -319,7 +319,7 @@ export const login = async (req, res) => {
       action: 'LOGIN',
       category: 'AUTH',
       description: `User ${user.email} logged in successfully`,
-      ipAddress: req.ip || req.connection.remoteAddress,
+      ipAddress: req.ip || req.socket?.remoteAddress,
       userAgent: req.get('user-agent'),
       status: 'SUCCESS'
     });

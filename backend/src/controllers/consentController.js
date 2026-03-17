@@ -184,7 +184,7 @@ export const grantConsent = asyncHandler(async (req, res) => {
     targetUserId: doctorId,
     targetResource: 'Consent',
     targetResourceId: consent._id,
-    ipAddress: req.ip || req.connection?.remoteAddress,
+    ipAddress: req.ip || req.socket?.remoteAddress,
     userAgent: req.get('user-agent'),
     metadata: {
       scope: consent.scope,
@@ -268,7 +268,7 @@ export const revokeConsent = asyncHandler(async (req, res) => {
     targetUserId: consent.doctor,
     targetResource: 'Consent',
     targetResourceId: consent._id,
-    ipAddress: req.ip || req.connection?.remoteAddress,
+    ipAddress: req.ip || req.socket?.remoteAddress,
     userAgent: req.get('user-agent'),
     metadata: {
       reason: req.body.reason || 'Revoked by patient'
