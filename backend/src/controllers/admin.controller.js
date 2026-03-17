@@ -3,6 +3,7 @@ import Appointment from '../models/Appointment.js';
 import Queue from '../models/Queue.js';
 import EmergencyAccess from '../models/EmergencyAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { invalidateUserCache } from '../utils/userCache.js';
 
 /**
  * @desc    Get admin dashboard statistics
@@ -149,6 +150,9 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   
   user.isActive = isActive;
   await user.save();
+
+  // Invalidate auth cache so deactivated users are rejected on next request
+  await invalidateUserCache(user._id.toString());
 
   res.json({
     success: true,

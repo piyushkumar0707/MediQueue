@@ -1,4 +1,5 @@
 import { verifyAccessToken, extractTokenFromHeader } from '../utils/jwt.js';
+import { getCachedUser } from '../utils/userCache.js';
 import User from '../models/User.js';
 import { logger } from '../utils/logger.js';
 
@@ -32,8 +33,8 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    // Check if user still exists in DB
-    const user = await User.findById(decoded.userId).select('-password -mfaSecret');
+    // Check if user still exists — served from Redis cache (TTL: 60s), falls back to DB
+    const user = await getCachedUser(decoded.userId);
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'User no longer exists' });

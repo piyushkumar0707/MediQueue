@@ -8,6 +8,7 @@ import { logFailedAuth } from '../middleware/auditLogger.js';
 import { activityTypes, emitStatsUpdate } from '../utils/adminEvents.js';
 import { setOTP, getOTP, deleteOTP } from '../utils/otpStore.js';
 import emailService from '../services/emailService.js';
+import { invalidateUserCache } from '../utils/userCache.js';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -651,6 +652,9 @@ export const resetPassword = async (req, res) => {
     
     user.password = newPassword;
     await user.save();
+    
+    // Invalidate auth cache so next request picks up new passwordChangedAt
+    await invalidateUserCache(user._id.toString());
     
     // Logout from all devices
     await user.removeAllRefreshTokens();
