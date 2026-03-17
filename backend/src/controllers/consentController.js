@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import Notification from '../models/Notification.js';
 import notificationService from '../services/notificationService.js';
 import AuditLog from '../models/AuditLog.js';
+import mongoose from 'mongoose';
 
 // @desc    Get my consents (patient view)
 // @route   GET /api/consent/my-consents
@@ -156,7 +157,7 @@ export const grantConsent = asyncHandler(async (req, res) => {
     recipient: doctorId,
     sender: req.user.userId,
     type: 'consent_granted',
-    title: '✅ Consent Granted',
+    title: 'Consent Granted',
     message: `A patient has granted you access to their medical records.`,
     priority: 'medium',
     channels: {
@@ -233,7 +234,7 @@ export const revokeConsent = asyncHandler(async (req, res) => {
     recipient: consent.doctor,
     sender: req.user.userId,
     type: 'consent_revoked',
-    title: '🚫 Consent Revoked',
+    title: 'Consent Revoked',
     message: `A patient has revoked your access to their medical records.`,
     priority: 'high',
     channels: {
@@ -416,7 +417,7 @@ export const getConsentStats = asyncHandler(async (req, res) => {
     Consent.aggregate([
       {
         $match: {
-          patient: req.user.userId,
+          patient: new mongoose.Types.ObjectId(req.user.userId),
           'accessLog.0': { $exists: true }
         }
       },

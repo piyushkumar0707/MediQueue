@@ -78,7 +78,7 @@ export const getAdminStats = asyncHandler(async (req, res) => {
  * @access  Private (Admin)
  */
 export const getRecentUsers = asyncHandler(async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;
+  const limit = Math.min(parseInt(req.query.limit) || 10, 100);
   
   const users = await User.find()
     .select('personalInfo email role createdAt isActive')

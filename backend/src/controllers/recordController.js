@@ -306,7 +306,8 @@ export const getPatientRecords = asyncHandler(async (req, res) => {
 // @route   GET /api/records/shared-with-me
 // @access  Private (Doctor)
 export const getSharedRecords = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, recordType } = req.query;
+  const { recordType } = req.query;
+  const { page, limit } = parsePagination(req.query);
   
   // Get records explicitly shared with this doctor
   const explicitlySharedRecords = await MedicalRecord.getSharedWithDoctor(req.user.userId);
@@ -388,7 +389,7 @@ export const getSharedRecords = asyncHandler(async (req, res) => {
     success: true,
     data: paginatedRecords,
     pagination: {
-      currentPage: parseInt(page),
+      currentPage: page,
       totalPages: Math.ceil(filteredRecords.length / limit),
       totalItems: filteredRecords.length
     }

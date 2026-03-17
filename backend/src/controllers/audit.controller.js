@@ -2,6 +2,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import AuditLog from '../models/AuditLog.js';
 import User from '../models/User.js';
 import { logger } from '../utils/logger.js';
+import { parsePagination } from '../utils/pagination.js';
 
 /**
  * @desc    Get all audit logs with filters
@@ -10,8 +11,6 @@ import { logger } from '../utils/logger.js';
  */
 export const getAuditLogs = asyncHandler(async (req, res) => {
   const { 
-    page = 1, 
-    limit = 50, 
     userId, 
     action, 
     category,
@@ -19,6 +18,8 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
     endDate,
     search 
   } = req.query;
+
+  const { page, limit, skip } = parsePagination(req.query, 50);
 
   const query = {};
 
@@ -39,14 +40,12 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
     query.description = { $regex: search, $options: 'i' };
   }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit);
-
   const [logs, total] = await Promise.all([
     AuditLog.find(query)
       .populate('userId', 'email personalInfo.firstName personalInfo.lastName role')
       .populate('targetUserId', 'email personalInfo.firstName personalInfo.lastName')
       .sort({ createdAt: -1 })
-      .limit(parseInt(limit))
+      .limit(limit)
       .skip(skip),
     AuditLog.countDocuments(query)
   ]);
@@ -55,10 +54,10 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
     success: true,
     data: logs,
     pagination: {
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page,
+      limit,
       total,
-      pages: Math.ceil(total / parseInt(limit))
+      pages: Math.ceil(total / limit)
     }
   });
 });
@@ -209,15 +208,13 @@ export const getAuditStats = asyncHandler(async (req, res) => {
  */
 export const getUserActivityLogs = asyncHandler(async (req, res) => {
   const { userId } = req.params;
-  const { page = 1, limit = 20 } = req.query;
-
-  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const { page, limit, skip } = parsePagination(req.query, 20);
 
   const [logs, total] = await Promise.all([
     AuditLog.find({ userId })
       .populate('targetUserId', 'email personalInfo.firstName personalInfo.lastName')
       .sort({ createdAt: -1 })
-      .limit(parseInt(limit))
+      .limit(limit)
       .skip(skip),
     AuditLog.countDocuments({ userId })
   ]);
@@ -231,10 +228,10 @@ export const getUserActivityLogs = asyncHandler(async (req, res) => {
       user,
       logs,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         total,
-        pages: Math.ceil(total / parseInt(limit))
+        pages: Math.ceil(total / limit)
       }
     }
   });

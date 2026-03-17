@@ -125,7 +125,7 @@ class EmailService {
   }
 
   emergencyAccessEmail(patientName, doctorName, emergencyType, location) {
-    const subject = '🚨 Emergency Access Granted - CareQueue';
+    const subject = '[URGENT] Emergency Access Granted - CareQueue';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -178,7 +178,7 @@ class EmailService {
   }
 
   verificationEmail(userName, verificationUrl) {
-    const subject = '✅ Verify Your Email — CareQueue';
+    const subject = 'Verify Your Email — CareQueue';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -259,7 +259,7 @@ class EmailService {
   }
 
   prescriptionEmail(patientName, doctorName, diagnosis, medicines) {
-    const subject = '💊 New Prescription Available - CareQueue';
+    const subject = 'New Prescription Available - CareQueue';
     const medicineList = medicines.map(med => 
       `<li><strong>${med.name}</strong> - ${med.dosage}, ${med.frequency}, ${med.duration}</li>`
     ).join('');
@@ -316,7 +316,7 @@ class EmailService {
   }
 
   appointmentCancelledEmail(patientName, doctorName, appointmentDate, timeSlot, reason) {
-    const subject = '❌ Appointment Cancelled - CareQueue';
+    const subject = 'Appointment Cancelled - CareQueue';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -441,7 +441,7 @@ class EmailService {
   }
 
   appointmentBookedEmail(patientName, doctorName, appointmentDate, timeSlot, reasonForVisit) {
-    const subject = '✅ Appointment Confirmed - CareQueue';
+    const subject = 'Appointment Confirmed - CareQueue';
     const html = `
       <!DOCTYPE html>
       <html>

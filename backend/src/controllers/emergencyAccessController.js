@@ -268,15 +268,15 @@ export const reviewEmergencyAccess = asyncHandler(async (req, res) => {
   let notificationTitle, notificationMessage, notificationPriority;
   
   if (decision === 'approved' || decision === 'legitimate') {
-    notificationTitle = '✅ Emergency Access Approved';
+    notificationTitle = 'Emergency Access Approved';
     notificationMessage = `Your emergency access request for patient ${emergencyAccess.patient.firstName} ${emergencyAccess.patient.lastName} has been reviewed and approved by admin.`;
     notificationPriority = 'medium';
   } else if (decision === 'flagged') {
-    notificationTitle = '⚠️ Emergency Access Flagged';
+    notificationTitle = 'Emergency Access Flagged';
     notificationMessage = `Your emergency access request for patient ${emergencyAccess.patient.firstName} ${emergencyAccess.patient.lastName} has been flagged for additional review. Notes: ${notes || 'None'}`;
     notificationPriority = 'high';
   } else if (decision === 'revoked') {
-    notificationTitle = '❌ Emergency Access Revoked';
+    notificationTitle = 'Emergency Access Revoked';
     notificationMessage = `Your emergency access request for patient ${emergencyAccess.patient.firstName} ${emergencyAccess.patient.lastName} has been revoked by admin. Notes: ${notes || 'None'}`;
     notificationPriority = 'urgent';
   }

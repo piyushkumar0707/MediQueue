@@ -1,6 +1,7 @@
 import Notification from '../models/Notification.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import notificationService from '../services/notificationService.js';
+import { parsePagination } from '../utils/pagination.js';
 
 // @desc    Create a new notification
 // @route   POST /api/notifications
@@ -47,18 +48,12 @@ export const createNotification = asyncHandler(async (req, res) => {
 // @route   GET /api/notifications
 // @access  Private
 export const getNotifications = asyncHandler(async (req, res) => {
-  const {
-    page = 1,
-    limit = 20,
-    type,
-    priority,
-    isRead,
-    sortBy
-  } = req.query;
+  const { type, priority, isRead, sortBy } = req.query;
+  const { page, limit } = parsePagination(req.query, 20);
 
   const options = {
-    page: parseInt(page),
-    limit: parseInt(limit),
+    page,
+    limit,
     type,
     priority,
     sortBy: sortBy || '-createdAt'

@@ -183,7 +183,7 @@ class NotificationService {
         case 'queue_update':
         case 'queue_status':
           emailTemplate = {
-            subject: '🔔 Your Turn - CareQueue',
+            subject: 'Your Turn - CareQueue',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background-color: #059669; color: white; padding: 20px; text-align: center;">

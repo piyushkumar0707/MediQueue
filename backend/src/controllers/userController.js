@@ -1,11 +1,13 @@
 import User from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { parsePagination } from '../utils/pagination.js';
 
 // @desc    Get all doctors with optional filters
 // @route   GET /api/users/doctors
 // @access  Public/Private
 export const getDoctors = asyncHandler(async (req, res) => {
-  const { specialization, search, available, page = 1, limit = 20 } = req.query;
+  const { specialization, search, available } = req.query;
+  const { page, limit, skip } = parsePagination(req.query, 20);
 
   const query = { role: 'doctor', isActive: true };
 
@@ -29,15 +31,11 @@ export const getDoctors = asyncHandler(async (req, res) => {
     ];
   }
 
-  const pageNum = parseInt(page);
-  const limitNum = parseInt(limit);
-  const skip = (pageNum - 1) * limitNum;
-
   const [doctors, total] = await Promise.all([
     User.find(query)
       .select('personalInfo professionalInfo email phoneNumber')
       .sort({ 'personalInfo.firstName': 1 })
-      .limit(limitNum)
+      .limit(limit)
       .skip(skip),
     User.countDocuments(query)
   ]);
@@ -47,10 +45,10 @@ export const getDoctors = asyncHandler(async (req, res) => {
     count: doctors.length,
     data: doctors,
     pagination: {
-      page: pageNum,
-      limit: limitNum,
+      page,
+      limit,
       total,
-      pages: Math.ceil(total / limitNum)
+      pages: Math.ceil(total / limit)
     }
   });
 });

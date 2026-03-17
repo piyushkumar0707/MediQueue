@@ -32,7 +32,7 @@ export const setupMfa = async (req, res) => {
 
     // Save the temp secret (not yet confirmed)
     user.mfaSecret = secret.base32;
-    await user.save({ validateBeforeSave: false });
+    await user.save({ validateModifiedOnly: true });
 
     // Generate QR code data URL
     const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
@@ -95,7 +95,7 @@ export const verifyMfaSetup = async (req, res) => {
 
     user.mfaEnabled = true;
     user.mfaBackupCodes = hashedBackupCodes;
-    await user.save({ validateBeforeSave: false });
+    await user.save({ validateModifiedOnly: true });
 
     logger.info(`MFA enabled for user: ${user.email}`);
 
@@ -181,7 +181,7 @@ export const validateMfa = async (req, res) => {
       status: 'SUCCESS'
     });
 
-    await user.save({ validateBeforeSave: false });
+    await user.save({ validateModifiedOnly: true });
 
     // Set httpOnly cookies
     const COOKIE_OPTIONS = {
@@ -238,7 +238,7 @@ export const disableMfa = async (req, res) => {
     user.mfaEnabled = false;
     user.mfaSecret = undefined;
     user.mfaBackupCodes = undefined;
-    await user.save({ validateBeforeSave: false });
+    await user.save({ validateModifiedOnly: true });
 
     logger.info(`MFA disabled for user: ${user.email}`);
 

@@ -324,7 +324,7 @@ export const callNextPatient = asyncHandler(async (req, res) => {
     recipient: nextPatient.patient._id,
     sender: req.user.userId,
     type: 'queue_update',
-    title: '🔔 Your Turn!',
+    title: 'Your Turn!',
     message: `Please proceed to ${consultationRoom || 'the consultation room'}. The doctor is ready to see you now.`,
     priority: 'high',
     channels: {
