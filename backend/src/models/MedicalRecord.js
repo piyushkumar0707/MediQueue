@@ -194,8 +194,9 @@ medicalRecordSchema.methods.canUserAccess = async function(userId, userRole) {
 // Method to share record with doctor
 medicalRecordSchema.methods.shareWith = function(doctorId, expiresAt = null, canDownload = true) {
   // Check if already shared
+  const doctorOid = new mongoose.Types.ObjectId(doctorId);
   const existingShare = this.sharedWith.find(
-    share => share.doctor.toString() === doctorId
+    share => doctorOid.equals(share.doctor)
   );
   
   if (existingShare) {
@@ -218,8 +219,9 @@ medicalRecordSchema.methods.shareWith = function(doctorId, expiresAt = null, can
 
 // Method to revoke access
 medicalRecordSchema.methods.revokeAccess = function(doctorId) {
+  const doctorOid = new mongoose.Types.ObjectId(doctorId);
   this.sharedWith = this.sharedWith.filter(
-    share => share.doctor.toString() !== doctorId
+    share => !doctorOid.equals(share.doctor)
   );
   return this.save();
 };
