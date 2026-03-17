@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 const auditLogSchema = new mongoose.Schema({
   userId: {
@@ -159,6 +160,28 @@ auditLogSchema.index({ targetUserId: 1, createdAt: -1 });
 auditLogSchema.index({ isHIPAARelevant: 1, createdAt: -1 });
 auditLogSchema.index({ severity: 1, createdAt: -1 });
 auditLogSchema.index({ status: 1, createdAt: -1 });
+
+// Auto-compute integrity hash covering all significant fields before save
+auditLogSchema.pre('save', function(next) {
+  const payload = JSON.stringify({
+    userId: this.userId?.toString(),
+    action: this.action,
+    category: this.category,
+    description: this.description,
+    ipAddress: this.ipAddress,
+    userAgent: this.userAgent,
+    targetUserId: this.targetUserId?.toString(),
+    targetResource: this.targetResource,
+    targetResourceId: this.targetResourceId?.toString(),
+    status: this.status,
+    metadata: this.metadata,
+    dataAccessed: this.dataAccessed,
+    accessReason: this.accessReason,
+    createdAt: this.createdAt?.toISOString() || new Date().toISOString()
+  });
+  this.hash = crypto.createHash('sha256').update(payload).digest('hex');
+  next();
+});
 
 // Static methods for compliance reporting
 auditLogSchema.statics.getHIPAALogs = function(startDate, endDate) {

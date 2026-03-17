@@ -5,7 +5,6 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import Notification from '../models/Notification.js';
 import notificationService from '../services/notificationService.js';
 import AuditLog from '../models/AuditLog.js';
-import crypto from 'crypto';
 
 // @desc    Get my consents (patient view)
 // @route   GET /api/consent/my-consents
@@ -170,12 +169,6 @@ export const grantConsent = asyncHandler(async (req, res) => {
   await notificationService.sendNotification(doctorNotification);
 
   // Audit log - HIPAA Critical
-  const hashString = JSON.stringify({
-    userId: req.user.userId,
-    action: 'CONSENT_GRANTED',
-    timestamp: new Date().toISOString()
-  });
-  
   await AuditLog.create({
     userId: req.user.userId,
     action: 'CONSENT_GRANTED',
@@ -195,8 +188,7 @@ export const grantConsent = asyncHandler(async (req, res) => {
     severity: 'HIGH',
     isHIPAARelevant: true,
     dataAccessed: ['Consent Information', 'Medical Records Access'],
-    accessReason: purpose || 'Medical treatment',
-    hash: crypto.createHash('sha256').update(hashString).digest('hex')
+    accessReason: purpose || 'Medical treatment'
   });
 
   res.status(201).json({
@@ -253,13 +245,9 @@ export const revokeConsent = asyncHandler(async (req, res) => {
   });
   await notificationService.sendNotification(doctorNotification);
 
+  await notificationService.sendNotification(doctorNotification);
+
   // Audit log - HIPAA Critical
-  const hashString = JSON.stringify({
-    userId: req.user.userId,
-    action: 'CONSENT_REVOKED',
-    timestamp: new Date().toISOString()
-  });
-  
   await AuditLog.create({
     userId: req.user.userId,
     action: 'CONSENT_REVOKED',
@@ -277,8 +265,7 @@ export const revokeConsent = asyncHandler(async (req, res) => {
     severity: 'HIGH',
     isHIPAARelevant: true,
     dataAccessed: ['Consent Information'],
-    accessReason: 'Consent revocation',
-    hash: crypto.createHash('sha256').update(hashString).digest('hex')
+    accessReason: 'Consent revocation'
   });
 
   res.json({

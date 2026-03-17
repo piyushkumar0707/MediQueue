@@ -54,10 +54,9 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 function App() {
   return (
     <ErrorBoundary>
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <Router>
-        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-      
-      <Routes>
+        <Routes>
         {/* Public Auth Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
@@ -134,7 +133,7 @@ function App() {
         {/* Default Redirect */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+        </Routes>
       </Router>
     </ErrorBoundary>
   );

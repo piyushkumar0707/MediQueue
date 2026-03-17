@@ -5,7 +5,6 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { parsePagination } from '../utils/pagination.js';
 import notificationService from '../services/notificationService.js';
 import AuditLog from '../models/AuditLog.js';
-import crypto from 'crypto';
 
 // @desc    Request emergency access to patient records
 // @route   POST /api/emergency-access/request
@@ -109,12 +108,6 @@ export const requestEmergencyAccess = asyncHandler(async (req, res) => {
   }));
 
   // Audit log - HIPAA CRITICAL
-  const hashString = JSON.stringify({
-    userId: req.user.userId,
-    action: 'EMERGENCY_ACCESS_CREATED',
-    timestamp: new Date().toISOString()
-  });
-  
   await AuditLog.create({
     userId: req.user.userId,
     action: 'EMERGENCY_ACCESS_CREATED',
@@ -136,8 +129,7 @@ export const requestEmergencyAccess = asyncHandler(async (req, res) => {
     severity: 'CRITICAL',
     isHIPAARelevant: true,
     dataAccessed: ['PHI', 'Medical Records', 'Emergency Override'],
-    accessReason: `EMERGENCY: ${emergencyType} - ${justification}`,
-    hash: crypto.createHash('sha256').update(hashString).digest('hex')
+    accessReason: `EMERGENCY: ${emergencyType} - ${justification}`
   });
 
   res.status(201).json({
@@ -336,12 +328,6 @@ export const reviewEmergencyAccess = asyncHandler(async (req, res) => {
   await notificationService.sendNotification(patientReviewNotification);
 
   // Audit log - HIPAA CRITICAL
-  const hashString = JSON.stringify({
-    userId: req.user.userId,
-    action: 'EMERGENCY_ACCESS_REVIEWED',
-    timestamp: new Date().toISOString()
-  });
-  
   await AuditLog.create({
     userId: req.user.userId,
     action: 'EMERGENCY_ACCESS_REVIEWED',
@@ -362,8 +348,7 @@ export const reviewEmergencyAccess = asyncHandler(async (req, res) => {
     severity: 'CRITICAL',
     isHIPAARelevant: true,
     dataAccessed: ['Emergency Access Review'],
-    accessReason: `Emergency access review: ${decision}`,
-    hash: crypto.createHash('sha256').update(hashString).digest('hex')
+    accessReason: `Emergency access review: ${decision}`
   });
 
   res.json({

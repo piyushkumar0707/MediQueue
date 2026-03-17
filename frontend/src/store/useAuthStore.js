@@ -33,7 +33,7 @@ const useAuthStore = create(
           set({ isLoading: false });
           return data;
         } catch (error) {
-          console.error('API call error:', error);
+          if (import.meta.env.DEV) console.error('API call error:', error);
           const errorMsg = error.response?.data?.message || error.message || 'Registration failed';
           set({ isLoading: false, error: errorMsg });
           throw new Error(errorMsg);
