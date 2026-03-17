@@ -9,7 +9,9 @@ export const validateEnv = () => {
     'MONGODB_URI',
     'JWT_ACCESS_SECRET',
     'JWT_REFRESH_SECRET',
+    'JWT_MFA_SECRET',
     'ENCRYPTION_KEY',
+    'REDIS_URL',
   ];
 
   const productionOnly = [
