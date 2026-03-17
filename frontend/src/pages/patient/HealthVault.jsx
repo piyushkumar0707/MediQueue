@@ -235,10 +235,13 @@ const HealthVault = () => {
 
   const handleViewFile = async (recordId, fileIndex = 0) => {
     try {
-      const response = await api.get(`/records/${recordId}/view-file?fileIndex=${fileIndex}`);
-      if (response.success) {
-        window.open(response.url, '_blank');
-      }
+      const blob = await api.get(`/records/${recordId}/view-file?fileIndex=${fileIndex}`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const win = window.open(url, '_blank');
+      if (!win) toast.error('Pop-up blocked — please allow pop-ups for this site');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (error) {
       toast.error('Failed to get file URL');
     }
@@ -261,18 +264,11 @@ const HealthVault = () => {
 
   const downloadRecordReport = async (record) => {
     try {
-      const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
-      const token = authStorage?.state?.accessToken;
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/records/${record._id}/download-report`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await api.get(`/records/${record._id}/download-report`, {
+        responseType: 'blob',
       });
 
-      if (!response.ok) throw new Error('Failed to download');
-
-      const blob = await response.blob();
+      const blob = new Blob([response], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

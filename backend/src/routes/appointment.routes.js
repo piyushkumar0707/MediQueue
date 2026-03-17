@@ -1,5 +1,5 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../utils/rateLimiter.js';
 import { protect, authorize } from '../middleware/auth.js';
 import {
   bookAppointment,
@@ -17,7 +17,7 @@ import {
 const router = express.Router();
 
 // Per-user rate limit for appointment bookings: 10 per hour
-const bookingRateLimit = rateLimit({
+const bookingRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 10,
   keyGenerator: (req) => req.user?.userId || req.ip,
@@ -27,7 +27,7 @@ const bookingRateLimit = rateLimit({
 });
 
 // Per-user rate limit for PDF confirmation downloads: 20 per hour
-const downloadConfirmationRateLimit = rateLimit({
+const downloadConfirmationRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 20,
   keyGenerator: (req) => req.user?.userId || req.ip,
@@ -53,3 +53,4 @@ router.patch('/:id/reschedule', protect, authorize('patient'), rescheduleAppoint
 router.delete('/:id', protect, cancelAppointment);
 
 export default router;
+

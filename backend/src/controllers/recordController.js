@@ -849,10 +849,17 @@ export const getFileViewUrl = asyncHandler(async (req, res) => {
   const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
     resource_type: getCloudinaryResourceType(file.fileType),
     type: 'upload',
-    expires_at: Math.floor(Date.now() / 1000) + 300, // 5 min
+    expires_at: Math.floor(Date.now() / 1000) + 300, // 5 min for internal fetch
   });
 
-  res.json({ success: true, url: signedUrl });
+  // Proxy the file through the backend so the browser receives it with the
+  // correct Content-Type (Cloudinary serves raw uploads as octet-stream).
+  const fileRes = await axios.get(signedUrl, { responseType: 'arraybuffer', timeout: 15000 });
+  const contentType = file.fileType || 'application/octet-stream';
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `inline; filename="${file.fileName || 'file'}"`);
+  res.setHeader('Content-Length', fileRes.data.byteLength);
+  res.send(Buffer.from(fileRes.data));
 });
 
 const SUMMARIZE_WINDOW = 3600; // seconds

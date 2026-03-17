@@ -1,5 +1,5 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../utils/rateLimiter.js';
 import { protect, authorize } from '../middleware/auth.js';
 import {
   createPrescription,
@@ -16,7 +16,7 @@ import {
 const router = express.Router();
 
 // Per-user rate limit for PDF prescription downloads: 20 per hour
-const downloadPrescriptionRateLimit = rateLimit({
+const downloadPrescriptionRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 20,
   keyGenerator: (req) => req.user?.userId || req.ip,
@@ -42,3 +42,4 @@ router.patch('/:id', protect, authorize('doctor'), updatePrescription);
 router.delete('/:id', protect, authorize('doctor', 'admin'), deletePrescription);
 
 export default router;
+

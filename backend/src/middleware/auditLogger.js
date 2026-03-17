@@ -123,21 +123,28 @@ function extractResourceId(req, data) {
 }
 
 /**
- * Sanitize request body (remove sensitive data)
+ * Sanitize request body (remove sensitive data — deep to catch nested objects)
  */
 function sanitizeBody(body) {
-  if (!body) return null;
-  
-  const sanitized = { ...body };
-  
-  // Remove sensitive fields
-  delete sanitized.password;
-  delete sanitized.currentPassword;
-  delete sanitized.newPassword;
-  delete sanitized.confirmPassword;
-  delete sanitized.token;
-  
-  return sanitized;
+  if (!body || typeof body !== 'object') return body ?? null;
+
+  const SENSITIVE_KEYS = new Set([
+    'password', 'currentPassword', 'newPassword', 'confirmPassword', 'token',
+  ]);
+
+  const sanitize = (obj) => {
+    if (Array.isArray(obj)) return obj.map(sanitize);
+    if (obj !== null && typeof obj === 'object') {
+      return Object.fromEntries(
+        Object.entries(obj)
+          .filter(([key]) => !SENSITIVE_KEYS.has(key))
+          .map(([key, val]) => [key, sanitize(val)])
+      );
+    }
+    return obj;
+  };
+
+  return sanitize(body);
 }
 
 /**

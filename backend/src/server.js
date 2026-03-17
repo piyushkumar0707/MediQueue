@@ -41,6 +41,20 @@ import { verifyAccessToken } from './utils/jwt.js';
 // Validate environment variables before starting
 validateEnv();
 
+// Build CORS allowlist — supports comma-separated origins for multi-env (staging + prod)
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const corsOriginFn = (origin, callback) => {
+  // Allow server-to-server and direct curl requests (no origin header)
+  if (!origin || allowedOrigins.includes(origin)) {
+    return callback(null, true);
+  }
+  callback(new Error(`CORS policy: origin '${origin}' is not allowed`));
+};
+
 // Initialize Express app
 const app = express();
 const httpServer = createServer(app);
@@ -48,7 +62,7 @@ const httpServer = createServer(app);
 // Initialize Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: corsOriginFn,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -61,16 +75,26 @@ notificationService.setSocketIO(io);
 emailService.initialize();
 
 // Middleware
-app.use(helmet()); // Security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],     // API server — no scripts, styles, or embeds needed
+      frameAncestors: ["'none'"], // Prevent clickjacking
+    },
+  },
+})); // Security headers
 app.use(compression()); // Compress responses
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: corsOriginFn,
   credentials: true,
 }));
 app.use(cookieParser());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(morgan('combined', {
+  stream: { write: message => logger.info(message.trim()) },
+  skip: (req) => req.url === '/health' || req.url === '/api/health',
+}));
 
 // Make io accessible to routes
 app.set('io', io);
@@ -109,20 +133,21 @@ const healthHandler = async (req, res) => {
 
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
+app.get('/api/v1/health', healthHandler);
 
 // API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/queue', queueRoutes);
-app.use('/api/records', recordRoutes);
-app.use('/api/consent', consentRoutes);
-app.use('/api/emergency-access', emergencyAccessRoutes);
-app.use('/api/prescriptions', prescriptionRoutes);
-app.use('/api/audit', auditRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/appointments', appointmentRoutes);
+app.use('/api/v1/queue', queueRoutes);
+app.use('/api/v1/records', recordRoutes);
+app.use('/api/v1/consent', consentRoutes);
+app.use('/api/v1/emergency-access', emergencyAccessRoutes);
+app.use('/api/v1/prescriptions', prescriptionRoutes);
+app.use('/api/v1/audit', auditRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -169,7 +194,15 @@ io.on('connection', (socket) => {
 // Connect to database and Redis, then start server
 const PORT = process.env.PORT || 5000;
 
-Promise.all([connectDB(), redisClient.connect()])
+const connectRedis = () => {
+  // ioredis with lazyConnect may already be connecting/connected — skip if so
+  if (redisClient.status === 'ready' || redisClient.status === 'connecting') {
+    return Promise.resolve();
+  }
+  return redisClient.connect();
+};
+
+Promise.all([connectDB(), connectRedis()])
   .then(() => {
     httpServer.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
@@ -189,6 +222,12 @@ Promise.all([connectDB(), redisClient.connect()])
 process.on('unhandledRejection', (err) => {
   logger.error('Unhandled Rejection:', err);
   httpServer.close(() => process.exit(1));
+});
+
+// Handle synchronous uncaught exceptions
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', err);
+  process.exit(1);
 });
 
 // Graceful shutdown on SIGTERM (Docker/Kubernetes/Heroku stop) and SIGINT (Ctrl+C)

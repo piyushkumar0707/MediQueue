@@ -124,7 +124,7 @@ const AdminDashboard = () => {
     });
 
     socketRef.current.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      if (import.meta.env.DEV) console.error('Socket connection error:', error);
       setSocketConnected(false);
     });
   };
@@ -178,7 +178,7 @@ const AdminDashboard = () => {
 
   const fetchSystemHealth = async () => {
     try {
-      const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '');
+      const BACKEND_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
       const response = await fetch(`${BACKEND_URL}/health`);
       const data = await response.json();
       const { uptime } = data;

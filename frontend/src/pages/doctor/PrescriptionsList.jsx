@@ -56,18 +56,11 @@ const Prescriptions = () => {
 
   const downloadPrescription = async (prescription) => {
     try {
-      const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
-      const token = authStorage?.state?.accessToken;
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/prescriptions/${prescription._id}/download`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await api.get(`/prescriptions/${prescription._id}/download`, {
+        responseType: 'blob',
       });
 
-      if (!response.ok) throw new Error('Failed to download');
-
-      const blob = await response.blob();
+      const blob = new Blob([response], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

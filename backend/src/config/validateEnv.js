@@ -40,6 +40,20 @@ export const validateEnv = () => {
     }
   }
 
+  // Validate FRONTEND_URL format when set (supports comma-separated for multi-env)
+  if (process.env.FRONTEND_URL) {
+    const urls = process.env.FRONTEND_URL.split(',').map(u => u.trim()).filter(Boolean);
+    for (const url of urls) {
+      try {
+        new URL(url);
+      } catch {
+        const msg = `[ENV] FRONTEND_URL contains invalid URL: "${url}"`;
+        if (process.env.NODE_ENV === 'production') throw new Error(msg);
+        else logger.warn(msg);
+      }
+    }
+  }
+
   // AI features — optional; warn so the developer knows AI is disabled
   if (!process.env.GROQ_API_KEY) {
     logger.warn('[ENV] GROQ_API_KEY not set — AI triage and summarization features will be disabled');

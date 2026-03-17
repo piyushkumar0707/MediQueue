@@ -1,5 +1,5 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../utils/rateLimiter.js';
 import * as authController from '../controllers/authController.js';
 import { verifyOtpOnly } from '../controllers/verifyOtpController.js';
 import { setupMfa, verifyMfaSetup, validateMfa, disableMfa } from '../controllers/mfaController.js';
@@ -19,7 +19,7 @@ import {
 const router = express.Router();
 
 // Brute-force sensitive: 5 attempts per 15 minutes per IP
-const loginLimiter = rateLimit({
+const loginLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 5,
   standardHeaders: true,
@@ -28,7 +28,7 @@ const loginLimiter = rateLimit({
 });
 
 // General auth limiter: 10 requests per 15 minutes per IP
-const authLimiter = rateLimit({
+const authLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 10,
   standardHeaders: true,
@@ -37,7 +37,7 @@ const authLimiter = rateLimit({
 });
 
 // Refresh token limiter: generous — triggered on every page load
-const refreshLimiter = rateLimit({
+const refreshLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 60,
   standardHeaders: true,
@@ -46,7 +46,7 @@ const refreshLimiter = rateLimit({
 });
 
 // Strict OTP limiter: 5 requests per 15 minutes per IP
-const otpLimiter = rateLimit({
+const otpLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 5,
   standardHeaders: true,
@@ -65,7 +65,7 @@ router.post('/forgot-password', otpLimiter, validateForgotPassword, validate, au
 router.post('/reset-password', authLimiter, validateResetPassword, validate, authController.resetPassword);
 
 // MFA code limiter: 10 attempts per 15 minutes (generous for code entry)
-const mfaLimiter = rateLimit({
+const mfaLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 10,
   standardHeaders: true,
@@ -88,3 +88,4 @@ router.post('/mfa/verify-setup', validateMfaToken, validate, verifyMfaSetup);
 router.post('/mfa/disable', validateMfaToken, validate, disableMfa);
 
 export default router;
+

@@ -1,5 +1,5 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../utils/rateLimiter.js';
 import { protect, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { validateEmergencyAccess } from '../middleware/validators.js';
@@ -16,7 +16,7 @@ import {
 const router = express.Router();
 
 // Per-user rate limit for emergency access requests: 5 per hour
-const emergencyRequestRateLimit = rateLimit({
+const emergencyRequestRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => req.user?.userId || req.ip,
@@ -42,3 +42,4 @@ router.get('/stats', authorize('admin'), getEmergencyAccessStats);
 router.delete('/:id', revokeEmergencyAccess);
 
 export default router;
+

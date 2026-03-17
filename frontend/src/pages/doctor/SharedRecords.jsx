@@ -43,6 +43,21 @@ const SharedRecords = () => {
     }
   };
 
+  const handleViewFile = async (recordId, fileIndex = 0) => {
+    try {
+      const blob = await api.get(`/records/${recordId}/view-file?fileIndex=${fileIndex}`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const win = window.open(url, '_blank');
+      if (!win) toast.error('Pop-up blocked — please allow pop-ups for this site');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (error) {
+      if (import.meta.env.DEV) console.error('Failed to get view URL:', error);
+      toast.error('Failed to open file');
+    }
+  };
+
   const handleViewDetails = async (record) => {
     try {
       const response = await api.get(`/records/${record._id}`);
@@ -242,7 +257,7 @@ const SharedRecords = () => {
                           Details
                         </button>
                         <button
-                          onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}${record.files[0].fileUrl}`, '_blank')}
+                          onClick={() => handleViewFile(record._id, 0)}
                           className="px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg font-medium"
                         >
                           View File
@@ -316,14 +331,12 @@ const SharedRecords = () => {
                             <p className="text-xs text-gray-500">{(file.fileSize / 1024).toFixed(2)} KB</p>
                           </div>
                         </div>
-                        <a
-                          href={`${import.meta.env.VITE_API_URL.replace('/api', '')}${file.fileUrl}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => handleViewFile(selectedRecord._id, index)}
                           className="px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium"
                         >
                           View
-                        </a>
+                        </button>
                       </div>
                     ))}
                   </div>

@@ -1,5 +1,5 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../utils/rateLimiter.js';
 import { protect, authorize } from '../middleware/auth.js';
 import { upload, handleUploadErrors } from '../middleware/upload.js';
 import {
@@ -21,7 +21,7 @@ import {
 const router = express.Router();
 
 // Per-user rate limit for file uploads: 10 per hour
-const uploadRateLimit = rateLimit({
+const uploadRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 10,
   keyGenerator: (req) => req.user?.userId || req.ip,
@@ -31,7 +31,7 @@ const uploadRateLimit = rateLimit({
 });
 
 // Per-user rate limit for AI summarization: 10 per minute
-const summarizeRateLimit = rateLimit({
+const summarizeRateLimit = createRateLimiter({
   windowMs: 60 * 1000,
   max: 10,
   keyGenerator: (req) => req.user?.userId || req.ip,
@@ -41,7 +41,7 @@ const summarizeRateLimit = rateLimit({
 });
 
 // Per-user rate limit for PDF report downloads: 20 per hour
-const downloadReportRateLimit = rateLimit({
+const downloadReportRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 20,
   keyGenerator: (req) => req.user?.userId || req.ip,
@@ -81,3 +81,4 @@ router.post('/:id/share', protect, authorize('patient', 'admin'), shareRecord);
 router.delete('/:id/share/:doctorId', protect, authorize('patient', 'admin'), revokeAccess);
 
 export default router;
+

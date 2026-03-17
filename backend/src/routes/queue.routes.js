@@ -1,5 +1,5 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import { createRateLimiter } from '../utils/rateLimiter.js';
 import { protect, authorize } from '../middleware/auth.js';
 import {
   joinQueue,
@@ -16,7 +16,7 @@ import {
 const router = express.Router();
 
 // Per-user rate limit for AI triage: 5 requests/minute
-const triageRateLimit = rateLimit({
+const triageRateLimit = createRateLimiter({
   windowMs: 60 * 1000,
   max: 5,
   keyGenerator: (req) => req.user?.userId || req.ip,
@@ -29,7 +29,7 @@ const triageRateLimit = rateLimit({
 router.post('/triage', protect, authorize('patient'), triageRateLimit, triageSymptoms);
 
 // Per-user rate limit for queue joins: 5 per hour
-const joinQueueRateLimit = rateLimit({
+const joinQueueRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => req.user?.userId || req.ip,
@@ -53,3 +53,4 @@ router.patch('/:id/status', protect, authorize('doctor'), updateQueueStatus);
 router.delete('/:id', protect, cancelQueueEntry);
 
 export default router;
+

@@ -97,37 +97,25 @@ const PatientRecords = () => {
 
   const handleViewFile = async (record, fileIndex = 0) => {
     try {
-      const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
-      const token = authStorage?.state?.accessToken;
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/records/${record._id}/view-file?fileIndex=${fileIndex}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      const data = await response.json();
-      if (response.ok && data?.url) {
-        window.open(data.url, '_blank');
-      } else {
-        toast.error(data?.message || 'Failed to open file. Please try downloading instead.');
-      }
+      const blob = await api.get(`/records/${record._id}/view-file?fileIndex=${fileIndex}`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const win = window.open(url, '_blank');
+      if (!win) toast.error('Pop-up blocked — please allow pop-ups for this site');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (error) {
-      console.error('Failed to get view URL:', error);
+      if (import.meta.env.DEV) console.error('Failed to get view URL:', error);
       toast.error('Failed to open file. Please try downloading instead.');
     }
   };
 
   const downloadRecord = async (recordId, filename) => {    try {
-      const authStorage = JSON.parse(localStorage.getItem('auth-storage'));
-      const token = authStorage?.state?.accessToken;
-      
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/records/${recordId}/download-report`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await api.get(`/records/${recordId}/download-report`, {
+        responseType: 'blob',
       });
       
-      if (!response.ok) throw new Error('Failed to download');
-      
-      const blob = await response.blob();
+      const blob = new Blob([response], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

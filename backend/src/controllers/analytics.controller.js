@@ -156,7 +156,7 @@ export const getDoctorPerformance = asyncHandler(async (req, res) => {
         $group: {
           _id: '$doctorId',
           doctorName: { $first: { $concat: ['$doctor.personalInfo.firstName', ' ', '$doctor.personalInfo.lastName'] } },
-          specialization: { $first: '$doctor.professionalInfo.specialization' },
+          specialty: { $first: '$doctor.professionalInfo.specialty' },
           totalAppointments: { $sum: 1 },
           completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
           cancelled: { $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] } }
@@ -164,7 +164,7 @@ export const getDoctorPerformance = asyncHandler(async (req, res) => {
       },
       {
         $project: {
-          doctorName: 1, specialization: 1, totalAppointments: 1, completed: 1, cancelled: 1,
+          doctorName: 1, specialty: 1, totalAppointments: 1, completed: 1, cancelled: 1,
           completionRate: { $multiply: [{ $divide: ['$completed', '$totalAppointments'] }, 100] }
         }
       },
