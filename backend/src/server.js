@@ -172,4 +172,28 @@ process.on('unhandledRejection', (err) => {
   httpServer.close(() => process.exit(1));
 });
 
+// Graceful shutdown on SIGTERM (Docker/Kubernetes/Heroku stop) and SIGINT (Ctrl+C)
+const gracefulShutdown = (signal) => {
+  logger.info(`${signal} received — shutting down gracefully`);
+  httpServer.close(async () => {
+    logger.info('HTTP server closed');
+    try {
+      await redisClient.quit();
+      logger.info('Redis connection closed');
+    } catch (err) {
+      logger.error('Error closing Redis:', err);
+    }
+    process.exit(0);
+  });
+
+  // Force exit if graceful shutdown takes too long
+  setTimeout(() => {
+    logger.error('Graceful shutdown timed out — forcing exit');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 export { io };
