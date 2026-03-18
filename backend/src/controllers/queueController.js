@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Queue from '../models/Queue.js';
+import QueueCounter from '../models/QueueCounter.js';
 import Appointment from '../models/Appointment.js';
 import User from '../models/User.js';
 
@@ -103,10 +104,13 @@ export const joinQueue = asyncHandler(async (req, res) => {
     });
   }
 
-  // Get current queue count for queue number
-  const queueCount = await Queue.countDocuments({
+  // Get next queue number atomically (prevents race condition)
+  const queueNumber = await QueueCounter.getNextQueueNumber(doctorId);
+  
+  // Get current waiting count for estimated wait time
+  const waitingCount = await Queue.countDocuments({
     doctor: doctorId,
-    status: { $in: ['waiting', 'in-progress'] }
+    status: 'waiting'
   });
 
   // Create queue entry
@@ -114,10 +118,10 @@ export const joinQueue = asyncHandler(async (req, res) => {
     patient: req.user.userId,
     doctor: doctorId,
     appointment: appointmentId || null,
-    queueNumber: queueCount + 1,
+    queueNumber,
     reasonForVisit,
     priority: priority || 'normal',
-    estimatedWaitTime: queueCount * 15, // 15 min per patient estimate
+    estimatedWaitTime: waitingCount * 15, // 15 min per patient estimate
     // AI metadata — stored as-is; backend never reads it to determine priority
     ...(aiMetadata?.aiSuggestedPriority && {
       aiSuggestedPriority: VALID_PRIORITIES.includes(aiMetadata.aiSuggestedPriority) ? aiMetadata.aiSuggestedPriority : undefined,
