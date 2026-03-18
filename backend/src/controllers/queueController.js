@@ -250,17 +250,20 @@ export const getDoctorQueue = asyncHandler(async (req, res) => {
     return new Date(a.checkInTime) - new Date(b.checkInTime);
   });
 
-  // Calculate positions for waiting patients
-  const queueWithPositions = await Promise.all(
-    queue.map(async (entry) => {
-      const position = entry.status === 'waiting' ? await entry.calculatePosition() : null;
-      return {
-        ...entry.toObject(),
-        position,
-        waitDuration: entry.waitDuration
-      };
-    })
-  );
+  // Calculate positions in-memory (avoids N+1 queries)
+  const waitingQueue = queue.filter(q => q.status === 'waiting');
+  const queueWithPositions = queue.map((entry) => {
+    let position = null;
+    if (entry.status === 'waiting') {
+      // Position = 1 + count of waiting entries that come before this one
+      position = 1 + waitingQueue.findIndex(w => w._id.equals(entry._id));
+    }
+    return {
+      ...entry.toObject(),
+      position,
+      waitDuration: entry.waitDuration
+    };
+  });
 
   res.json({
     success: true,
