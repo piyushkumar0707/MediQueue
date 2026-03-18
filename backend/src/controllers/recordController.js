@@ -16,6 +16,7 @@ import { extractTextFromPDF } from '../services/pdfTextExtractor.js';
 import { fetchFileAsBuffer } from '../utils/fileUtils.js';
 import axios from 'axios';
 import cloudinary from '../config/cloudinary.js';
+import mongoose from 'mongoose';
 
 // @desc    Upload medical record
 // @route   POST /api/records
@@ -696,10 +697,12 @@ export const deleteRecord = asyncHandler(async (req, res) => {
 // @route   GET /api/records/stats
 // @access  Private (Patient)
 export const getRecordStats = asyncHandler(async (req, res) => {
+  const userId = new mongoose.Types.ObjectId(req.user.userId);
+  
   const stats = await MedicalRecord.aggregate([
     {
       $match: {
-        patient: req.user.userId,
+        patient: userId,
         status: 'active'
       }
     },
@@ -712,12 +715,12 @@ export const getRecordStats = asyncHandler(async (req, res) => {
   ]);
   
   const totalRecords = await MedicalRecord.countDocuments({
-    patient: req.user.userId,
+    patient: userId,
     status: 'active'
   });
   
   const sharedCount = await MedicalRecord.countDocuments({
-    patient: req.user.userId,
+    patient: userId,
     status: 'active',
     'sharedWith.0': { $exists: true }
   });

@@ -3,6 +3,7 @@ import Appointment from '../models/Appointment.js';
 import Notification from '../models/Notification.js';
 import notificationService from './notificationService.js';
 import { logger } from '../utils/logger.js';
+import { withDistributedLock } from '../utils/distributedLock.js';
 
 /**
  * Appointment Reminder Scheduler
@@ -13,7 +14,7 @@ import { logger } from '../utils/logger.js';
 export const schedule24HourReminders = () => {
   // Run every hour at minute 0
   cron.schedule('0 * * * *', async () => {
-    try {
+    await withDistributedLock('cron:24h-reminders', 3500, async () => {
       logger.info('Running 24-hour appointment reminder check...');
 
       // Find appointments scheduled for 24 hours from now
@@ -64,9 +65,7 @@ export const schedule24HourReminders = () => {
           logger.error(`Failed to send 24h reminder for appointment ${appointment._id}:`, error);
         }
       }
-    } catch (error) {
-      logger.error('Error in 24-hour reminder scheduler:', error);
-    }
+    });
   });
 
   logger.info('24-hour appointment reminder scheduler started');
@@ -76,7 +75,7 @@ export const schedule24HourReminders = () => {
 export const schedule1HourReminders = () => {
   // Run every 10 minutes
   cron.schedule('*/10 * * * *', async () => {
-    try {
+    await withDistributedLock('cron:1h-reminders', 550, async () => {
       logger.info('Running 1-hour appointment reminder check...');
 
       const now = new Date();
@@ -125,9 +124,7 @@ export const schedule1HourReminders = () => {
           logger.error(`Failed to send 1h reminder for appointment ${appointment._id}:`, error);
         }
       }
-    } catch (error) {
-      logger.error('Error in 1-hour reminder scheduler:', error);
-    }
+    });
   });
 
   logger.info('1-hour appointment reminder scheduler started');
