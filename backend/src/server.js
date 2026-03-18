@@ -74,6 +74,21 @@ notificationService.setSocketIO(io);
 // Initialize email service
 emailService.initialize();
 
+// Trust proxy if behind load balancer (for x-forwarded-proto)
+if (process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+}
+
+// HTTPS redirect (MUST be first middleware, before helmet)
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] !== 'https' && req.protocol !== 'https') {
+      return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
+
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: {
@@ -82,6 +97,11 @@ app.use(helmet({
       frameAncestors: ["'none'"], // Prevent clickjacking
     },
   },
+  hsts: process.env.NODE_ENV === 'production' ? {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
+  } : false
 })); // Security headers
 app.use(compression()); // Compress responses
 app.use(cors({

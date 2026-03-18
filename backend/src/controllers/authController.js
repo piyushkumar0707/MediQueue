@@ -9,6 +9,7 @@ import { activityTypes, emitStatsUpdate } from '../utils/adminEvents.js';
 import { setOTP, getOTP, deleteOTP } from '../utils/otpStore.js';
 import emailService from '../services/emailService.js';
 import { invalidateUserCache } from '../utils/userCache.js';
+import redisClient from '../config/redis.js';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -114,6 +115,18 @@ export const completeRegistration = async (req, res) => {
       });
     }
     
+    // Check OTP attempt lockout
+    const attemptsKey = `otp:attempts:${sessionId}`;
+    const attempts = parseInt(await redisClient.get(attemptsKey) || '0', 10);
+    
+    if (attempts >= 5) {
+      await deleteOTP(sessionId); // Invalidate session
+      return res.status(429).json({
+        success: false,
+        message: 'Too many failed OTP attempts. Session invalidated. Please start registration again.'
+      });
+    }
+    
     // Verify OTP
     const otpData = await getOTP(sessionId);
     
@@ -125,11 +138,18 @@ export const completeRegistration = async (req, res) => {
     }
     
     if (!verifyOTP(otp, otpData.otp)) {
+      // Increment attempt counter (5 min TTL)
+      await redisClient.incr(attemptsKey);
+      await redisClient.expire(attemptsKey, 300);
+      
       return res.status(400).json({
         success: false,
         message: 'Invalid OTP'
       });
     }
+    
+    // Clear attempt counter on success
+    await redisClient.del(attemptsKey);
     
     // Validate password strength
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -638,6 +658,18 @@ export const resetPassword = async (req, res) => {
       });
     }
     
+    // Check OTP attempt lockout
+    const attemptsKey = `otp:attempts:${sessionId}`;
+    const attempts = parseInt(await redisClient.get(attemptsKey) || '0', 10);
+    
+    if (attempts >= 5) {
+      await deleteOTP(sessionId); // Invalidate session
+      return res.status(429).json({
+        success: false,
+        message: 'Too many failed OTP attempts. Session invalidated. Please request a new password reset.'
+      });
+    }
+    
     // Verify OTP
     const otpData = await getOTP(sessionId);
     
@@ -649,11 +681,18 @@ export const resetPassword = async (req, res) => {
     }
     
     if (!verifyOTP(otp, otpData.otp)) {
+      // Increment attempt counter (10 min TTL to match OTP expiry)
+      await redisClient.incr(attemptsKey);
+      await redisClient.expire(attemptsKey, 600);
+      
       return res.status(400).json({
         success: false,
         message: 'Invalid OTP'
       });
     }
+    
+    // Clear attempt counter on success
+    await redisClient.del(attemptsKey);
     
     // Validate password
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
