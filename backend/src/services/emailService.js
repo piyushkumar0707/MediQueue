@@ -74,7 +74,11 @@ class EmailService {
       return { success: true, messageId: info.messageId };
     } catch (error) {
       logger.error(`Failed to send email to ${to}:`, error);
-      return { success: false, error: error.message };
+      const errorResponse = { success: false };
+      if (process.env.NODE_ENV === 'development') {
+        errorResponse.error = error.message;
+      }
+      return errorResponse;
     }
   }
 

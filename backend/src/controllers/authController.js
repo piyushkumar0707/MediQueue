@@ -86,11 +86,14 @@ export const initiateRegistration = async (req, res) => {
     
   } catch (error) {
     logger.error('Registration initiation error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Failed to initiate registration',
-      error: error.message
-    });
+      message: 'Failed to initiate registration'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -214,11 +217,14 @@ export const completeRegistration = async (req, res) => {
     
   } catch (error) {
     logger.error('Registration completion error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Failed to complete registration',
-      error: error.message
-    });
+      message: 'Failed to complete registration'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -348,11 +354,14 @@ export const login = async (req, res) => {
     
   } catch (error) {
     logger.error('Login error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Login failed',
-      error: error.message
-    });
+      message: 'Login failed'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -431,11 +440,14 @@ export const refreshToken = async (req, res) => {
     
   } catch (error) {
     logger.error('Token refresh error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Failed to refresh token',
-      error: error.message
-    });
+      message: 'Failed to refresh token'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -463,11 +475,14 @@ export const logout = async (req, res) => {
     
   } catch (error) {
     logger.error('Logout error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Logout failed',
-      error: error.message
-    });
+      message: 'Logout failed'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -494,11 +509,14 @@ export const logoutAll = async (req, res) => {
     
   } catch (error) {
     logger.error('Logout all error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Failed to logout from all devices',
-      error: error.message
-    });
+      message: 'Failed to logout from all devices'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -525,11 +543,14 @@ export const getCurrentUser = async (req, res) => {
     
   } catch (error) {
     logger.error('Get current user error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Failed to fetch user',
-      error: error.message
-    });
+      message: 'Failed to fetch user'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -590,11 +611,14 @@ export const forgotPassword = async (req, res) => {
     
   } catch (error) {
     logger.error('Forgot password error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Failed to process request',
-      error: error.message
-    });
+      message: 'Failed to process request'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -671,11 +695,14 @@ export const resetPassword = async (req, res) => {
     
   } catch (error) {
     logger.error('Reset password error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Failed to reset password',
-      error: error.message
-    });
+      message: 'Failed to reset password'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
@@ -714,6 +741,10 @@ export const verifyEmail = async (req, res) => {
 
   } catch (error) {
     logger.error('Email verification error:', error);
-    res.status(500).json({ success: false, message: 'Email verification failed', error: error.message });
+    const errorResponse = { success: false, message: 'Email verification failed' };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };

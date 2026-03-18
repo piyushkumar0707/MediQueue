@@ -46,10 +46,13 @@ export const verifyOtpOnly = async (req, res) => {
     
   } catch (error) {
     logger.error('OTP verification error:', error);
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Failed to verify OTP',
-      error: error.message
-    });
+      message: 'Failed to verify OTP'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };

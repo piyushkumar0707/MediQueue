@@ -425,10 +425,13 @@ export const downloadPrescription = asyncHandler(async (req, res) => {
       stack: error.stack,
       prescriptionId: prescription._id 
     });
-    res.status(500).json({
+    const errorResponse = {
       success: false,
-      message: 'Error generating PDF',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+      message: 'Error generating PDF'
+    };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 });

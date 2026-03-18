@@ -63,7 +63,11 @@ export const protect = async (req, res, next) => {
     next();
   } catch (error) {
     logger.error('Auth middleware error:', error);
-    res.status(500).json({ success: false, message: 'Authentication failed', error: error.message });
+    const errorResponse = { success: false, message: 'Authentication failed' };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = error.message;
+    }
+    res.status(500).json(errorResponse);
   }
 };
 
