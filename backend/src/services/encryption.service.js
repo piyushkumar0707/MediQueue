@@ -8,6 +8,67 @@ const IV_LENGTH = 16; // 128 bits
 const AUTH_TAG_LENGTH = 16;
 
 /**
+ * Wrap (encrypt) a per-record encryption key with the master ENCRYPTION_KEY
+ * @param {string} recordKeyBase64 - Base64 encoded record encryption key
+ * @returns {string} Base64 encoded wrapped key
+ */
+export const wrapKey = (recordKeyBase64) => {
+  try {
+    const masterKey = process.env.ENCRYPTION_KEY;
+    if (!masterKey || masterKey.length !== 32) {
+      throw new Error('ENCRYPTION_KEY must be exactly 32 characters');
+    }
+    
+    const masterKeyBuffer = Buffer.from(masterKey, 'utf8');
+    const recordKey = Buffer.from(recordKeyBase64, 'base64');
+    const iv = crypto.randomBytes(IV_LENGTH);
+    
+    const cipher = crypto.createCipheriv(ALGORITHM, masterKeyBuffer, iv);
+    const encrypted = Buffer.concat([cipher.update(recordKey), cipher.final()]);
+    const authTag = cipher.getAuthTag();
+    
+    // Return: iv + authTag + encrypted (all base64)
+    return JSON.stringify({
+      iv: iv.toString('base64'),
+      authTag: authTag.toString('base64'),
+      encrypted: encrypted.toString('base64')
+    });
+  } catch (error) {
+    logger.error('Key wrapping error:', error);
+    throw new Error('Failed to wrap encryption key');
+  }
+};
+
+/**
+ * Unwrap (decrypt) a per-record encryption key using the master ENCRYPTION_KEY
+ * @param {string} wrappedKeyJson - JSON string with iv, authTag, encrypted
+ * @returns {string} Base64 encoded unwrapped record key
+ */
+export const unwrapKey = (wrappedKeyJson) => {
+  try {
+    const masterKey = process.env.ENCRYPTION_KEY;
+    if (!masterKey || masterKey.length !== 32) {
+      throw new Error('ENCRYPTION_KEY must be exactly 32 characters');
+    }
+    
+    const { iv, authTag, encrypted } = JSON.parse(wrappedKeyJson);
+    const masterKeyBuffer = Buffer.from(masterKey, 'utf8');
+    const ivBuffer = Buffer.from(iv, 'base64');
+    const authTagBuffer = Buffer.from(authTag, 'base64');
+    const encryptedBuffer = Buffer.from(encrypted, 'base64');
+    
+    const decipher = crypto.createDecipheriv(ALGORITHM, masterKeyBuffer, ivBuffer);
+    decipher.setAuthTag(authTagBuffer);
+    
+    const decrypted = Buffer.concat([decipher.update(encryptedBuffer), decipher.final()]);
+    return decrypted.toString('base64');
+  } catch (error) {
+    logger.error('Key unwrapping error:', error);
+    throw new Error('Failed to unwrap encryption key');
+  }
+};
+
+/**
  * Generate a secure encryption key
  * @returns {string} Base64 encoded key
  */
@@ -174,5 +235,7 @@ export default {
   hash,
   encryptFile,
   decryptFile,
-  generateToken
+  generateToken,
+  wrapKey,
+  unwrapKey
 };

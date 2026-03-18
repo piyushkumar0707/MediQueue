@@ -5,7 +5,7 @@ import EmergencyAccess from '../models/EmergencyAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 import { parsePagination } from '../utils/pagination.js';
-import { generateEncryptionKey } from '../services/encryption.service.js';
+import { generateEncryptionKey, wrapKey, unwrapKey } from '../services/encryption.service.js';
 import { getFileInfo, deleteFile } from '../middleware/upload.js';
 import path from 'path';
 import { generateMedicalRecordPDF } from '../services/pdfGenerators.js';
@@ -70,6 +70,9 @@ export const uploadRecord = asyncHandler(async (req, res) => {
   // Generate encryption key for this record
   const encryptionKey = generateEncryptionKey();
   
+  // Wrap the key before storing (encrypt with master ENCRYPTION_KEY)
+  const wrappedKey = wrapKey(encryptionKey);
+  
   // Parse metadata if it's a string
   let parsedMetadata = {};
   if (metadata) {
@@ -91,7 +94,7 @@ export const uploadRecord = asyncHandler(async (req, res) => {
     files,
     metadata: parsedMetadata,
     isEncrypted: true,
-    encryptionKey,
+    encryptionKey: wrappedKey,
     visibility: visibility || 'private',
     status: 'active'
   });
