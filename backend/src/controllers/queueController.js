@@ -440,7 +440,7 @@ export const getQueueStats = asyncHandler(async (req, res) => {
   const stats = await Queue.aggregate([
     {
       $match: {
-        doctor: req.user.userId,
+        doctor: new mongoose.Types.ObjectId(req.user.userId),
         checkInTime: { $gte: today }
       }
     },

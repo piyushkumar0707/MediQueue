@@ -97,10 +97,12 @@ const PatientRecords = () => {
 
   const handleViewFile = async (record, fileIndex = 0) => {
     try {
-      const blob = await api.get(`/records/${record._id}/view-file?fileIndex=${fileIndex}`, {
+      const response = await api.get(`/records/${record._id}/view-file?fileIndex=${fileIndex}`, {
         responseType: 'blob',
       });
-      const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      // Use the actual content-type from the response
+      const contentType = response.type || 'application/octet-stream';
+      const url = URL.createObjectURL(new Blob([response], { type: contentType }));
       const win = window.open(url, '_blank');
       if (!win) toast.error('Pop-up blocked — please allow pop-ups for this site');
       setTimeout(() => URL.revokeObjectURL(url), 60000);
