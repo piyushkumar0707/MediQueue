@@ -137,12 +137,60 @@ Three user roles — **Patient**, **Doctor**, **Admin** — each with their own 
 ## Getting Started
 
 ### Prerequisites
-- Node.js v18+
-- MongoDB (local or Atlas)
-- Redis (local or cloud — e.g. Upstash, Railway)
-- npm
+- **Option 1 (Docker)**: Docker & Docker Compose
+- **Option 2 (Manual)**: Node.js v18+, MongoDB, Redis, npm
 
-### Setup
+### Quick Start with Docker (Recommended)
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/piyushkumar0707/MediQueue.git
+cd MediQueue
+
+# 2. Configure environment
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+# Edit both .env files with your values (see table below)
+
+# 3. Start all services
+docker-compose up --build
+
+# App is now running at:
+# - Frontend: http://localhost:80
+# - Backend API: http://localhost:5000
+# - MongoDB: localhost:27017
+# - Redis: localhost:6379
+```
+
+### Docker Environment Overrides
+
+Use shell environment variables to override frontend build-time endpoints and backend CORS origin without editing the compose file.
+
+```bash
+# PowerShell example
+$env:VITE_API_URL="http://localhost:5000/api/v1"
+$env:VITE_SOCKET_URL="http://localhost:5000"
+$env:FRONTEND_URL="http://localhost"
+docker-compose up --build
+```
+
+```bash
+# Bash example
+VITE_API_URL=http://localhost:5000/api/v1 \
+VITE_SOCKET_URL=http://localhost:5000 \
+FRONTEND_URL=http://localhost \
+docker-compose up --build
+```
+
+### Docker Troubleshooting
+
+- If compose fails before startup, ensure backend/.env exists:
+    - cp backend/.env.example backend/.env
+- Backend validates required variables at boot. Confirm these are set in backend/.env:
+    - MONGODB_URI, REDIS_URL, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, JWT_MFA_SECRET, ENCRYPTION_KEY
+- ENCRYPTION_KEY must be exactly 32 characters in production mode.
+
+### Manual Setup (Without Docker)
 
 ```bash
 # 1. Clone

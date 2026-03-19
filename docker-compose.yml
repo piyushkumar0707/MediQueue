@@ -1,0 +1,84 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: mediqueue-mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: mediqueue
+    networks:
+      - mediqueue-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: mediqueue-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - mediqueue-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mediqueue-backend
+    restart: unless-stopped
+    ports:
+      - '5000:5000'
+    env_file:
+      - ./backend/.env
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/mediqueue
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - mediqueue-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--header=X-Forwarded-Proto: https", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api/v1}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL:-http://localhost:5000}
+    container_name: mediqueue-frontend
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      - backend
+    networks:
+      - mediqueue-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  mediqueue-network:
+    driver: bridge
