@@ -294,7 +294,7 @@ const ConsentManagement = () => {
                             Dr. {consent.doctor?.firstName} {consent.doctor?.lastName}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {consent.doctor?.specialization || 'General'}
+                            {consent.doctor?.specialty || consent.doctor?.specialization || 'General'}
                           </div>
                         </div>
                       </div>
@@ -369,7 +369,7 @@ const ConsentManagement = () => {
                     <option value="">Choose a doctor</option>
                     {doctors.map((doctor) => (
                       <option key={doctor._id} value={doctor._id}>
-                        Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName} - {doctor.professionalInfo?.specialization || 'General'}
+                        Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName} - {doctor.professionalInfo?.specialty || doctor.professionalInfo?.specialization || 'General'}
                       </option>
                     ))}
                   </select>

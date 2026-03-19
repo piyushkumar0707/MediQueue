@@ -45,7 +45,7 @@ const DoctorLayout = () => {
                   Welcome, Dr. {user?.personalInfo?.firstName || 'Doctor'}
                 </h2>
                 <p className="text-sm text-gray-500">
-                  {user?.professionalInfo?.specialization || 'Medical Professional'}
+                  {user?.professionalInfo?.specialty || user?.professionalInfo?.specialization || 'Medical Professional'}
                 </p>
               </div>
             </div>

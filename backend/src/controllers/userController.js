@@ -6,15 +6,16 @@ import { parsePagination } from '../utils/pagination.js';
 // @route   GET /api/users/doctors
 // @access  Public/Private
 export const getDoctors = asyncHandler(async (req, res) => {
-  const { specialization, search, available } = req.query;
+  const { specialty, specialization, search, available } = req.query;
   const { page, limit, skip } = parsePagination(req.query, 20);
 
   const query = { role: 'doctor', isActive: true };
 
-  // Filter by specialization
-  if (specialization && specialization !== 'all') {
-    const escapedSpec = specialization.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    query['professionalInfo.specialization'] = new RegExp(escapedSpec, 'i');
+  // Filter by specialty (supports legacy query param "specialization")
+  const specialtyFilter = specialty || specialization;
+  if (specialtyFilter && specialtyFilter !== 'all') {
+    const escapedSpec = specialtyFilter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    query['professionalInfo.specialty'] = new RegExp(escapedSpec, 'i');
   }
 
   // Search by name or email

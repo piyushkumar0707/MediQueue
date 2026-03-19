@@ -768,7 +768,7 @@ const HealthVault = () => {
                     {doctors.map(doctor => (
                       <option key={doctor._id} value={doctor._id}>
                         Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName} 
-                        {doctor.professionalInfo?.specialization && ` - ${doctor.professionalInfo.specialization}`}
+                          {(doctor.professionalInfo?.specialty || doctor.professionalInfo?.specialization) && ` - ${doctor.professionalInfo?.specialty || doctor.professionalInfo?.specialization}`}
                       </option>
                     ))}
                   </select>

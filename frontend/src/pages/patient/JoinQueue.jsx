@@ -129,7 +129,7 @@ const JoinQueue = () => {
 
   const filteredDoctors = doctors.filter(doctor => 
     `${doctor.personalInfo?.firstName} ${doctor.personalInfo?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.professionalInfo?.specialization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (doctor.professionalInfo?.specialty || doctor.professionalInfo?.specialization || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     doctor.professionalInfo?.department?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -191,7 +191,7 @@ const JoinQueue = () => {
                         Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {doctor.professionalInfo?.specialization || 'General Physician'}
+                        {doctor.professionalInfo?.specialty || doctor.professionalInfo?.specialization || 'General Physician'}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         {doctor.professionalInfo?.department || ''}
@@ -229,7 +229,7 @@ const JoinQueue = () => {
                     Dr. {selectedDoctor.personalInfo?.firstName} {selectedDoctor.personalInfo?.lastName}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {selectedDoctor.professionalInfo?.specialization || 'General Physician'}
+                    {selectedDoctor.professionalInfo?.specialty || selectedDoctor.professionalInfo?.specialization || 'General Physician'}
                   </p>
                 </div>
               ) : (
