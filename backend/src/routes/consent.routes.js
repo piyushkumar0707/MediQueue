@@ -22,7 +22,11 @@ const consentMutationRateLimit = createRateLimiter({
   keyGenerator: (req) => req.user?.userId || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many consent updates, please try again later.' }
+  message: { 
+    success: false, 
+    message: 'You\'ve made too many consent changes in a short time. Please wait 15 minutes before modifying consents again.',
+    retryAfter: '15 minutes'
+  }
 });
 
 // All routes require authentication

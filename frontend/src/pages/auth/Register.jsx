@@ -64,7 +64,7 @@ const Register = () => {
     const errors = {};
     
     if (!formData.phoneNumber.match(/^[0-9]{10}$/)) {
-      errors.phoneNumber = 'Please enter a valid 10-digit phone number';
+      errors.phoneNumber = 'Please enter a valid 10-digit phone number (digits only, no spaces or dashes)';
     }
     
     if (!formData.email.match(/^\S+@\S+\.\S+$/)) {

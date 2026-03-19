@@ -117,6 +117,8 @@ const HealthVault = () => {
 
     try {
       setUploading(true);
+      toast.loading('Uploading your file(s)...', { id: 'upload-progress' });
+      
       const formData = new FormData();
       formData.append('title', uploadForm.title);
       formData.append('description', uploadForm.description);
@@ -140,7 +142,7 @@ const HealthVault = () => {
       });
 
       if (response.success) {
-        toast.success('Record uploaded successfully!');
+        toast.success('Record uploaded successfully!', { id: 'upload-progress' });
         setShowUploadModal(false);
         setUploadForm({
           title: '',
@@ -154,7 +156,7 @@ const HealthVault = () => {
       }
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error(error.response?.data?.message || 'Failed to upload record');
+      toast.error(error.response?.data?.message || 'Failed to upload record', { id: 'upload-progress' });
     } finally {
       setUploading(false);
     }

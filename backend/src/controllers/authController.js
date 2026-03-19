@@ -133,7 +133,7 @@ export const completeRegistration = async (req, res) => {
     if (!otpData) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired session'
+        message: 'Your verification code has expired. Please request a new code to continue.'
       });
     }
     
@@ -144,7 +144,7 @@ export const completeRegistration = async (req, res) => {
       
       return res.status(400).json({
         success: false,
-        message: 'Invalid OTP'
+        message: 'Invalid verification code. Please try again.'
       });
     }
     
@@ -156,7 +156,7 @@ export const completeRegistration = async (req, res) => {
     if (!passwordRegex.test(password)) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
+        message: 'Password must include:\n• At least 8 characters\n• One uppercase letter (A-Z)\n• One lowercase letter (a-z)\n• One number (0-9)\n• One special character (@$!%*?&)'
       });
     }
     

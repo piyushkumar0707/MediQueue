@@ -48,7 +48,9 @@ export const errorHandler = (err, req, res, next) => {
   // Send error response
   res.status(statusCode).json({
     success: false,
-    message: isProduction && statusCode >= 500 ? 'Internal Server Error' : message,
+    message: isProduction && statusCode >= 500 
+      ? 'Something went wrong on our end. Please try again, or contact support if the problem persists.' 
+      : message,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 };

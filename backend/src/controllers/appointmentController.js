@@ -114,8 +114,8 @@ export const bookAppointment = asyncHandler(async (req, res) => {
   const patientNotification = await Notification.create({
     recipient: req.user.userId,
     type: 'appointment_booked',
-    title: 'Appointment Confirmed',
-    message: `Your appointment with Dr. ${appointment.doctor.personalInfo?.firstName} ${appointment.doctor.personalInfo?.lastName} on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime} has been confirmed.`,
+    title: 'Appointment Confirmed!',
+    message: `Your appointment with Dr. ${appointment.doctor.personalInfo?.firstName} ${appointment.doctor.personalInfo?.lastName} on ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot.startTime} is confirmed. You'll receive a reminder 24 hours before your appointment. Please arrive 15 minutes early.`,
     priority: 'medium',
     relatedEntity: {
       entityType: 'appointment',

@@ -109,7 +109,7 @@ export const grantConsent = asyncHandler(async (req, res) => {
   if (existingConsent) {
     return res.status(400).json({
       success: false,
-      message: 'Active consent already exists for this doctor. Please revoke it first to create a new one.'
+      message: 'You already have active consent for this doctor. To modify permissions, go to Consent Management and revoke the existing consent first.'
     });
   }
 

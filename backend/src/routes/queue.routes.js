@@ -20,7 +20,11 @@ const triageRateLimit = createRateLimiter({
   windowMs: 60 * 1000,
   max: 5,
   keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, message: 'Too many triage requests. Please wait a minute.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve used the priority suggestion feature 5 times in the last minute. Please wait a moment before trying again, or select a priority manually.',
+    retryAfter: '1 minute'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -33,7 +37,11 @@ const joinQueueRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, message: 'Too many queue join requests. Please wait before trying again.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve joined 5 queues in the past hour. If you need immediate assistance, please contact the hospital reception directly.',
+    retryAfter: '1 hour'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });

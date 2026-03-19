@@ -25,7 +25,11 @@ const uploadRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 10,
   keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, message: 'Too many file uploads. Please wait before uploading again.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve uploaded 10 files in the past hour. Please wait a few minutes, or try uploading multiple files at once (up to 5 files per upload).',
+    retryAfter: '1 hour'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -35,7 +39,11 @@ const summarizeRateLimit = createRateLimiter({
   windowMs: 60 * 1000,
   max: 10,
   keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, message: 'Too many summarization requests. Please wait a minute.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve used the AI summary feature 10 times in the last minute. Please wait a moment before generating another summary.',
+    retryAfter: '1 minute'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -45,7 +53,11 @@ const downloadReportRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 20,
   keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, message: 'Too many download requests. Please wait before downloading again.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve downloaded 20 medical reports in the past hour. If you\'re having trouble viewing your reports, please contact support.',
+    retryAfter: '1 hour'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });

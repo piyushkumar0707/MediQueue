@@ -20,7 +20,11 @@ const downloadPrescriptionRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 20,
   keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, message: 'Too many download requests. Please wait before downloading again.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve downloaded prescriptions 20 times in the past hour. If you need help accessing your prescription, please contact your doctor or pharmacy.',
+    retryAfter: '1 hour'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });

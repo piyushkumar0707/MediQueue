@@ -35,7 +35,10 @@ const VALID_CONFIDENCES = ['low', 'medium', 'high'];
 // @access  Private (Patient)
 export const triageSymptoms = asyncHandler(async (req, res) => {
   if (!AI_FEATURES.triage) {
-    return res.status(503).json({ success: false, message: 'AI triage is currently disabled' });
+    return res.status(503).json({ 
+      success: false, 
+      message: 'Smart priority suggestion is temporarily unavailable. You can still select a priority level manually.' 
+    });
   }
 
   const { symptoms } = req.body;
@@ -303,7 +306,7 @@ export const callNextPatient = asyncHandler(async (req, res) => {
   if (!rawNext) {
     return res.status(404).json({
       success: false,
-      message: 'No patients waiting in queue'
+      message: 'No patients in queue. Your queue is empty at this time.'
     });
   }
 

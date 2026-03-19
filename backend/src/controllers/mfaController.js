@@ -65,7 +65,7 @@ export const verifyMfaSetup = async (req, res) => {
     if (!user.mfaSecret) {
       return res.status(400).json({
         success: false,
-        message: 'MFA setup not initiated. Call /mfa/setup first.'
+        message: 'Please start MFA setup from your security settings before verifying.'
       });
     }
 
