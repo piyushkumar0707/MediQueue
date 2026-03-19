@@ -4,6 +4,8 @@ import User from '../models/User.js';
 import { logger } from '../utils/logger.js';
 import { parsePagination } from '../utils/pagination.js';
 
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
  * @desc    Get all audit logs with filters
  * @route   GET /api/audit/logs
@@ -37,7 +39,7 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
 
   // Search in description
   if (search) {
-    query.description = { $regex: search, $options: 'i' };
+    query.description = { $regex: escapeRegex(search), $options: 'i' };
   }
 
   const [logs, total] = await Promise.all([

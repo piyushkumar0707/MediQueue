@@ -4,6 +4,9 @@ import Queue from '../models/Queue.js';
 import EmergencyAccess from '../models/EmergencyAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { invalidateUserCache } from '../utils/userCache.js';
+import { parsePagination } from '../utils/pagination.js';
+
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
  * @desc    Get admin dashboard statistics
@@ -11,23 +14,33 @@ import { invalidateUserCache } from '../utils/userCache.js';
  * @access  Private (Admin)
  */
 export const getAdminStats = asyncHandler(async (req, res) => {
-  // Get user counts by role
-  const totalUsers = await User.countDocuments();
-  const totalPatients = await User.countDocuments({ role: 'patient' });
-  const totalDoctors = await User.countDocuments({ role: 'doctor' });
-  const totalAdmins = await User.countDocuments({ role: 'admin' });
-
-  // Get appointment stats
-  const totalAppointments = await Appointment.countDocuments();
-  const scheduledAppointments = await Appointment.countDocuments({ 
-    status: { $in: ['scheduled', 'confirmed'] } 
-  });
-  const completedAppointments = await Appointment.countDocuments({ status: 'completed' });
-
-  // Get active queue count
-  const activeQueue = await Queue.countDocuments({ 
-    status: { $in: ['waiting', 'in-consultation'] } 
-  });
+  const [
+    totalUsers,
+    totalPatients,
+    totalDoctors,
+    totalAdmins,
+    totalAppointments,
+    scheduledAppointments,
+    completedAppointments,
+    activeQueue,
+    totalEmergencyRequests,
+    flaggedEmergency,
+    activeEmergency,
+    unreviewed
+  ] = await Promise.all([
+    User.countDocuments(),
+    User.countDocuments({ role: 'patient' }),
+    User.countDocuments({ role: 'doctor' }),
+    User.countDocuments({ role: 'admin' }),
+    Appointment.countDocuments(),
+    Appointment.countDocuments({ status: { $in: ['scheduled', 'confirmed'] } }),
+    Appointment.countDocuments({ status: 'completed' }),
+    Queue.countDocuments({ status: { $in: ['waiting', 'in-progress'] } }),
+    EmergencyAccess.countDocuments(),
+    EmergencyAccess.countDocuments({ flaggedForReview: true }),
+    EmergencyAccess.countDocuments({ status: 'approved' }),
+    EmergencyAccess.countDocuments({ status: 'pending' })
+  ]);
 
   // Get today's appointments
   const today = new Date();
@@ -38,12 +51,6 @@ export const getAdminStats = asyncHandler(async (req, res) => {
   const todayAppointments = await Appointment.countDocuments({
     appointmentDate: { $gte: today, $lt: tomorrow }
   });
-
-  // Get emergency access stats
-  const totalEmergencyRequests = await EmergencyAccess.countDocuments();
-  const flaggedEmergency = await EmergencyAccess.countDocuments({ flaggedForReview: true });
-  const activeEmergency = await EmergencyAccess.countDocuments({ status: 'approved' });
-  const unreviewed = await EmergencyAccess.countDocuments({ status: 'pending' });
 
   res.json({
     success: true,
@@ -99,6 +106,7 @@ export const getRecentUsers = asyncHandler(async (req, res) => {
  */
 export const getAllUsers = asyncHandler(async (req, res) => {
   const { role, status, search } = req.query;
+  const { page, limit, skip } = parsePagination(req.query, 20);
   
   const query = {};
   
@@ -113,21 +121,33 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   }
   
   if (search) {
+    const escapedSearch = escapeRegex(search);
     query.$or = [
-      { email: { $regex: search, $options: 'i' } },
-      { 'personalInfo.firstName': { $regex: search, $options: 'i' } },
-      { 'personalInfo.lastName': { $regex: search, $options: 'i' } }
+      { email: { $regex: escapedSearch, $options: 'i' } },
+      { 'personalInfo.firstName': { $regex: escapedSearch, $options: 'i' } },
+      { 'personalInfo.lastName': { $regex: escapedSearch, $options: 'i' } }
     ];
   }
-  
-  const users = await User.find(query)
-    .select('personalInfo email role phoneNumber isActive createdAt')
-    .sort({ createdAt: -1 });
+
+  const [users, total] = await Promise.all([
+    User.find(query)
+      .select('personalInfo email role phoneNumber isActive createdAt')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(skip),
+    User.countDocuments(query)
+  ]);
 
   res.json({
     success: true,
     count: users.length,
-    data: users
+    data: users,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit)
+    }
   });
 });
 
@@ -149,7 +169,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   }
   
   user.isActive = isActive;
-  await user.save();
+  await user.save({ validateModifiedOnly: true });
 
   // Invalidate auth cache so deactivated users are rejected on next request
   await invalidateUserCache(user._id.toString());
@@ -236,7 +256,7 @@ export const updateUser = asyncHandler(async (req, res) => {
     user.professionalInfo = { ...user.professionalInfo, ...professionalInfo };
   }
   
-  await user.save();
+  await user.save({ validateModifiedOnly: true });
 
   res.json({
     success: true,

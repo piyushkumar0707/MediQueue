@@ -316,59 +316,106 @@ export const getSharedRecords = asyncHandler(async (req, res) => {
   // Get records explicitly shared with this doctor
   const explicitlySharedRecords = await MedicalRecord.getSharedWithDoctor(req.user.userId);
   
+  const now = new Date();
+
   // Get active consents for this doctor
   const activeConsents = await Consent.find({
     doctor: req.user.userId,
     status: 'active',
     $or: [
       { expiresAt: null },
-      { expiresAt: { $gt: new Date() } }
+      { expiresAt: { $gt: now } }
     ]
-  }).populate('patient');
-  
-  // For each active consent, get records based on consent scope
-  const consentBasedRecords = [];
-  
+  }).select('patient scope recordTypes specificRecords');
+
+  // Build batched consent queries instead of one query per consent
+  const allRecordConsentPatientIds = [];
+  const scopedRecordTypeRules = [];
+  const specificRecordIds = [];
+
   for (const consent of activeConsents) {
-    let query = {
-      patient: consent.patient._id,
-      status: 'active'
-    };
-    
-    // Apply scope-based filtering
-    if (consent.scope === 'record-types' && consent.recordTypes && consent.recordTypes.length > 0) {
-      query.recordType = { $in: consent.recordTypes };
+    if (consent.scope === 'all-records') {
+      allRecordConsentPatientIds.push(consent.patient);
+      continue;
     }
-    // If scope is 'all-records', no additional filtering needed
-    // If scope is 'specific-records', would need to check specificRecords array
-    
-    const records = await MedicalRecord.find(query)
+
+    if (consent.scope === 'record-types' && Array.isArray(consent.recordTypes) && consent.recordTypes.length > 0) {
+      scopedRecordTypeRules.push({
+        patient: consent.patient,
+        recordTypes: consent.recordTypes
+      });
+      continue;
+    }
+
+    if (consent.scope === 'specific-records' && Array.isArray(consent.specificRecords) && consent.specificRecords.length > 0) {
+      specificRecordIds.push(...consent.specificRecords);
+    }
+  }
+
+  const consentOrConditions = [];
+  if (allRecordConsentPatientIds.length > 0) {
+    consentOrConditions.push({ patient: { $in: allRecordConsentPatientIds } });
+  }
+
+  if (scopedRecordTypeRules.length > 0) {
+    consentOrConditions.push(
+      ...scopedRecordTypeRules.map(rule => ({
+        patient: rule.patient,
+        recordType: { $in: rule.recordTypes }
+      }))
+    );
+  }
+
+  let consentBasedRecords = [];
+  if (consentOrConditions.length > 0 || specificRecordIds.length > 0) {
+    const consentQuery = {
+      status: 'active',
+      $or: []
+    };
+
+    if (consentOrConditions.length > 0) {
+      consentQuery.$or.push(...consentOrConditions);
+    }
+
+    if (specificRecordIds.length > 0) {
+      consentQuery.$or.push({ _id: { $in: specificRecordIds } });
+    }
+
+    if (recordType && recordType !== 'all') {
+      consentQuery.recordType = recordType;
+    }
+
+    consentBasedRecords = await MedicalRecord.find(consentQuery)
       .populate('patient', 'personalInfo email phoneNumber')
       .populate('uploadedBy', 'personalInfo')
       .sort({ recordDate: -1 });
-    
-    consentBasedRecords.push(...records);
   }
-  
+
   // Get active emergency accesses for this doctor
   const emergencyAccesses = await EmergencyAccess.find({
     doctor: req.user.userId,
     status: 'active',
-    expiresAt: { $gt: new Date() }
-  }).populate('patient');
-  
-  // For each active emergency access, get all records for that patient
+    expiresAt: { $gt: now }
+  }).select('patient');
+
+  const emergencyPatientIds = emergencyAccesses.map(access => access.patient);
   const emergencyBasedRecords = [];
-  
-  for (const emergencyAccess of emergencyAccesses) {
-    const records = await MedicalRecord.find({
-      patient: emergencyAccess.patient._id,
+
+  if (emergencyPatientIds.length > 0) {
+    const emergencyQuery = {
+      patient: { $in: emergencyPatientIds },
       status: 'active'
-    })
+    };
+
+    if (recordType && recordType !== 'all') {
+      emergencyQuery.recordType = recordType;
+    }
+
+    const records = await MedicalRecord.find(emergencyQuery)
       .populate('patient', 'personalInfo email phoneNumber')
       .populate('uploadedBy', 'personalInfo')
       .sort({ recordDate: -1 });
-    
+
     emergencyBasedRecords.push(...records);
   }
   
@@ -507,7 +554,8 @@ export const getRecordById = asyncHandler(async (req, res) => {
         _id: share.doctor._id,
         firstName: share.doctor.personalInfo?.firstName,
         lastName: share.doctor.personalInfo?.lastName,
-        specialization: share.doctor.professionalInfo?.specialization
+        specialty: share.doctor.professionalInfo?.specialty,
+        specialization: share.doctor.professionalInfo?.specialty || share.doctor.professionalInfo?.specialization
       } : null
     }))
   };

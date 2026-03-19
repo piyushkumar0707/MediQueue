@@ -3,6 +3,12 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const EmergencyReview = () => {
+  const logDevError = (...args) => {
+    if (import.meta.env.DEV) {
+      console.error(...args);
+    }
+  };
+
   const [cases, setCases] = useState([]);
   const [stats, setStats] = useState(null);
   const [doctors, setDoctors] = useState([]);
@@ -45,7 +51,7 @@ const EmergencyReview = () => {
       setStats(statsRes.data);
       setDoctors(doctorsRes.data || []);
     } catch (error) {
-      console.error('Error fetching emergency data:', error);
+      logDevError('Error fetching emergency data:', error);
       toast.error('Failed to fetch emergency cases');
     } finally {
       setLoading(false);
@@ -65,7 +71,7 @@ const EmergencyReview = () => {
       setSelectedCase(null);
       fetchData();
     } catch (error) {
-      console.error('Error assigning doctor:', error);
+      logDevError('Error assigning doctor:', error);
       toast.error('Failed to assign doctor');
     }
   };
@@ -83,7 +89,7 @@ const EmergencyReview = () => {
       setSelectedCase(null);
       fetchData();
     } catch (error) {
-      console.error('Error updating priority:', error);
+      logDevError('Error updating priority:', error);
       toast.error('Failed to update priority');
     }
   };
@@ -94,7 +100,7 @@ const EmergencyReview = () => {
       toast.success('Status updated successfully');
       fetchData();
     } catch (error) {
-      console.error('Error updating status:', error);
+      logDevError('Error updating status:', error);
       toast.error('Failed to update status');
     }
   };
