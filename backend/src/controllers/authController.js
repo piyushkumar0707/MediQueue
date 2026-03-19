@@ -18,7 +18,7 @@ const COOKIE_OPTIONS = {
 };
 
 const setAuthCookies = (res, accessToken, refreshToken) => {
-  res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: 2 * 60 * 60 * 1000 }); // 2h
+  res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: 15 * 60 * 1000 }); // 15m
   res.cookie('refreshToken', refreshToken, { ...COOKIE_OPTIONS, maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7d
 };
 
@@ -59,7 +59,7 @@ export const initiateRegistration = async (req, res) => {
     // Generate OTP
     const otp = generateOTP();
     const hashedOTP = hashOTP(otp);
-    const sessionId = `reg_${Date.now()}_${phoneNumber}`;
+    const sessionId = `reg_${crypto.randomBytes(16).toString('hex')}`;
     
     // Store OTP in Redis with 5-minute TTL
     await setOTP(sessionId, {
@@ -604,7 +604,7 @@ export const forgotPassword = async (req, res) => {
     // Generate OTP
     const otp = generateOTP();
     const hashedOTP = hashOTP(otp);
-    const sessionId = `reset_${Date.now()}_${user._id}`;
+    const sessionId = `reset_${crypto.randomBytes(16).toString('hex')}`;
     
     // Store OTP in Redis with 10-minute TTL
     await setOTP(sessionId, {

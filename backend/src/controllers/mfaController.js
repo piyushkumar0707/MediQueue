@@ -189,7 +189,7 @@ export const validateMfa = async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'Strict',
     };
-    res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: 2 * 60 * 60 * 1000 });
+    res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: 15 * 60 * 1000 });
     res.cookie('refreshToken', refreshToken, { ...COOKIE_OPTIONS, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     user.password = undefined;
