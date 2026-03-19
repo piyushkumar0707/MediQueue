@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
@@ -112,9 +113,9 @@ api.interceptors.response.use(
         isRefreshing = false;
         clearAuthTokens();
         failedQueue = [];
-        // Lazy import to avoid circular deps
-        import('react-hot-toast').then(({ default: toast }) => {
-          toast.error('Your session has expired. You will be redirected to login in a few seconds.', { id: 'session-expired', duration: 3000 });
+        toast.error('Your session has expired. You will be redirected to login in a few seconds.', {
+          id: 'session-expired',
+          duration: 3000,
         });
         setTimeout(() => { window.location.href = '/login'; }, 1500);
         return Promise.reject(refreshError);
