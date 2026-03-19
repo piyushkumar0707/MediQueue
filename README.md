@@ -15,7 +15,7 @@
 
 </div>
 
-![Architecture Overview](architecture%20diagram%20mediqueue.png)
+![Architecture Overview](docs/images/architecture-diagram.png)
 
 ---
 
@@ -61,9 +61,7 @@ Three user roles — **Patient**, **Doctor**, **Admin** — each with their own 
 - View prescriptions from completed consultations
 - In-app notification centre with real-time push
 
-![Queue Flow](queue%20flow.png)
 
-![Health-Vault Flow](health-valut%20flow.png)
 
 ### Doctor
 - Live queue dashboard — call next patient, manage consultation flow
@@ -83,13 +81,11 @@ Three user roles — **Patient**, **Doctor**, **Admin** — each with their own 
 
 ## Architecture
 
-![System Architecture Component View](system%20arch%20comp%20view.png)
-
-![Event Flow Diagram](event-flow%20diagram%20mediqueue.png)
+![System Architecture Component View](docs/images/system-architecture.png)
 
 ### Data Model
 
-![Database ER Diagram](database%20ER%20diagram%20mediqueue.png)
+![Database ER Diagram](docs/images/database-er-diagram.png)
 
 ### Key Design Decisions
 
