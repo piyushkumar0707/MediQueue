@@ -3,6 +3,29 @@ import Queue from '../models/Queue.js';
 import Appointment from '../models/Appointment.js';
 import User from '../models/User.js';
 
+const PRIORITY_TO_SCORE = {
+  normal: 1,
+  urgent: 3,
+  emergency: 5
+};
+
+const SCORE_TO_PRIORITY = {
+  '1': 'normal',
+  '2': 'normal',
+  '3': 'urgent',
+  '4': 'emergency',
+  '5': 'emergency'
+};
+
+const normalizePriorityInput = (priority) => {
+  if (!priority || priority === 'all') return null;
+  const normalized = String(priority).toLowerCase();
+  if (PRIORITY_TO_SCORE[normalized]) return normalized;
+  return SCORE_TO_PRIORITY[normalized] || null;
+};
+
+const getUserName = (user) => `${user?.personalInfo?.firstName || ''} ${user?.personalInfo?.lastName || ''}`.trim();
+
 /**
  * @desc    Get all emergency cases (queue + appointments)
  * @route   GET /api/admin/emergency
@@ -10,29 +33,30 @@ import User from '../models/User.js';
  */
 export const getEmergencyCases = asyncHandler(async (req, res) => {
   const { status, priority, assignedDoctor } = req.query;
+  const normalizedPriority = normalizePriorityInput(priority);
 
-  // Build queue query
-  const queueQuery = { isEmergency: true };
+  // Build queue query from actual schema fields
+  const queueQuery = { priority: 'emergency' };
   if (status && status !== 'all') queueQuery.status = status;
-  if (priority && priority !== 'all') queueQuery.priority = priority;
-  if (assignedDoctor) queueQuery.assignedDoctor = assignedDoctor;
+  if (normalizedPriority) queueQuery.priority = normalizedPriority;
+  if (assignedDoctor) queueQuery.doctor = assignedDoctor;
 
-  // Build appointment query
-  const appointmentQuery = { isEmergency: true };
+  // Build appointment query from actual schema fields
+  const appointmentQuery = { type: 'emergency' };
   if (status && status !== 'all') appointmentQuery.status = status;
-  if (assignedDoctor) appointmentQuery.doctorId = assignedDoctor;
+  if (assignedDoctor) appointmentQuery.doctor = assignedDoctor;
 
   // Fetch emergency queue entries
   const emergencyQueue = await Queue.find(queueQuery)
-    .populate('patientId', 'email personalInfo phoneNumber')
-    .populate('assignedDoctor', 'email personalInfo professionalInfo')
-    .sort({ priority: -1, createdAt: 1 })
+    .populate('patient', 'email personalInfo phoneNumber')
+    .populate('doctor', 'email personalInfo professionalInfo')
+    .sort({ createdAt: 1 })
     .lean();
 
   // Fetch emergency appointments
   const emergencyAppointments = await Appointment.find(appointmentQuery)
-    .populate('patientId', 'email personalInfo phoneNumber')
-    .populate('doctorId', 'email personalInfo professionalInfo')
+    .populate('patient', 'email personalInfo phoneNumber')
+    .populate('doctor', 'email personalInfo professionalInfo')
     .sort({ appointmentDate: 1 })
     .lean();
 
@@ -42,43 +66,44 @@ export const getEmergencyCases = asyncHandler(async (req, res) => {
       _id: q._id,
       type: 'queue',
       patient: {
-        id: q.patientId?._id,
-        name: `${q.patientId?.personalInfo?.firstName || ''} ${q.patientId?.personalInfo?.lastName || ''}`.trim(),
-        email: q.patientId?.email,
-        phone: q.patientId?.phoneNumber
+        id: q.patient?._id,
+        name: getUserName(q.patient),
+        email: q.patient?.email,
+        phone: q.patient?.phoneNumber
       },
-      doctor: q.assignedDoctor ? {
-        id: q.assignedDoctor._id,
-        name: `${q.assignedDoctor.personalInfo?.firstName || ''} ${q.assignedDoctor.personalInfo?.lastName || ''}`.trim(),
-        specialization: q.assignedDoctor.professionalInfo?.specialization
+      doctor: q.doctor ? {
+        id: q.doctor._id,
+        name: getUserName(q.doctor),
+        specialization: q.doctor.professionalInfo?.specialty || q.doctor.professionalInfo?.specialization,
+        specialty: q.doctor.professionalInfo?.specialty || q.doctor.professionalInfo?.specialization
       } : null,
       status: q.status,
-      priority: q.priority,
-      chiefComplaint: q.chiefComplaint,
+      priority: PRIORITY_TO_SCORE[q.priority] || 1,
+      priorityCode: q.priority,
+      chiefComplaint: q.reasonForVisit,
       symptoms: q.symptoms,
-      vitalSigns: q.vitalSigns,
-      triageNotes: q.triageNotes,
       createdAt: q.createdAt,
-      waitTime: Math.floor((Date.now() - new Date(q.createdAt).getTime()) / (1000 * 60)) // minutes
+      waitTime: Math.floor((Date.now() - new Date(q.checkInTime || q.createdAt).getTime()) / (1000 * 60))
     })),
     ...emergencyAppointments.map(a => ({
       _id: a._id,
       type: 'appointment',
       patient: {
-        id: a.patientId?._id,
-        name: `${a.patientId?.personalInfo?.firstName || ''} ${a.patientId?.personalInfo?.lastName || ''}`.trim(),
-        email: a.patientId?.email,
-        phone: a.patientId?.phoneNumber
+        id: a.patient?._id,
+        name: getUserName(a.patient),
+        email: a.patient?.email,
+        phone: a.patient?.phoneNumber
       },
-      doctor: a.doctorId ? {
-        id: a.doctorId._id,
-        name: `${a.doctorId.personalInfo?.firstName || ''} ${a.doctorId.personalInfo?.lastName || ''}`.trim(),
-        specialization: a.doctorId.professionalInfo?.specialization
+      doctor: a.doctor ? {
+        id: a.doctor._id,
+        name: getUserName(a.doctor),
+        specialization: a.doctor.professionalInfo?.specialty || a.doctor.professionalInfo?.specialization,
+        specialty: a.doctor.professionalInfo?.specialty || a.doctor.professionalInfo?.specialization
       } : null,
       status: a.status,
       appointmentDate: a.appointmentDate,
-      appointmentType: a.appointmentType,
-      reason: a.reason,
+      appointmentType: a.type,
+      reason: a.reasonForVisit,
       notes: a.notes,
       createdAt: a.createdAt
     }))
@@ -108,7 +133,7 @@ export const getEmergencyStats = asyncHandler(async (req, res) => {
   // Emergency queue stats
   const queueStats = await Queue.aggregate([
     {
-      $match: { isEmergency: true }
+      $match: { priority: 'emergency' }
     },
     {
       $group: {
@@ -121,7 +146,7 @@ export const getEmergencyStats = asyncHandler(async (req, res) => {
   // Emergency appointments stats
   const appointmentStats = await Appointment.aggregate([
     {
-      $match: { isEmergency: true }
+      $match: { type: 'emergency' }
     },
     {
       $group: {
@@ -133,22 +158,22 @@ export const getEmergencyStats = asyncHandler(async (req, res) => {
 
   // Recent emergencies (last 24 hours)
   const recentEmergencies = await Queue.countDocuments({
-    isEmergency: true,
+    priority: 'emergency',
     createdAt: { $gte: last24Hours }
   });
 
   // Average wait time for completed emergencies (last 7 days)
   const completedEmergencies = await Queue.find({
-    isEmergency: true,
+    priority: 'emergency',
     status: 'completed',
     createdAt: { $gte: last7Days },
-    actualEndTime: { $exists: true }
+    completedTime: { $exists: true }
   });
 
   let avgWaitTime = 0;
   if (completedEmergencies.length > 0) {
     const totalWaitTime = completedEmergencies.reduce((sum, q) => {
-      const wait = new Date(q.actualEndTime) - new Date(q.createdAt);
+      const wait = new Date(q.completedTime) - new Date(q.checkInTime || q.createdAt);
       return sum + wait;
     }, 0);
     avgWaitTime = Math.floor(totalWaitTime / completedEmergencies.length / (1000 * 60)); // minutes
@@ -157,7 +182,7 @@ export const getEmergencyStats = asyncHandler(async (req, res) => {
   // Priority distribution
   const priorityDistribution = await Queue.aggregate([
     {
-      $match: { isEmergency: true, status: { $in: ['waiting', 'in-progress'] } }
+      $match: { priority: 'emergency', status: { $in: ['waiting', 'in-progress'] } }
     },
     {
       $group: {
@@ -190,11 +215,12 @@ export const getEmergencyStats = asyncHandler(async (req, res) => {
 export const updateEmergencyPriority = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { priority } = req.body;
+  const normalizedPriority = normalizePriorityInput(priority);
 
-  if (!priority || ![1, 2, 3, 4, 5].includes(priority)) {
+  if (!normalizedPriority) {
     return res.status(400).json({
       success: false,
-      message: 'Valid priority (1-5) is required'
+      message: 'Valid priority is required (normal, urgent, emergency or 1-5)'
     });
   }
 
@@ -207,8 +233,8 @@ export const updateEmergencyPriority = asyncHandler(async (req, res) => {
     });
   }
 
-  queueEntry.priority = priority;
-  await queueEntry.save();
+  queueEntry.priority = normalizedPriority;
+  await queueEntry.save({ validateModifiedOnly: true });
 
   res.json({
     success: true,
@@ -251,14 +277,14 @@ export const assignDoctorToEmergency = asyncHandler(async (req, res) => {
     });
   }
 
-  queueEntry.assignedDoctor = doctorId;
+  queueEntry.doctor = doctorId;
   if (queueEntry.status === 'waiting') {
     queueEntry.status = 'in-progress';
-    queueEntry.actualStartTime = new Date();
+    queueEntry.calledTime = new Date();
   }
-  await queueEntry.save();
+  await queueEntry.save({ validateModifiedOnly: true });
 
-  await queueEntry.populate('assignedDoctor', 'email personalInfo professionalInfo');
+  await queueEntry.populate('doctor', 'email personalInfo professionalInfo');
 
   res.json({
     success: true,
@@ -298,12 +324,12 @@ export const updateEmergencyStatus = asyncHandler(async (req, res) => {
 
   // Update timestamps based on status
   if (status === 'in-progress' && oldStatus === 'waiting') {
-    queueEntry.actualStartTime = new Date();
-  } else if (status === 'completed' && !queueEntry.actualEndTime) {
-    queueEntry.actualEndTime = new Date();
+    queueEntry.calledTime = new Date();
+  } else if (status === 'completed' && !queueEntry.completedTime) {
+    queueEntry.completedTime = new Date();
   }
 
-  await queueEntry.save();
+  await queueEntry.save({ validateModifiedOnly: true });
 
   res.json({
     success: true,
@@ -330,12 +356,12 @@ export const getAvailableDoctors = asyncHandler(async (req, res) => {
     {
       $match: {
         status: { $in: ['waiting', 'in-progress'] },
-        assignedDoctor: { $exists: true, $ne: null }
+        doctor: { $exists: true, $ne: null }
       }
     },
     {
       $group: {
-        _id: '$assignedDoctor',
+        _id: '$doctor',
         activeCount: { $sum: 1 }
       }
     }
@@ -348,9 +374,10 @@ export const getAvailableDoctors = asyncHandler(async (req, res) => {
 
   const doctorsWithLoad = doctors.map(doc => ({
     _id: doc._id,
-    name: `${doc.personalInfo?.firstName || ''} ${doc.personalInfo?.lastName || ''}`.trim(),
+    name: getUserName(doc),
     email: doc.email,
-    specialization: doc.professionalInfo?.specialization,
+    specialization: doc.professionalInfo?.specialty || doc.professionalInfo?.specialization,
+    specialty: doc.professionalInfo?.specialty || doc.professionalInfo?.specialization,
     experience: doc.professionalInfo?.experience,
     activePatients: assignmentMap[doc._id.toString()] || 0
   }));
