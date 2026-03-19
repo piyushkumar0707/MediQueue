@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
 
 jobs:
   backend:
@@ -71,6 +73,139 @@ jobs:
       - name: Run Tests
         run: npm test -- --passWithNoTests
 
+  backend-integration-pr:
+    name: Backend Integration (PR Gate)
+    runs-on: ubuntu-latest
+    needs: backend
+    if: github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      MONGODB_URI: mongodb://localhost:27017/mediqueue_test
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test_access_secret_32_chars_minimum' }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test_refresh_secret_32_chars_minimum' }}
+      JWT_MFA_SECRET: ${{ secrets.JWT_MFA_SECRET || 'test_mfa_secret_here_32_chars_ok' }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'test_encryption_key_32chars!' }}
+      FRONTEND_URL: http://localhost:5173
+      EMAIL_FROM: ci@example.com
+      EMAIL_USER: ci@example.com
+      EMAIL_PASS: ci-placeholder-pass
+      TWILIO_ACCOUNT_SID: ci_placeholder
+      TWILIO_AUTH_TOKEN: ci_placeholder
+      TWILIO_PHONE_NUMBER: +10000000000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run Integration Tests
+        run: npm run test:integration
+
+  backend-integration-coverage:
+    name: Backend Integration Coverage (Advisory)
+    runs-on: ubuntu-latest
+    needs: backend
+    if: github.event_name != 'pull_request'
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      MONGODB_URI: mongodb://localhost:27017/mediqueue_test
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test_access_secret_32_chars_minimum' }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test_refresh_secret_32_chars_minimum' }}
+      JWT_MFA_SECRET: ${{ secrets.JWT_MFA_SECRET || 'test_mfa_secret_here_32_chars_ok' }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'test_encryption_key_32chars!' }}
+      FRONTEND_URL: http://localhost:5173
+      EMAIL_FROM: ci@example.com
+      EMAIL_USER: ci@example.com
+      EMAIL_PASS: ci-placeholder-pass
+      TWILIO_ACCOUNT_SID: ci_placeholder
+      TWILIO_AUTH_TOKEN: ci_placeholder
+      TWILIO_PHONE_NUMBER: +10000000000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run Integration Coverage
+        run: npm run test:integration:coverage
+
+      - name: Upload Backend Coverage Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-integration-coverage
+          path: backend/coverage
+          if-no-files-found: ignore
+
   frontend:
     name: Frontend Build
     runs-on: ubuntu-latest
@@ -99,3 +234,50 @@ jobs:
         env:
           VITE_API_URL: http://localhost:5000/api/v1
           VITE_SOCKET_URL: http://localhost:5000
+
+  e2e-smoke:
+    name: E2E Smoke (Playwright)
+    runs-on: ubuntu-latest
+    needs: frontend
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      VITE_API_URL: http://localhost:5000/api/v1
+      VITE_SOCKET_URL: http://localhost:5000
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:5173
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Install Playwright Browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run PR Smoke Tests
+        if: github.event_name == 'pull_request'
+        run: npm run e2e -- --project=chromium --grep "@smoke"
+
+      - name: Run Full E2E (Main/Nightly/Manual)
+        if: github.event_name != 'pull_request'
+        run: npm run e2e -- --project=chromium
+
+      - name: Upload Playwright Report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          if-no-files-found: ignore

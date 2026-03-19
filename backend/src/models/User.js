@@ -240,10 +240,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Indexes for performance
-userSchema.index({ email: 1 });
-userSchema.index({ phoneNumber: 1 });
 userSchema.index({ role: 1 });
-userSchema.index({ 'professionalInfo.licenseNumber': 1 }, { sparse: true });
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {
