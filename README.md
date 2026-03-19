@@ -11,6 +11,7 @@
 [![Socket.io](https://img.shields.io/badge/Socket.io-v4-010101?style=flat-square&logo=socket.io)](https://socket.io)
 [![JWT](https://img.shields.io/badge/Auth-JWT%20%2B%20OTP-orange?style=flat-square)](https://jwt.io)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![CI](https://github.com/piyushkumar0707/MediQueue/actions/workflows/ci.yml/badge.svg)](https://github.com/piyushkumar0707/MediQueue/actions/workflows/ci.yml)
 
 </div>
 
@@ -34,14 +35,14 @@ Three user roles — **Patient**, **Doctor**, **Admin** — each with their own 
 | Concern | Solution |
 |---|---|
 | Real-time queue updates | Socket.io v4 rooms (`user:<id>`) — server pushes diffs on every queue state change |
-| Medical record security | AES-256-GCM encryption via a dedicated service; key separate from data |
+| Medical record security | AES-256-GCM encryption via a dedicated backend service |
 | Authentication | Two-token JWT (15 min access + 7 day refresh) with a two-step OTP registration flow; tokens kept in memory only — never written to localStorage |
 | MFA | TOTP via speakeasy + backup codes; separate JWT_MFA_SECRET for MFA session tokens |
 | Authorization | Stateless `protect()` + `authorize(...roles)` middleware; Redis-cached user lookup (60s TTL) to avoid DB hit on every request |
 | Rate limiting | Redis-backed `createRateLimiter()` factory — per-user limits effective across multiple processes |
 | Audit compliance | Immutable `AuditLog` model with SHA-256 integrity hashes; middleware wraps every sensitive admin action |
 | Emergency access | Doctors can request override access; all overrides are logged and surfaced to admins for review |
-| File uploads | Multer → Cloudinary storage; files served via authenticated backend proxy — raw CDN URLs never exposed to clients |
+| File uploads | Multer → Cloudinary storage with authenticated backend retrieval flows |
 | AI triage | Groq LLaMA 3.1 suggests priority from symptoms — human override always preserved, AI is advisory only |
 | AI summarization | On-demand PDF text extraction + LLaMA summary — quota-limited, PII-stripped before Groq sees any text |
 | AI image analysis | Groq LLaMA 4 Scout (multimodal) reads consultation note images — confidence scoring flags unclear handwriting |
@@ -237,6 +238,98 @@ npm run dev                 # → http://localhost:5173
 |---|---|---|
 | `VITE_API_URL` | ✅ | Backend API base URL (e.g. `http://localhost:5000/api/v1`) — validated at build time |
 | `VITE_SOCKET_URL` | ✅ | Socket.io server URL (e.g. `http://localhost:5000`) — validated at build time |
+
+---
+
+## CI/CD Pipeline
+
+GitHub Actions workflow is configured at `.github/workflows/ci.yml`.
+
+### Triggers
+
+- Push to `main`
+- Pull request targeting `main`
+- Manual run (`workflow_dispatch`)
+
+### Jobs
+
+- **Backend Lint and Test**
+    - Starts MongoDB and Redis service containers
+    - Installs backend dependencies
+    - Runs `npm run lint`
+    - Runs `npm test -- --passWithNoTests`
+
+- **Frontend Build**
+    - Installs frontend dependencies
+    - Runs `npm run build`
+
+### Local parity commands (same checks as CI)
+
+```bash
+npm --prefix backend run lint
+npm --prefix backend test -- --passWithNoTests
+npm --prefix frontend run build
+```
+
+### Branch protection (recommended)
+
+Require both checks before merge into `main`:
+
+- `Backend Lint and Test`
+- `Frontend Build`
+
+---
+
+## Release & Deployment
+
+Use this as the standard release flow for this repository.
+
+### 1) Pre-release checklist
+
+- Confirm required production env vars are set (`MONGODB_URI`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_MFA_SECRET`, `ENCRYPTION_KEY`, `FRONTEND_URL`, and required provider keys)
+- Ensure branch protection on `main` requires CI checks
+- Ensure CI workflow is green on the release PR
+
+### 2) Local verification before merge
+
+```bash
+# CI parity
+npm --prefix backend run lint
+npm --prefix backend test -- --passWithNoTests
+npm --prefix frontend run build
+
+# Container smoke test
+docker-compose up -d --build
+docker-compose ps
+```
+
+Health checks:
+
+- Frontend: `http://localhost/health`
+- Backend: `http://localhost:5000/health`
+
+### 3) Merge and deploy
+
+- Open PR to `main`
+- Wait for both CI jobs to pass:
+    - `Backend Lint and Test`
+    - `Frontend Build`
+- Merge PR
+- Deploy using your target environment process (container platform, VM, or orchestration)
+
+### 4) Post-deploy validation
+
+- Verify API health endpoint returns healthy status
+- Verify frontend loads and authentication flow works
+- Verify one core end-to-end flow (e.g. registration/login or queue join)
+- Check logs for startup/runtime errors
+
+### 5) Rollback strategy
+
+- If health checks fail or critical paths break:
+    - rollback to last known good image/commit
+    - re-run health checks
+    - investigate using CI logs + runtime logs before re-release
 
 ---
 
