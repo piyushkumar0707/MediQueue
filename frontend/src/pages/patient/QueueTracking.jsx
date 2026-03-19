@@ -214,7 +214,7 @@ const QueueTracking = () => {
                 <h4 className="text-lg font-medium text-gray-900">
                   Dr. {doctor?.personalInfo?.firstName} {doctor?.personalInfo?.lastName}
                 </h4>
-                <p className="text-sm text-gray-600">{doctor?.professionalInfo?.specialization}</p>
+                <p className="text-sm text-gray-600">{doctor?.professionalInfo?.specialty || doctor?.professionalInfo?.specialization}</p>
                 {doctor?.professionalInfo?.department && (
                   <p className="text-sm text-gray-500 mt-1">{doctor?.professionalInfo?.department}</p>
                 )}

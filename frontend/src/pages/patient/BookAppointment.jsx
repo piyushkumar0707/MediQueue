@@ -44,7 +44,7 @@ const BookAppointment = () => {
         
         // Extract unique specializations
         const specs = [...new Set(res.data
-          .map(d => d.professionalInfo?.specialization)
+          .map(d => d.professionalInfo?.specialty || d.professionalInfo?.specialization)
           .filter(Boolean))];
         setSpecializations(specs);
       }
@@ -263,7 +263,7 @@ const BookAppointment = () => {
                           Dr. {doctor.personalInfo?.firstName} {doctor.personalInfo?.lastName}
                         </h3>
                         <p className="text-sm text-indigo-600 font-medium">
-                          {doctor.professionalInfo?.specialization || 'General Physician'}
+                          {doctor.professionalInfo?.specialty || doctor.professionalInfo?.specialization || 'General Physician'}
                         </p>
                         {doctor.professionalInfo?.experience && (
                           <p className="text-sm text-gray-600 mt-1">
@@ -468,7 +468,7 @@ const BookAppointment = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">Dr. {selectedDoctor.personalInfo?.firstName} {selectedDoctor.personalInfo?.lastName}</h3>
-                  <p className="text-sm text-indigo-600">{selectedDoctor.professionalInfo?.specialization}</p>
+                  <p className="text-sm text-indigo-600">{selectedDoctor.professionalInfo?.specialty || selectedDoctor.professionalInfo?.specialization}</p>
                 </div>
               </div>
 

@@ -41,7 +41,7 @@ const DoctorSidebar = ({ onNavigate }) => {
               Dr. {user.personalInfo.firstName} {user.personalInfo.lastName}
             </p>
             <p className="text-xs text-indigo-500 truncate">
-              {user?.professionalInfo?.specialization || 'Medical Professional'}
+              {user?.professionalInfo?.specialty || user?.professionalInfo?.specialization || 'Medical Professional'}
             </p>
           </div>
         )}
