@@ -9,6 +9,12 @@ services:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: mediqueue
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - mediqueue-network
 
@@ -21,6 +27,12 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
     networks:
       - mediqueue-network
 
@@ -37,11 +49,13 @@ services:
     environment:
       MONGODB_URI: mongodb://mongodb:27017/mediqueue
       REDIS_URL: redis://redis:6379
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-development}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - mediqueue-network
     healthcheck:
@@ -63,7 +77,8 @@ services:
     ports:
       - '80:80'
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - mediqueue-network
     healthcheck:

@@ -40,6 +40,29 @@ export const validateEnv = () => {
     }
   }
 
+  const emailKeys = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USER', 'EMAIL_PASSWORD', 'EMAIL_FROM'];
+  const twilioKeys = ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_PHONE_NUMBER'];
+
+  const validateProviderGroup = (keys, providerName) => {
+    const provided = keys.filter(key => !!process.env[key]);
+    if (provided.length === 0) {
+      logger.warn(`[ENV] ${providerName} not configured - related features may be unavailable`);
+      return;
+    }
+
+    if (provided.length !== keys.length) {
+      const missing = keys.filter(key => !process.env[key]);
+      const msg = `[ENV] Incomplete ${providerName} configuration. Missing: ${missing.join(', ')}`;
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(msg);
+      }
+      logger.warn(msg);
+    }
+  };
+
+  validateProviderGroup(emailKeys, 'Email provider');
+  validateProviderGroup(twilioKeys, 'Twilio provider');
+
   // Validate FRONTEND_URL format when set (supports comma-separated for multi-env)
   if (process.env.FRONTEND_URL) {
     const urls = process.env.FRONTEND_URL.split(',').map(u => u.trim()).filter(Boolean);
