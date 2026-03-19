@@ -19,7 +19,6 @@ export const schedule24HourReminders = () => {
 
       // Find appointments scheduled for 24 hours from now
       const now = new Date();
-      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       
       // Get appointments between 23-25 hours from now (1-hour window)
       const startWindow = new Date(now.getTime() + 23 * 60 * 60 * 1000);
@@ -30,8 +29,8 @@ export const schedule24HourReminders = () => {
         status: { $in: ['scheduled', 'confirmed'] },
         reminderSent24h: { $ne: true } // Haven't sent reminder yet
       })
-        .populate('patient', 'personalInfo email phoneNumber firstName lastName')
-        .populate('doctor', 'personalInfo professionalInfo firstName lastName');
+        .populate('patient', 'personalInfo email phoneNumber')
+        .populate('doctor', 'personalInfo professionalInfo');
 
       logger.info(`Found ${appointments.length} appointments needing 24h reminders`);
 
@@ -42,7 +41,7 @@ export const schedule24HourReminders = () => {
             recipient: appointment.patient._id,
             type: 'appointment_reminder',
             title: '📅 Appointment Tomorrow',
-            message: `Reminder: You have an appointment with Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} tomorrow at ${appointment.timeSlot.startTime}. Department: ${appointment.doctor.professionalInfo?.specialization || 'General'}`,
+            message: `Reminder: You have an appointment with Dr. ${appointment.doctor.personalInfo?.firstName || ''} ${appointment.doctor.personalInfo?.lastName || ''} tomorrow at ${appointment.timeSlot.startTime}. Department: ${appointment.doctor.professionalInfo?.specialty || appointment.doctor.professionalInfo?.specialization || 'General'}`,
             priority: 'medium',
             relatedEntity: {
               entityType: 'Appointment',
@@ -89,8 +88,8 @@ export const schedule1HourReminders = () => {
         status: { $in: ['scheduled', 'confirmed'] },
         reminderSent1h: { $ne: true } // Haven't sent reminder yet
       })
-        .populate('patient', 'personalInfo email phoneNumber firstName lastName')
-        .populate('doctor', 'personalInfo professionalInfo firstName lastName');
+        .populate('patient', 'personalInfo email phoneNumber')
+        .populate('doctor', 'personalInfo professionalInfo');
 
       logger.info(`Found ${appointments.length} appointments needing 1h reminders`);
 
@@ -101,7 +100,7 @@ export const schedule1HourReminders = () => {
             recipient: appointment.patient._id,
             type: 'appointment_reminder',
             title: '⏰ Appointment in 1 Hour',
-            message: `Your appointment with Dr. ${appointment.doctor.firstName} ${appointment.doctor.lastName} is in 1 hour at ${appointment.timeSlot.startTime}. Please be on time!`,
+            message: `Your appointment with Dr. ${appointment.doctor.personalInfo?.firstName || ''} ${appointment.doctor.personalInfo?.lastName || ''} is in 1 hour at ${appointment.timeSlot.startTime}. Please be on time!`,
             priority: 'high',
             relatedEntity: {
               entityType: 'Appointment',
