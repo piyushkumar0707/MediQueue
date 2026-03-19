@@ -108,18 +108,25 @@ class NotificationService {
   async sendEmail(notification) {
     try {
       // Populate recipient to get email if not already populated
-      if (!notification.recipient.email) {
-        await notification.populate('recipient', 'email firstName lastName');
+      if (!notification.recipient?.email) {
+        await notification.populate('recipient', 'email phoneNumber countryCode personalInfo.firstName personalInfo.lastName');
       }
 
       // Populate sender for email context
-      if (notification.sender && !notification.sender.firstName) {
-        await notification.populate('sender', 'firstName lastName');
+      if (notification.sender && !notification.sender?.personalInfo?.firstName) {
+        await notification.populate('sender', 'personalInfo.firstName personalInfo.lastName');
       }
 
       const recipientEmail = notification.recipient.email;
-      const recipientName = `${notification.recipient.firstName} ${notification.recipient.lastName}`;
-      const senderName = notification.sender ? `${notification.sender.firstName} ${notification.sender.lastName}` : 'CareQueue';
+      const recipientFirstName = notification.recipient.personalInfo?.firstName || '';
+      const recipientLastName = notification.recipient.personalInfo?.lastName || '';
+      const senderFirstName = notification.sender?.personalInfo?.firstName || '';
+      const senderLastName = notification.sender?.personalInfo?.lastName || '';
+
+      const recipientName = `${recipientFirstName} ${recipientLastName}`.trim() || 'User';
+      const senderName = notification.sender
+        ? `${senderFirstName} ${senderLastName}`.trim() || 'CareQueue'
+        : 'CareQueue';
 
       let emailTemplate = { subject: '', html: '' };
 
@@ -340,7 +347,7 @@ class NotificationService {
       const notification = await NotificationModel.create(data);
       
       // Populate sender info
-      await notification.populate('sender', 'firstName lastName role');
+      await notification.populate('sender', 'personalInfo.firstName personalInfo.lastName role');
 
       // Send through all channels
       await this.sendNotification(notification);

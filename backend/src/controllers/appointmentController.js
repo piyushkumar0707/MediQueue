@@ -286,7 +286,8 @@ export const getAvailableSlots = asyncHandler(async (req, res) => {
       doctor: {
         _id: doctor._id,
         name: doctor.personalInfo.fullName,
-        specialization: doctor.professionalInfo?.specialization
+        specialty: doctor.professionalInfo?.specialty,
+        specialization: doctor.professionalInfo?.specialty || doctor.professionalInfo?.specialization
       },
       slots: allSlots
     }
@@ -559,8 +560,8 @@ export const getAppointmentById = asyncHandler(async (req, res) => {
   }
 
   // Check authorization
-  const isPatient = appointment.patient._id.toString() === req.user._id.toString();
-  const isDoctor = appointment.doctor._id.toString() === req.user._id.toString();
+  const isPatient = appointment.patient._id.toString() === req.user.userId;
+  const isDoctor = appointment.doctor._id.toString() === req.user.userId;
 
   if (!isPatient && !isDoctor && req.user.role !== 'admin') {
     return res.status(403).json({
