@@ -22,6 +22,10 @@ build/
 .vscode/
 .idea/
 .github/
+!.github/
+.github/*
+!.github/workflows/
+!.github/workflows/**
 *.swp
 *.swo
 *~

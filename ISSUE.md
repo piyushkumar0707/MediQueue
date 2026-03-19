@@ -646,12 +646,12 @@ jobs:
 
 ### Subtasks
 
-- [ ] **11.1** Create `.github/workflows/` directory at project root
-- [ ] **11.2** Create `.github/workflows/ci.yml` with the backend job (lint + test)
-- [ ] **11.3** Create `.github/workflows/ci.yml` with the frontend job (build check)
+- [x] **11.1** Create `.github/workflows/` directory at project root
+- [x] **11.2** Create `.github/workflows/ci.yml` with the backend job (lint + test)
+- [x] **11.3** Create `.github/workflows/ci.yml` with the frontend job (build check)
 - [ ] **11.4** Add GitHub Actions secrets for any env vars needed in CI (`JWT_ACCESS_SECRET`, etc.)
 - [ ] **11.5** Add a branch protection rule on `main`: require CI to pass before merge
-- [ ] **11.6** Verify the pipeline passes on first run
+- [x] **11.6** Verify the pipeline passes on first run
 
 ---
 

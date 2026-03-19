@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend Lint and Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })' || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      MONGODB_URI: mongodb://localhost:27017/mediqueue_test
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test_access_secret_32_chars_minimum' }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test_refresh_secret_32_chars_minimum' }}
+      JWT_MFA_SECRET: ${{ secrets.JWT_MFA_SECRET || 'test_mfa_secret_here_32_chars_ok' }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'test_encryption_key_32chars!' }}
+      FRONTEND_URL: http://localhost:5173
+      EMAIL_FROM: ci@example.com
+      EMAIL_USER: ci@example.com
+      EMAIL_PASS: ci-placeholder-pass
+      TWILIO_ACCOUNT_SID: ci_placeholder
+      TWILIO_AUTH_TOKEN: ci_placeholder
+      TWILIO_PHONE_NUMBER: +10000000000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Run Tests
+        run: npm test -- --passWithNoTests
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: npm run build
+        env:
+          VITE_API_URL: http://localhost:5000/api/v1
+          VITE_SOCKET_URL: http://localhost:5000
