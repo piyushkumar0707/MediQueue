@@ -12,7 +12,7 @@ import mongoose from 'mongoose';
 // @access  Private (Patient)
 export const getMyConsents = asyncHandler(async (req, res) => {
   const consents = await Consent.find({ patient: req.user.userId })
-    .populate('doctor', 'personalInfo.firstName personalInfo.lastName professionalInfo.specialization email')
+    .populate('doctor', 'personalInfo.firstName personalInfo.lastName professionalInfo.specialty email')
     .populate('specificRecords', 'title recordType')
     .sort({ createdAt: -1 });
 
@@ -26,7 +26,8 @@ export const getMyConsents = asyncHandler(async (req, res) => {
         _id: obj.doctor._id,
         firstName: obj.doctor.personalInfo.firstName,
         lastName: obj.doctor.personalInfo.lastName,
-        specialization: obj.doctor.professionalInfo?.specialization,
+        specialty: obj.doctor.professionalInfo?.specialty,
+        specialization: obj.doctor.professionalInfo?.specialty,
         email: obj.doctor.email
       };
     }
@@ -139,7 +140,7 @@ export const grantConsent = asyncHandler(async (req, res) => {
     consentGivenMethod: 'manual'
   });
 
-  await consent.populate('doctor', 'personalInfo.firstName personalInfo.lastName professionalInfo.specialization');
+  await consent.populate('doctor', 'personalInfo.firstName personalInfo.lastName professionalInfo.specialty');
 
   // Transform doctor data
   const transformedConsent = consent.toObject();
@@ -148,7 +149,8 @@ export const grantConsent = asyncHandler(async (req, res) => {
       _id: transformedConsent.doctor._id,
       firstName: transformedConsent.doctor.personalInfo.firstName,
       lastName: transformedConsent.doctor.personalInfo.lastName,
-      specialization: transformedConsent.doctor.professionalInfo?.specialization
+      specialty: transformedConsent.doctor.professionalInfo?.specialty,
+      specialization: transformedConsent.doctor.professionalInfo?.specialty
     };
   }
 
@@ -244,8 +246,6 @@ export const revokeConsent = asyncHandler(async (req, res) => {
     },
     actionUrl: '/doctor/shared-records',
   });
-  await notificationService.sendNotification(doctorNotification);
-
   await notificationService.sendNotification(doctorNotification);
 
   // Audit log - HIPAA Critical
