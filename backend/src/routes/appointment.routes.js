@@ -21,7 +21,11 @@ const bookingRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 10,
   keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, message: 'Too many booking requests. Please wait before booking again.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve reached the maximum of 10 appointment bookings per hour. Please wait a few minutes before booking another appointment.',
+    retryAfter: '1 hour'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -31,7 +35,11 @@ const downloadConfirmationRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 20,
   keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, message: 'Too many download requests. Please wait before downloading again.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve downloaded appointment confirmations 20 times in the past hour. If you\'re having trouble opening the file, please contact support.',
+    retryAfter: '1 hour'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });

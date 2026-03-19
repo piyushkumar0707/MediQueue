@@ -114,7 +114,7 @@ api.interceptors.response.use(
         failedQueue = [];
         // Lazy import to avoid circular deps
         import('react-hot-toast').then(({ default: toast }) => {
-          toast.error('Session expired. Please log in again.', { id: 'session-expired', duration: 3000 });
+          toast.error('Your session has expired. You will be redirected to login in a few seconds.', { id: 'session-expired', duration: 3000 });
         });
         setTimeout(() => { window.location.href = '/login'; }, 1500);
         return Promise.reject(refreshError);

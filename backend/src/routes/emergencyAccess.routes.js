@@ -20,7 +20,11 @@ const emergencyRequestRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   max: 5,
   keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, message: 'Too many emergency access requests. Please wait before trying again.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve requested emergency access 5 times in the past hour. For urgent assistance, please contact the administrator directly or call hospital emergency services.',
+    retryAfter: '1 hour'
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });

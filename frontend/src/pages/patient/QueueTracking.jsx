@@ -75,7 +75,23 @@ const QueueTracking = () => {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Not in Queue</h2>
-          <p className="text-gray-600 mb-6">You are not currently in any queue</p>
+          <p className="text-gray-600 mb-6">
+            You're not in any queue right now. Would you like to join a queue or book an appointment?
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => navigate('/patient/join-queue')}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Join Queue
+            </button>
+            <button
+              onClick={() => navigate('/patient/appointments/book')}
+              className="px-6 py-2 bg-white text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
+            >
+              Book Appointment
+            </button>
+          </div>
           <div className="flex gap-4 justify-center flex-wrap">
             <button
               onClick={() => navigate('/patient')}

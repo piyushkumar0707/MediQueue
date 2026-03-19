@@ -24,7 +24,11 @@ const loginLimiter = createRateLimiter({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many login attempts, please try again later.' },
+  message: { 
+    success: false, 
+    message: 'Too many login attempts from this device. For your security, please wait 15 minutes before trying again. If you forgot your password, you can reset it.',
+    retryAfter: '15 minutes'
+  },
 });
 
 // General auth limiter: 10 requests per 15 minutes per IP
@@ -33,7 +37,11 @@ const authLimiter = createRateLimiter({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many requests, please try again later.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve made too many authentication requests. Please wait 15 minutes to continue.',
+    retryAfter: '15 minutes'
+  },
 });
 
 // Refresh token limiter: generous — triggered on every page load
@@ -42,7 +50,11 @@ const refreshLimiter = createRateLimiter({
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many token refresh requests, please try again later.' },
+  message: { 
+    success: false, 
+    message: 'There seems to be an issue with your session. Please log out and log back in.',
+    retryAfter: '15 minutes'
+  },
 });
 
 // Strict OTP limiter: 5 requests per 15 minutes per IP
@@ -51,7 +63,11 @@ const otpLimiter = createRateLimiter({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many OTP requests, please try again later.' },
+  message: { 
+    success: false, 
+    message: 'You\'ve requested too many verification codes. Please wait 15 minutes before requesting a new code.',
+    retryAfter: '15 minutes'
+  },
 });
 
 // Public routes
@@ -70,7 +86,11 @@ const mfaLimiter = createRateLimiter({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many MFA attempts, please try again later.' },
+  message: { 
+    success: false, 
+    message: 'Too many authentication code attempts. Please wait 15 minutes, then try again or use a backup code.',
+    retryAfter: '15 minutes'
+  },
 });
 
 // MFA login validation (public — user has mfaSessionToken but no full auth yet)
