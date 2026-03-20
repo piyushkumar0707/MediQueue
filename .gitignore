@@ -65,6 +65,9 @@ backend/scripts/
 
 # ── Generated / tool output ──────────────────────────────────────────────────
 repomix-output.xml
+check-db.mjs
+backend/check-db.mjs
+diagrams/
 
 # ── One-off setup scripts ─────────────────────────────────────────────────────
 install_ioredis.bat
