@@ -25,8 +25,8 @@ export const setupMfa = async (req, res) => {
 
     // Generate a new TOTP secret
     const secret = speakeasy.generateSecret({
-      name: `CareQueue (${user.email})`,
-      issuer: 'CareQueue',
+      name: `MediQueue (${user.email})`,
+      issuer: 'MediQueue',
       length: 32
     });
 

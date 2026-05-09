@@ -21,13 +21,13 @@ class PDFService {
   /**
    * Add clinic header to PDF
    */
-  addHeader(doc, title = 'CareQueue Health Services', options = {}) {
+  addHeader(doc, title = 'MediQueue Health Services', options = {}) {
     const {
       subtitle = 'Quality Healthcare at Your Fingertips',
       contactLines = [
         'Phone: +91-XXX-XXX-XXXX',
-        'Email: info@carequeue.com',
-        'Web: www.carequeue.com'
+        'Email: info@mediqueue.com',
+        'Web: www.mediqueue.com'
       ]
     } = options;
 
@@ -87,7 +87,7 @@ class PDFService {
       doc.fontSize(8)
          .fillColor('#6B7280')
          .text(
-           `Page ${i + 1} of ${pageCount} | Generated on ${new Date().toLocaleDateString('en-IN')} | CareQueue Health Services`,
+           `Page ${i + 1} of ${pageCount} | Generated on ${new Date().toLocaleDateString('en-IN')} | MediQueue Health Services`,
            50,
            doc.page.height - 40,
            { align: 'center', width: doc.page.width - 100 }

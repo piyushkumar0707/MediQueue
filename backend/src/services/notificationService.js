@@ -125,8 +125,8 @@ class NotificationService {
 
       const recipientName = `${recipientFirstName} ${recipientLastName}`.trim() || 'User';
       const senderName = notification.sender
-        ? `${senderFirstName} ${senderLastName}`.trim() || 'CareQueue'
-        : 'CareQueue';
+        ? `${senderFirstName} ${senderLastName}`.trim() || 'MediQueue'
+        : 'MediQueue';
 
       let emailTemplate = { subject: '', html: '' };
 
@@ -190,11 +190,11 @@ class NotificationService {
         case 'queue_update':
         case 'queue_status':
           emailTemplate = {
-            subject: 'Your Turn - CareQueue',
+            subject: 'Your Turn - MediQueue',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background-color: #059669; color: white; padding: 20px; text-align: center;">
-                  <h1>🏥 CareQueue</h1>
+                  <h1>🏥 MediQueue</h1>
                 </div>
                 <div style="background-color: #f9fafb; padding: 30px;">
                   <div style="background-color: #d1fae5; border-left: 4px solid #059669; padding: 20px; margin: 20px 0;">
@@ -207,7 +207,7 @@ class NotificationService {
                   <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}${notification.actionUrl}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">View Queue Status</a>
                 </div>
                 <div style="text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px;">
-                  <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+                  <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
                 </div>
               </div>
             `
@@ -221,7 +221,7 @@ class NotificationService {
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background-color: #2563eb; color: white; padding: 20px; text-align: center;">
-                  <h1>CareQueue</h1>
+                  <h1>MediQueue</h1>
                 </div>
                 <div style="background-color: #f9fafb; padding: 30px;">
                   <h2>${notification.title}</h2>
@@ -229,7 +229,7 @@ class NotificationService {
                   ${notification.actionUrl ? `<a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}${notification.actionUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">View Details</a>` : ''}
                 </div>
                 <div style="text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px;">
-                  <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+                  <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
                 </div>
               </div>
             `
