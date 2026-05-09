@@ -2,7 +2,7 @@ import pkg from 'nodemailer';
 const { createTransport } = pkg;
 import { logger } from '../utils/logger.js';
 
-const DEFAULT_FROM = '"CareQueue" <noreply@carequeue.com>';
+const DEFAULT_FROM = '"MediQueue" <noreply@MediQueue.com>';
 const DEFAULT_BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
 class EmailService {
@@ -66,8 +66,8 @@ class EmailService {
 
   parseSender(fromValue) {
     const fallbackSender = {
-      name: 'CareQueue',
-      email: 'noreply@carequeue.com'
+      name: 'MediQueue',
+      email: 'noreply@MediQueue.com'
     };
 
     if (!fromValue || typeof fromValue !== 'string') {
@@ -217,7 +217,7 @@ class EmailService {
   // Email Templates
 
   consentRequestEmail(patientName, doctorName, purpose) {
-    const subject = 'Consent Request - CareQueue';
+    const subject = 'Consent Request - MediQueue';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -234,20 +234,20 @@ class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🏥 CareQueue</h1>
+            <h1>🏥 MediQueue</h1>
           </div>
           <div class="content">
             <h2>Consent Request</h2>
             <p>Dear ${patientName},</p>
             <p>Dr. ${doctorName} has requested your consent to access your medical records for the following purpose:</p>
             <p><strong>${purpose}</strong></p>
-            <p>Please log in to your CareQueue account to review and respond to this consent request.</p>
+            <p>Please log in to your MediQueue account to review and respond to this consent request.</p>
             <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/patient/consent" class="button">Review Consent Request</a>
             <p>If you did not expect this request, please contact our support team immediately.</p>
           </div>
           <div class="footer">
-            <p>This is an automated message from CareQueue. Please do not reply to this email.</p>
-            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+            <p>This is an automated message from MediQueue. Please do not reply to this email.</p>
+            <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -257,7 +257,7 @@ class EmailService {
   }
 
   emergencyAccessEmail(patientName, doctorName, emergencyType, location) {
-    const subject = '[URGENT] Emergency Access Granted - CareQueue';
+    const subject = '[URGENT] Emergency Access Granted - MediQueue';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -296,11 +296,11 @@ class EmailService {
             </div>
             <p>This access was granted to ensure you receive the best possible emergency care. An administrator will review this access request.</p>
             <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/patient/emergency-access" class="button">View Access Details</a>
-            <p><strong>Questions or concerns?</strong> Contact our support team immediately at support@carequeue.com</p>
+            <p><strong>Questions or concerns?</strong> Contact our support team immediately at support@MediQueue.com</p>
           </div>
           <div class="footer">
-            <p>This is an urgent automated message from CareQueue.</p>
-            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+            <p>This is an urgent automated message from MediQueue.</p>
+            <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -310,7 +310,7 @@ class EmailService {
   }
 
   verificationEmail(userName, verificationUrl) {
-    const subject = 'Verify Your Email — CareQueue';
+    const subject = 'Verify Your Email — MediQueue';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -326,7 +326,7 @@ class EmailService {
       </head>
       <body>
         <div class="container">
-          <div class="header"><h1>🏥 CareQueue</h1></div>
+          <div class="header"><h1>🏥 MediQueue</h1></div>
           <div class="content">
             <h2>Verify Your Email Address</h2>
             <p>Hi ${userName},</p>
@@ -335,8 +335,8 @@ class EmailService {
             <p>If you did not create an account, you can safely ignore this email.</p>
           </div>
           <div class="footer">
-            <p>This is an automated message from CareQueue. Please do not reply.</p>
-            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+            <p>This is an automated message from MediQueue. Please do not reply.</p>
+            <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -346,7 +346,7 @@ class EmailService {
   }
 
   appointmentReminderEmail(patientName, doctorName, appointmentDate, timeSlot) {
-    const subject = '📅 Appointment Reminder - CareQueue';
+    const subject = '📅 Appointment Reminder - MediQueue';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -377,11 +377,11 @@ class EmailService {
             </div>
             <p><strong>Please arrive 10 minutes early</strong> to complete any necessary check-in procedures.</p>
             <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/patient/appointments" class="button">View Appointment</a>
-            <p>Need to reschedule? Log in to your CareQueue account to modify your appointment.</p>
+            <p>Need to reschedule? Log in to your MediQueue account to modify your appointment.</p>
           </div>
           <div class="footer">
-            <p>This is an automated reminder from CareQueue.</p>
-            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+            <p>This is an automated reminder from MediQueue.</p>
+            <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -391,7 +391,7 @@ class EmailService {
   }
 
   prescriptionEmail(patientName, doctorName, diagnosis, medicines) {
-    const subject = 'New Prescription Available - CareQueue';
+    const subject = 'New Prescription Available - MediQueue';
     const medicineList = medicines.map(med => 
       `<li><strong>${med.name}</strong> - ${med.dosage}, ${med.frequency}, ${med.duration}</li>`
     ).join('');
@@ -437,8 +437,8 @@ class EmailService {
             <p>If you have any questions about your prescription, please contact your doctor.</p>
           </div>
           <div class="footer">
-            <p>This is an automated message from CareQueue.</p>
-            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+            <p>This is an automated message from MediQueue.</p>
+            <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -448,7 +448,7 @@ class EmailService {
   }
 
   appointmentCancelledEmail(patientName, doctorName, appointmentDate, timeSlot, reason) {
-    const subject = 'Appointment Cancelled - CareQueue';
+    const subject = 'Appointment Cancelled - MediQueue';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -482,8 +482,8 @@ class EmailService {
             <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/patient/appointments/book" class="button">Book New Appointment</a>
           </div>
           <div class="footer">
-            <p>This is an automated message from CareQueue.</p>
-            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+            <p>This is an automated message from MediQueue.</p>
+            <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -493,7 +493,7 @@ class EmailService {
   }
 
   registrationOtpEmail(otp, expiresInMinutes = 5) {
-    const subject = '🔐 Your CareQueue Verification Code';
+    const subject = '🔐 Your MediQueue Verification Code';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -510,7 +510,7 @@ class EmailService {
       </head>
       <body>
         <div class="container">
-          <div class="header"><h1>🏥 CareQueue</h1></div>
+          <div class="header"><h1>🏥 MediQueue</h1></div>
           <div class="content">
             <h2>Verify Your Account</h2>
             <p>Use the code below to complete your registration. It expires in <strong>${expiresInMinutes} minutes</strong>.</p>
@@ -520,8 +520,8 @@ class EmailService {
             <p>If you did not request this, please ignore this email.</p>
           </div>
           <div class="footer">
-            <p>This is an automated message from CareQueue. Please do not reply.</p>
-            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+            <p>This is an automated message from MediQueue. Please do not reply.</p>
+            <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -531,7 +531,7 @@ class EmailService {
   }
 
   passwordResetOtpEmail(otp, expiresInMinutes = 10) {
-    const subject = '🔑 Your CareQueue Password Reset Code';
+    const subject = '🔑 Your MediQueue Password Reset Code';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -549,7 +549,7 @@ class EmailService {
       </head>
       <body>
         <div class="container">
-          <div class="header"><h1>🏥 CareQueue</h1></div>
+          <div class="header"><h1>🏥 MediQueue</h1></div>
           <div class="content">
             <h2>Password Reset Request</h2>
             <p>Use the code below to reset your password. It expires in <strong>${expiresInMinutes} minutes</strong>.</p>
@@ -557,13 +557,13 @@ class EmailService {
               <div class="otp-code">${otp}</div>
             </div>
             <div class="warning">
-              ⚠️ <strong>Never share this code with anyone.</strong> CareQueue staff will never ask for your OTP.
+              ⚠️ <strong>Never share this code with anyone.</strong> MediQueue staff will never ask for your OTP.
             </div>
             <p>If you did not request a password reset, you can safely ignore this email. Your account is secure.</p>
           </div>
           <div class="footer">
-            <p>This is an automated message from CareQueue. Please do not reply.</p>
-            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+            <p>This is an automated message from MediQueue. Please do not reply.</p>
+            <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -573,7 +573,7 @@ class EmailService {
   }
 
   appointmentBookedEmail(patientName, doctorName, appointmentDate, timeSlot, reasonForVisit) {
-    const subject = 'Appointment Confirmed - CareQueue';
+    const subject = 'Appointment Confirmed - MediQueue';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -607,8 +607,8 @@ class EmailService {
             <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/patient/appointments" class="button">View Appointment</a>
           </div>
           <div class="footer">
-            <p>This is an automated confirmation from CareQueue.</p>
-            <p>&copy; ${new Date().getFullYear()} CareQueue. All rights reserved.</p>
+            <p>This is an automated confirmation from MediQueue.</p>
+            <p>&copy; ${new Date().getFullYear()} MediQueue. All rights reserved.</p>
           </div>
         </div>
       </body>

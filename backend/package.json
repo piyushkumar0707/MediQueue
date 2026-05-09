@@ -1,7 +1,7 @@
 {
-  "name": "carequeue-backend",
+  "name": "mediqueue-backend",
   "version": "1.0.0",
-  "description": "Backend API for CareQueue + Health-Vault healthcare platform",
+  "description": "Backend API for MediQueue + Health-Vault healthcare platform",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
