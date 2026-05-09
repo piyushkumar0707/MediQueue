@@ -19,8 +19,8 @@ const generateAccessToken = (payload) => {
     process.env.JWT_ACCESS_SECRET,
     {
       expiresIn: process.env.JWT_ACCESS_EXPIRY || '15m',
-      issuer: 'carequeue-api',
-      audience: 'carequeue-client'
+      issuer: 'mediqueue-api',
+      audience: 'mediqueue-client'
     }
   );
 };
@@ -42,8 +42,8 @@ const generateRefreshToken = (userId) => {
     process.env.JWT_REFRESH_SECRET,
     {
       expiresIn: process.env.JWT_REFRESH_EXPIRY || '7d',
-      issuer: 'carequeue-api',
-      audience: 'carequeue-client'
+      issuer: 'mediqueue-api',
+      audience: 'mediqueue-client'
     }
   );
 };
@@ -74,8 +74,8 @@ const generateTokenPair = (user) => {
 const verifyAccessToken = (token) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET, {
-      issuer: 'carequeue-api',
-      audience: 'carequeue-client'
+      issuer: 'mediqueue-api',
+      audience: 'mediqueue-client'
     });
     
     if (decoded.type !== 'access') {
@@ -102,8 +102,8 @@ const verifyAccessToken = (token) => {
 const verifyRefreshToken = (token) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET, {
-      issuer: 'carequeue-api',
-      audience: 'carequeue-client'
+      issuer: 'mediqueue-api',
+      audience: 'mediqueue-client'
     });
     
     if (decoded.type !== 'refresh') {

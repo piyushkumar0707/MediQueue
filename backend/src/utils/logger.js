@@ -17,7 +17,7 @@ const logFormat = winston.format.combine(
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: logFormat,
-  defaultMeta: { service: 'carequeue-api' },
+  defaultMeta: { service: 'mediqueue-api' },
   transports: [
     // Always log to stdout (captured by all cloud platforms and Docker)
     new winston.transports.Console({
