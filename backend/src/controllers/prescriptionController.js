@@ -116,7 +116,7 @@ export const createPrescription = asyncHandler(async (req, res) => {
     sender: req.user.userId,
     type: 'prescription_created',
     title: 'New Prescription Available',
-    message: `Dr. ${req.user.firstName} ${req.user.lastName} has created a new prescription for you. Diagnosis: ${diagnosis}. Please review it and follow the instructions.`,
+    message: `Dr. ${req.userDoc?.personalInfo?.firstName || 'Your doctor'} ${req.userDoc?.personalInfo?.lastName || ''} has created a new prescription for you. Diagnosis: ${diagnosis}. Please review it and follow the instructions.`.trim(),
     priority: 'medium',
     relatedEntity: {
       entityType: 'prescription',
