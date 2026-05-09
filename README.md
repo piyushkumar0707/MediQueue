@@ -4,6 +4,9 @@
 
 ### A production-grade healthcare operations platform built with security and real-time UX at its core.
 
+**🌟 Live Demo:** [https://medi-queue-ten.vercel.app/login](https://medi-queue-ten.vercel.app/login)  
+*(See [Demo Credentials](#recruiter-demo-mode--live-link) below)*
+
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongoosejs.com)
@@ -207,9 +210,11 @@ npm install
 npm run dev                 # → http://localhost:5173
 ```
 
-### Recruiter Demo Mode
+### Recruiter Demo Mode & Live Link
 
-Use the seeded demo dataset when you want recruiters to test quickly without creating accounts.
+**Live Demo URL:** [https://medi-queue-ten.vercel.app/login](https://medi-queue-ten.vercel.app/login)
+
+Use the seeded demo dataset to test the platform quickly without creating accounts.
 
 ```bash
 # Backend: reset and seed deterministic demo data
