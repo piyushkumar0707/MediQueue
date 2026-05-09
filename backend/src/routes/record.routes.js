@@ -20,43 +20,43 @@ import {
 
 const router = express.Router();
 
-// Per-user rate limit for file uploads: 10 per hour
+// Per-user rate limit for file uploads: 30 per 10 minutes
 const uploadRateLimit = createRateLimiter({
-  windowMs: 60 * 60 * 1000,
-  max: 10,
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve uploaded 10 files in the past hour. Please wait a few minutes, or try uploading multiple files at once (up to 5 files per upload).',
-    retryAfter: '1 hour'
+    message: 'You\'ve uploaded files 30 times in 10 minutes. Please wait 10 minutes before uploading again.',
+    retryAfter: '10 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Per-user rate limit for AI summarization: 10 per minute
+// Per-user rate limit for AI summarization: 30 per 10 minutes
 const summarizeRateLimit = createRateLimiter({
-  windowMs: 60 * 1000,
-  max: 10,
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve used the AI summary feature 10 times in the last minute. Please wait a moment before generating another summary.',
-    retryAfter: '1 minute'
+    message: 'You\'ve used the AI summary feature 30 times in 10 minutes. Please wait 10 minutes before generating another summary.',
+    retryAfter: '10 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Per-user rate limit for PDF report downloads: 20 per hour
+// Per-user rate limit for PDF report downloads: 30 per 10 minutes
 const downloadReportRateLimit = createRateLimiter({
-  windowMs: 60 * 60 * 1000,
-  max: 20,
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve downloaded 20 medical reports in the past hour. If you\'re having trouble viewing your reports, please contact support.',
-    retryAfter: '1 hour'
+    message: 'You\'ve downloaded medical reports 30 times in 10 minutes. Please wait 10 minutes before trying again.',
+    retryAfter: '10 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,

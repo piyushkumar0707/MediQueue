@@ -17,15 +17,15 @@ import {
 const router = express.Router();
 
 const consentMutationRateLimit = createRateLimiter({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
   message: { 
     success: false, 
-    message: 'You\'ve made too many consent changes in a short time. Please wait 15 minutes before modifying consents again.',
-    retryAfter: '15 minutes'
+    message: 'You\'ve made too many consent changes in a short time. Please wait 10 minutes before modifying consents again.',
+    retryAfter: '10 minutes'
   }
 });
 

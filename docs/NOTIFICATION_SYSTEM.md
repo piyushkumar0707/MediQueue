@@ -60,7 +60,7 @@ All notification features are implemented and working:
   - Prescription notifications
   - Generic notifications
 - **HTML email formatting** with responsive design
-- **NodeMailer integration** with Gmail/SMTP
+- **NodeMailer integration** with Brevo SMTP (plus Brevo API fallback)
 
 #### 5. **Appointment Scheduler** (`backend/src/services/appointmentScheduler.js`)
 - **24-hour reminders**: Runs hourly, sends 1 day before appointments
@@ -206,20 +206,23 @@ npm install node-cron nodemailer
 
 2. **Configure Environment** (`.env`):
 ```env
-# Email Configuration (Gmail)
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-16-char-app-password
+# Email Configuration (Brevo SMTP + API fallback)
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_USER=your-brevo-smtp-login
+EMAIL_PASSWORD=your-brevo-smtp-key
 EMAIL_FROM="CareQueue <noreply@carequeue.com>"
+BREVO_API_KEY=your-brevo-api-key
 
 # Frontend URL for email links
 FRONTEND_URL=http://localhost:5173
 ```
 
-3. **Enable Gmail App Password**:
-   - Enable 2FA on Gmail account
-   - Go to https://myaccount.google.com/apppasswords
-   - Generate app password (remove spaces)
-   - Add to `.env` as `EMAIL_PASSWORD`
+3. **Configure Brevo Credentials**:
+  - Create SMTP credentials in Brevo
+  - Create transactional API key in Brevo
+  - Set SMTP credentials in `EMAIL_USER` and `EMAIL_PASSWORD`
+  - Set API key in `BREVO_API_KEY` for automatic fallback
 
 4. **Start Server**:
 ```bash
@@ -385,10 +388,10 @@ node scripts/testNotificationIntegration.js
 ```
 Look for "Email service: Configured"
 
-2. **Check Gmail Settings**:
-   - 2FA enabled?
-   - App password generated?
-   - No spaces in password?
+2. **Check Brevo Settings**:
+  - SMTP login/key valid?
+  - `EMAIL_HOST=smtp-relay.brevo.com` and `EMAIL_PORT=587`?
+  - `BREVO_API_KEY` configured for fallback?
 
 3. **Test Email Service**:
 ```javascript

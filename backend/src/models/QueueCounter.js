@@ -4,8 +4,7 @@ const queueCounterSchema = new mongoose.Schema({
   doctorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    unique: true
+    required: true
   },
   date: {
     type: String, // YYYY-MM-DD format

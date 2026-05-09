@@ -207,6 +207,34 @@ npm install
 npm run dev                 # → http://localhost:5173
 ```
 
+### Recruiter Demo Mode
+
+Use the seeded demo dataset when you want recruiters to test quickly without creating accounts.
+
+```bash
+# Backend: reset and seed deterministic demo data
+cd backend
+npm run seed:demo:fresh
+
+# Frontend: enable demo credentials panel on login
+cd ../frontend
+cp .env.example .env
+# set VITE_DEMO_MODE=true in frontend/.env
+npm run dev
+```
+
+Demo credentials:
+
+- Patient: `demo.patient@mediqueue.local` / `DemoPass@123`
+- Doctor: `demo.doctor@mediqueue.local` / `DemoPass@123`
+- Admin: `demo.admin@mediqueue.local` / `DemoPass@123`
+
+Seed commands:
+
+- `npm run seed:demo` → idempotent upsert (safe re-run)
+- `npm run seed:demo:reset` → remove demo-tagged data
+- `npm run seed:demo:fresh` → reset then seed
+
 ### Environment Variables (Backend)
 
 | Variable | Required | Description |

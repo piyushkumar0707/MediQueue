@@ -378,8 +378,8 @@ export const getPrescriptionStats = asyncHandler(async (req, res) => {
 // @access  Private (Patient/Doctor)
 export const downloadPrescription = asyncHandler(async (req, res) => {
   const prescription = await Prescription.findById(req.params.id)
-    .populate('patient', 'personalInfo phone email')
-    .populate('doctor', 'personalInfo professionalInfo phone');
+    .populate('patient', 'personalInfo phoneNumber email')
+    .populate('doctor', 'personalInfo professionalInfo phoneNumber');
 
   if (!prescription) {
     return res.status(404).json({

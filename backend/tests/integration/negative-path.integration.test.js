@@ -93,8 +93,9 @@ describeIntegration('negative path integration', () => {
 
   test('login route is rate-limited after repeated failed attempts', async () => {
     const statuses = [];
+    const maxRequests = 30;
 
-    for (let i = 0; i < 6; i += 1) {
+    for (let i = 0; i < maxRequests + 1; i += 1) {
       const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,8 +108,8 @@ describeIntegration('negative path integration', () => {
       statuses.push(response.status);
     }
 
-    expect(statuses.slice(0, 5).every((status) => status === 401)).toBe(true);
-    expect(statuses[5]).toBe(429);
+    expect(statuses.slice(0, maxRequests).every((status) => status === 401)).toBe(true);
+    expect(statuses[maxRequests]).toBe(429);
   });
 
   test('doctor without consent cannot access patient record by id', async () => {

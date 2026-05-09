@@ -21,7 +21,16 @@ class PDFService {
   /**
    * Add clinic header to PDF
    */
-  addHeader(doc, title = 'CareQueue Health Services') {
+  addHeader(doc, title = 'CareQueue Health Services', options = {}) {
+    const {
+      subtitle = 'Quality Healthcare at Your Fingertips',
+      contactLines = [
+        'Phone: +91-XXX-XXX-XXXX',
+        'Email: info@carequeue.com',
+        'Web: www.carequeue.com'
+      ]
+    } = options;
+
     const pageWidth = doc.page.width;
     
     // Header background
@@ -38,14 +47,18 @@ class PDFService {
     doc.fontSize(10)
        .fillColor('#E5E7EB')
        .font('Helvetica')
-       .text('Quality Healthcare at Your Fingertips', 50, 60);
+       .text(subtitle, 50, 60);
     
     // Contact info (right side)
     doc.fontSize(9)
-       .fillColor('#FFFFFF')
-       .text('📞 +91-XXX-XXX-XXXX', pageWidth - 200, 35, { align: 'right' })
-       .text('📧 info@carequeue.com', pageWidth - 200, 50, { align: 'right' })
-       .text('🌐 www.carequeue.com', pageWidth - 200, 65, { align: 'right' });
+       .fillColor('#FFFFFF');
+
+    contactLines.slice(0, 3).forEach((line, index) => {
+      doc.text(String(line), pageWidth - 230, 35 + (index * 15), {
+        align: 'right',
+        width: 180
+      });
+    });
     
     // Reset position and color
     doc.fillColor('#000000');

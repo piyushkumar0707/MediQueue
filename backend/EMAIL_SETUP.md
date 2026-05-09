@@ -1,106 +1,97 @@
 # Email Service Configuration
 
-## Gmail Setup (Development)
+This project uses a two-step delivery strategy:
 
-1. **Enable 2-Factor Authentication**:
-   - Go to Google Account Settings
-   - Security > 2-Step Verification
-   - Enable 2FA
+1. Brevo SMTP via Nodemailer (primary)
+2. Brevo Transactional API (automatic fallback when SMTP fails)
 
-2. **Create App Password**:
-   - Go to Google Account Settings
-   - Security > 2-Step Verification > App passwords
-   - Select "Mail" and "Other" (custom name)
-   - Copy the 16-character password
+## Brevo Setup
 
-3. **Add to .env file**:
+1. Create a Brevo account and verify your sender/domain.
+2. Create SMTP credentials in Brevo.
+3. Create a Brevo API key for fallback delivery.
+4. Add the values to backend environment variables.
+
+### Required SMTP Variables
+
 ```env
-# Email Configuration
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-16-char-app-password
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_USER=your-brevo-smtp-login
+EMAIL_PASSWORD=your-brevo-smtp-key
 EMAIL_FROM="CareQueue <noreply@carequeue.com>"
+```
+
+### Fallback Variable
+
+```env
+BREVO_API_KEY=your-brevo-api-key
+```
+
+Notes:
+- If SMTP fails and BREVO_API_KEY is set, the service retries the same message through Brevo API automatically.
+- If BREVO_API_KEY is missing, fallback is disabled and SMTP becomes the only channel.
+
+## Local Development Example
+
+```env
 FRONTEND_URL=http://localhost:5173
-```
-
-## Production Setup (SendGrid/AWS SES)
-
-### Option 1: SendGrid
-```env
-SENDGRID_API_KEY=your-api-key
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_USER=your-brevo-smtp-login
+EMAIL_PASSWORD=your-brevo-smtp-key
 EMAIL_FROM="CareQueue <noreply@carequeue.com>"
-FRONTEND_URL=https://your-production-domain.com
-```
-
-Update `emailService.js` transporter:
-```javascript
-this.transporter = nodemailer.createTransporter({
-  host: 'smtp.sendgrid.net',
-  port: 587,
-  auth: {
-    user: 'apikey',
-    pass: process.env.SENDGRID_API_KEY
-  }
-});
-```
-
-### Option 2: AWS SES
-```env
-AWS_SES_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your-access-key
-AWS_SECRET_ACCESS_KEY=your-secret-key
-EMAIL_FROM="CareQueue <noreply@carequeue.com>"
-FRONTEND_URL=https://your-production-domain.com
-```
-
-Update `emailService.js` transporter:
-```javascript
-this.transporter = nodemailer.createTransporter({
-  SES: new AWS.SES({
-    apiVersion: '2010-12-01',
-    region: process.env.AWS_SES_REGION
-  })
-});
+BREVO_API_KEY=your-brevo-api-key
 ```
 
 ## Email Templates
 
-The following email templates are available:
+The following templates are available in the email service:
 
-1. **Consent Request**: `consentRequestEmail()`
-2. **Emergency Access Alert**: `emergencyAccessEmail()`
-3. **Appointment Reminder**: `appointmentReminderEmail()`
-4. **Appointment Booked**: `appointmentBookedEmail()`
-5. **Appointment Cancelled**: `appointmentCancelledEmail()`
-6. **Prescription**: `prescriptionEmail()`
+1. consentRequestEmail()
+2. emergencyAccessEmail()
+3. verificationEmail()
+4. appointmentReminderEmail()
+5. prescriptionEmail()
+6. appointmentCancelledEmail()
+7. registrationOtpEmail()
+8. passwordResetOtpEmail()
+9. appointmentBookedEmail()
 
-## Testing Email Service
+## Testing Email Delivery
 
-Run the test script:
-```bash
-node backend/scripts/testEmail.js
-```
+Run the backend and trigger flows that send email:
+
+- Registration OTP
+- Password reset OTP
+- Appointment booking notification
+
+You should observe one of these log outcomes:
+
+- SMTP success
+- SMTP failure followed by Brevo API fallback success
+- SMTP failure and Brevo API failure
 
 ## Troubleshooting
 
-### Gmail "Less secure app access" error
-- Use App Password (not your account password)
-- Make sure 2FA is enabled
+### SMTP works intermittently
+
+- Confirm EMAIL_HOST and EMAIL_PORT are Brevo values.
+- Confirm EMAIL_USER and EMAIL_PASSWORD are SMTP credentials from Brevo.
+- Check network egress/firewall rules for SMTP ports.
+
+### Fallback not used after SMTP failure
+
+- Confirm BREVO_API_KEY is set.
+- Confirm BREVO API key has transactional email permission.
+- Check backend logs for Brevo API status codes.
 
 ### Emails going to spam
-- Add SPF, DKIM, and DMARC records to your domain
-- Use a verified domain email address
-- Avoid spam trigger words
 
-### Rate Limits
-- Gmail: 500 emails/day (free), 2000/day (Google Workspace)
-- SendGrid: 100/day (free), unlimited (paid)
-- AWS SES: 200/day (free), pay-per-email after
+- Add SPF, DKIM, and DMARC records for your sender domain.
+- Use a verified sender/domain in Brevo.
+- Avoid spam-triggering subject/content patterns.
 
-## Email Queue (Future Enhancement)
+## Future Enhancement
 
-For high-volume email sending, consider implementing a job queue:
-- Bull (Redis-based)
-- Bee-Queue
-- AWS SQS
-
-This prevents blocking API responses while emails are being sent.
+For high-volume or high-reliability delivery, add queue + retry orchestration (for example Bull with Redis) so transient provider failures can be retried with backoff.

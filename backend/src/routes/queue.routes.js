@@ -15,15 +15,15 @@ import {
 
 const router = express.Router();
 
-// Per-user rate limit for AI triage: 5 requests/minute
+// Per-user rate limit for AI triage: 30 requests per 10 minutes
 const triageRateLimit = createRateLimiter({
-  windowMs: 60 * 1000,
-  max: 5,
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve used the priority suggestion feature 5 times in the last minute. Please wait a moment before trying again, or select a priority manually.',
-    retryAfter: '1 minute'
+    message: 'You\'ve used the priority suggestion feature 30 times in 10 minutes. Please wait 10 minutes before trying again, or select a priority manually.',
+    retryAfter: '10 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -32,15 +32,15 @@ const triageRateLimit = createRateLimiter({
 // AI triage route
 router.post('/triage', protect, authorize('patient'), triageRateLimit, triageSymptoms);
 
-// Per-user rate limit for queue joins: 5 per hour
+// Per-user rate limit for queue joins: 30 per 10 minutes
 const joinQueueRateLimit = createRateLimiter({
-  windowMs: 60 * 60 * 1000,
-  max: 5,
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve joined 5 queues in the past hour. If you need immediate assistance, please contact the hospital reception directly.',
-    retryAfter: '1 hour'
+    message: 'You\'ve joined 30 queues in 10 minutes. Please wait 10 minutes before joining another queue.',
+    retryAfter: '10 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,

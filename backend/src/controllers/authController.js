@@ -714,7 +714,7 @@ export const resetPassword = async (req, res) => {
     }
     
     user.password = newPassword;
-    await user.save();
+    await user.save({ validateModifiedOnly: true });
     
     // Invalidate auth cache so next request picks up new passwordChangedAt
     await invalidateUserCache(user._id.toString());

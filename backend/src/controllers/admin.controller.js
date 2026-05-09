@@ -3,17 +3,24 @@ import Appointment from '../models/Appointment.js';
 import Queue from '../models/Queue.js';
 import EmergencyAccess from '../models/EmergencyAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { invalidateUserCache } from '../utils/userCache.js';
+import redisClient from '../config/redis.js';
+import { logger } from '../utils/logger.js';
+import { invalidateUserCache, getOrSetCache } from '../utils/userCache.js';
 import { parsePagination } from '../utils/pagination.js';
 
 const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const ADMIN_STATS_CACHE_KEY = 'admin:stats:v1';
+const ADMIN_STATS_CACHE_TTL_SECONDS = 45;
 
-/**
- * @desc    Get admin dashboard statistics
- * @route   GET /api/admin/stats
- * @access  Private (Admin)
- */
-export const getAdminStats = asyncHandler(async (req, res) => {
+const invalidateAdminStatsCache = async () => {
+  try {
+    await redisClient.del(ADMIN_STATS_CACHE_KEY);
+  } catch (err) {
+    logger.warn(`Admin stats cache invalidation failed: ${err.message}`);
+  }
+};
+
+const buildAdminStatsPayload = async () => {
   const [
     totalUsers,
     totalPatients,
@@ -47,36 +54,60 @@ export const getAdminStats = asyncHandler(async (req, res) => {
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
   const todayAppointments = await Appointment.countDocuments({
     appointmentDate: { $gte: today, $lt: tomorrow }
   });
 
+  return {
+    users: {
+      total: totalUsers,
+      patients: totalPatients,
+      doctors: totalDoctors,
+      admins: totalAdmins
+    },
+    appointments: {
+      total: totalAppointments,
+      scheduled: scheduledAppointments,
+      completed: completedAppointments,
+      today: todayAppointments
+    },
+    queue: {
+      active: activeQueue
+    },
+    emergencyAccess: {
+      total: totalEmergencyRequests,
+      flagged: flaggedEmergency,
+      active: activeEmergency,
+      unreviewed
+    }
+  };
+};
+
+/**
+ * @desc    Get admin dashboard statistics
+ * @route   GET /api/admin/stats
+ * @access  Private (Admin)
+ */
+export const getAdminStats = asyncHandler(async (req, res) => {
+  const startedAt = Date.now();
+  const data = await getOrSetCache(
+    ADMIN_STATS_CACHE_KEY,
+    ADMIN_STATS_CACHE_TTL_SECONDS,
+    buildAdminStatsPayload
+  );
+  const durationMs = Date.now() - startedAt;
+
+  logger.info('Admin stats served', {
+    route: '/api/v1/admin/stats',
+    adminUserId: req.user?.userId,
+    durationMs,
+    cacheTtlSeconds: ADMIN_STATS_CACHE_TTL_SECONDS
+  });
+
   res.json({
     success: true,
-    data: {
-      users: {
-        total: totalUsers,
-        patients: totalPatients,
-        doctors: totalDoctors,
-        admins: totalAdmins
-      },
-      appointments: {
-        total: totalAppointments,
-        scheduled: scheduledAppointments,
-        completed: completedAppointments,
-        today: todayAppointments
-      },
-      queue: {
-        active: activeQueue
-      },
-      emergencyAccess: {
-        total: totalEmergencyRequests,
-        flagged: flaggedEmergency,
-        active: activeEmergency,
-        unreviewed: unreviewed
-      }
-    }
+    data
   });
 });
 
@@ -86,12 +117,20 @@ export const getAdminStats = asyncHandler(async (req, res) => {
  * @access  Private (Admin)
  */
 export const getRecentUsers = asyncHandler(async (req, res) => {
+  const startedAt = Date.now();
   const limit = Math.min(parseInt(req.query.limit) || 10, 100);
   
   const users = await User.find()
     .select('personalInfo email role createdAt isActive')
     .sort({ createdAt: -1 })
     .limit(limit);
+
+  logger.info('Admin recent users served', {
+    route: '/api/v1/admin/recent-users',
+    adminUserId: req.user?.userId,
+    limit,
+    durationMs: Date.now() - startedAt
+  });
 
   res.json({
     success: true,
@@ -173,6 +212,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
 
   // Invalidate auth cache so deactivated users are rejected on next request
   await invalidateUserCache(user._id.toString());
+  await invalidateAdminStatsCache();
 
   res.json({
     success: true,
@@ -216,6 +256,7 @@ export const createUser = asyncHandler(async (req, res) => {
   }
   
   const user = await User.create(userData);
+  await invalidateAdminStatsCache();
 
   res.status(201).json({
     success: true,
@@ -257,6 +298,7 @@ export const updateUser = asyncHandler(async (req, res) => {
   }
   
   await user.save({ validateModifiedOnly: true });
+  await invalidateAdminStatsCache();
 
   res.json({
     success: true,
@@ -289,6 +331,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
   }
   
   await user.deleteOne();
+  await invalidateAdminStatsCache();
 
   res.json({
     success: true,

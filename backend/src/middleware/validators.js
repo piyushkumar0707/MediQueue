@@ -154,7 +154,7 @@ export const validateGrantConsent = [
       return true;
     }),
   body('expiresAt')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .isISO8601().withMessage('Expiry date must be a valid ISO date'),
 ];
 

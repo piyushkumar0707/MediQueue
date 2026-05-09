@@ -86,9 +86,12 @@ const ConsentManagement = () => {
         scope: grantForm.scope,
         recordTypes: grantForm.scope === 'record-types' ? grantForm.recordTypes : undefined,
         permissions: grantForm.permissions,
-        expiresAt: grantForm.expiresAt || null,
         purpose: grantForm.purpose
       };
+
+      if (grantForm.expiresAt) {
+        payload.expiresAt = grantForm.expiresAt;
+      }
 
       await apiService.grantConsent(payload);
       toast.success('Consent granted successfully');
@@ -97,7 +100,11 @@ const ConsentManagement = () => {
       fetchData();
     } catch (error) {
       console.error('Error granting consent:', error);
-      toast.error(error.response?.data?.message || 'Failed to grant consent');
+      const errorData = error?.response?.data || error;
+      const validationMessage = Array.isArray(errorData?.errors)
+        ? errorData.errors[0]?.message
+        : null;
+      toast.error(errorData?.message || validationMessage || 'Failed to grant consent');
     }
   };
 

@@ -16,29 +16,29 @@ import {
 
 const router = express.Router();
 
-// Per-user rate limit for appointment bookings: 10 per hour
+// Per-user rate limit for appointment bookings: 30 per 10 minutes
 const bookingRateLimit = createRateLimiter({
-  windowMs: 60 * 60 * 1000,
-  max: 10,
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve reached the maximum of 10 appointment bookings per hour. Please wait a few minutes before booking another appointment.',
-    retryAfter: '1 hour'
+    message: 'You\'ve reached the maximum of 30 appointment bookings in 10 minutes. Please wait 10 minutes before booking another appointment.',
+    retryAfter: '10 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Per-user rate limit for PDF confirmation downloads: 20 per hour
+// Per-user rate limit for PDF confirmation downloads: 30 per 10 minutes
 const downloadConfirmationRateLimit = createRateLimiter({
-  windowMs: 60 * 60 * 1000,
-  max: 20,
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve downloaded appointment confirmations 20 times in the past hour. If you\'re having trouble opening the file, please contact support.',
-    retryAfter: '1 hour'
+    message: 'You\'ve downloaded appointment confirmations 30 times in 10 minutes. Please wait 10 minutes before trying again.',
+    retryAfter: '10 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,

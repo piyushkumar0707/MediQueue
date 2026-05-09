@@ -229,6 +229,29 @@ const Login = () => {
               )}
             </div>
 
+            {import.meta.env.VITE_DEMO_MODE === 'true' && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-900">Demo Credentials</p>
+                <div className="space-y-2 text-xs text-amber-800">
+                  <p>
+                    <span className="font-semibold">Patient:</span>{' '}
+                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">demo.patient@mediqueue.local</span>{' / '}
+                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">DemoPass@123</span>
+                  </p>
+                  <p>
+                    <span className="font-semibold">Doctor:</span>{' '}
+                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">demo.doctor@mediqueue.local</span>{' / '}
+                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">DemoPass@123</span>
+                  </p>
+                  <p>
+                    <span className="font-semibold">Admin:</span>{' '}
+                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">demo.admin@mediqueue.local</span>{' / '}
+                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">DemoPass@123</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <div className="flex items-center">

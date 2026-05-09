@@ -97,12 +97,15 @@ await notificationService.sendNotification(notification);
 6. **Prescription** - `emailService.prescriptionEmail()`
 
 ### Configure Email Service
-1. Create Gmail App Password (see `backend/EMAIL_SETUP.md`)
+1. Configure Brevo SMTP + API fallback (see `backend/EMAIL_SETUP.md`)
 2. Add to `.env`:
 ```env
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-16-char-app-password
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_USER=your-brevo-smtp-login
+EMAIL_PASSWORD=your-brevo-smtp-key
 EMAIL_FROM="CareQueue <noreply@carequeue.com>"
+BREVO_API_KEY=your-brevo-api-key
 FRONTEND_URL=http://localhost:5173
 ```
 3. Restart backend
@@ -224,7 +227,7 @@ node scripts/testNotifications.js
 ### Email Not Sending
 1. **Check .env**: EMAIL_USER and EMAIL_PASSWORD configured?
 2. **Check logs**: Look for "Email service is ready"
-3. **Test Gmail**: Use App Password, not regular password
+3. **Check fallback**: Confirm BREVO_API_KEY is present for SMTP failure fallback
 4. **Check spam folder**: Emails might be filtered
 
 ### Badge Count Not Updating

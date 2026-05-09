@@ -67,50 +67,48 @@ const QueueTracking = () => {
 
   if (!queueData) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <div className="mb-4">
-            <svg className="mx-auto h-24 w-24 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Not in Queue</h2>
-          <p className="text-gray-600 mb-6">
-            You're not in any queue right now. Would you like to join a queue or book an appointment?
-          </p>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={() => navigate('/patient/join-queue')}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              Join Queue
-            </button>
-            <button
-              onClick={() => navigate('/patient/appointments/book')}
-              className="px-6 py-2 bg-white text-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
-            >
-              Book Appointment
-            </button>
-          </div>
-          <div className="flex gap-4 justify-center flex-wrap">
-            <button
-              onClick={() => navigate('/patient')}
-              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-            >
-              Go to Dashboard
-            </button>
-            <button
-              onClick={() => navigate('/patient/queue/join')}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
-              Join Queue
-            </button>
-            <button
-              onClick={() => navigate('/patient/appointments/book')}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-            >
-              Book Appointment
-            </button>
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-8 sm:p-10 text-center shadow-sm">
+          <div className="pointer-events-none absolute -top-20 -right-16 h-52 w-52 rounded-full bg-indigo-100 blur-3xl opacity-70"></div>
+
+          <div className="relative">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-indigo-50">
+              <svg className="h-10 w-10 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+
+            <h2 className="text-3xl font-bold text-slate-900 mb-3">You are not in queue</h2>
+            <p className="mx-auto max-w-2xl text-slate-600">
+              Join the live queue for walk-in care, or book a scheduled appointment.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <button
+                onClick={() => navigate('/patient/queue/join')}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors"
+              >
+                Join Queue
+              </button>
+
+              <button
+                onClick={() => navigate('/patient/appointments/book')}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-lg border border-indigo-300 text-indigo-700 font-medium hover:bg-indigo-50 transition-colors"
+              >
+                Book Appointment
+              </button>
+
+              <button
+                onClick={() => navigate('/patient')}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+
+            <p className="mt-5 text-xs text-slate-500">
+              Queue updates refresh automatically every 10 seconds after you join.
+            </p>
           </div>
         </div>
       </div>

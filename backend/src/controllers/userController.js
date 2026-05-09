@@ -100,7 +100,13 @@ export const getProfile = asyncHandler(async (req, res) => {
 // @route   PUT /api/users/profile
 // @access  Private
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { personalInfo, professionalInfo } = req.body;
+  const {
+    personalInfo,
+    professionalInfo,
+    email,
+    phoneNumber,
+    countryCode,
+  } = req.body;
 
   const user = await User.findById(req.user.userId);
 
@@ -111,9 +117,28 @@ export const updateProfile = asyncHandler(async (req, res) => {
     });
   }
 
+  if (typeof email === 'string') {
+    user.email = email.trim().toLowerCase();
+  }
+
+  if (typeof phoneNumber === 'string') {
+    user.phoneNumber = phoneNumber.trim();
+  }
+
+  if (typeof countryCode === 'string') {
+    user.countryCode = countryCode.trim();
+  }
+
   // Update personal info
   if (personalInfo) {
-    user.personalInfo = { ...user.personalInfo, ...personalInfo };
+    const mergedPersonalInfo = { ...user.personalInfo, ...personalInfo };
+    if (personalInfo.address) {
+      mergedPersonalInfo.address = {
+        ...user.personalInfo?.address,
+        ...personalInfo.address,
+      };
+    }
+    user.personalInfo = mergedPersonalInfo;
   }
 
   // Update professional info (doctors only)
@@ -121,7 +146,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
     user.professionalInfo = { ...user.professionalInfo, ...professionalInfo };
   }
 
-  await user.save();
+  await user.save({ validateModifiedOnly: true });
 
   res.json({
     success: true,

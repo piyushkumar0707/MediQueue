@@ -857,6 +857,20 @@ const SUMMARIZE_QUOTA = 10; // per user per hour
 const getCloudinaryResourceType = (fileType = '') =>
   fileType.startsWith('image/') ? 'image' : 'raw';
 
+const DIRECT_FILE_HOST_ALLOWLIST = new Set([
+  'www.w3.org',
+  'res.cloudinary.com',
+]);
+
+const isAllowlistedDirectFileUrl = (value = '') => {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'https:' && DIRECT_FILE_HOST_ALLOWLIST.has(parsed.hostname);
+  } catch {
+    return false;
+  }
+};
+
 // @desc    Get a short-lived signed URL to view a file attachment
 // @route   GET /api/records/:id/view-file?fileIndex=0
 // @access  Private
@@ -900,20 +914,66 @@ export const getFileViewUrl = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'File not found in storage' });
   }
 
+  const proxyFileResponse = async (sourceUrl) => {
+    const fileRes = await axios.get(sourceUrl, { responseType: 'arraybuffer', timeout: 15000 });
+    const contentType = file.fileType || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `inline; filename="${file.fileName || 'file'}"`);
+    res.setHeader('Content-Length', fileRes.data.byteLength);
+    res.send(Buffer.from(fileRes.data));
+  };
+
+  const canUseDirectFallback = isAllowlistedDirectFileUrl(file.fileUrl);
+
+  if (!publicId) {
+    if (canUseDirectFallback) {
+      try {
+        await proxyFileResponse(file.fileUrl);
+        return;
+      } catch (directError) {
+        logger.warn('Direct file proxy failed', {
+          recordId: record._id.toString(),
+          fileIndex,
+          error: directError.message,
+        });
+        return res.status(502).json({ success: false, message: 'Unable to retrieve file from storage' });
+      }
+    }
+
+    return res.status(404).json({ success: false, message: 'File not found in storage' });
+  }
+
   const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
     resource_type: getCloudinaryResourceType(file.fileType),
     type: 'upload',
     expires_at: Math.floor(Date.now() / 1000) + 300, // 5 min for internal fetch
   });
 
-  // Proxy the file through the backend so the browser receives it with the
-  // correct Content-Type (Cloudinary serves raw uploads as octet-stream).
-  const fileRes = await axios.get(signedUrl, { responseType: 'arraybuffer', timeout: 15000 });
-  const contentType = file.fileType || 'application/octet-stream';
-  res.setHeader('Content-Type', contentType);
-  res.setHeader('Content-Disposition', `inline; filename="${file.fileName || 'file'}"`);
-  res.setHeader('Content-Length', fileRes.data.byteLength);
-  res.send(Buffer.from(fileRes.data));
+  try {
+    await proxyFileResponse(signedUrl);
+    return;
+  } catch (cloudinaryError) {
+    logger.warn('Signed Cloudinary proxy failed', {
+      recordId: record._id.toString(),
+      fileIndex,
+      error: cloudinaryError.message,
+    });
+
+    if (canUseDirectFallback) {
+      try {
+        await proxyFileResponse(file.fileUrl);
+        return;
+      } catch (directError) {
+        logger.warn('Direct fallback proxy failed', {
+          recordId: record._id.toString(),
+          fileIndex,
+          error: directError.message,
+        });
+      }
+    }
+
+    return res.status(502).json({ success: false, message: 'Unable to retrieve file from storage' });
+  }
 });
 
 const SUMMARIZE_WINDOW = 3600; // seconds

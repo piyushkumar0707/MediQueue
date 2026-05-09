@@ -7,6 +7,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "seed:demo:reset": "node scripts/reset-demo.mjs",
+    "seed:demo:fresh": "npm run seed:demo:reset && npm run seed:demo",
     "test": "node tests/run-jest.mjs",
     "test:coverage": "node tests/run-jest.mjs --coverage",
     "test:integration": "node tests/run-jest.mjs --integration",

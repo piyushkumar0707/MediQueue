@@ -9,6 +9,48 @@ import {
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
+const safeArray = (value) => (Array.isArray(value) ? value : []);
+
+const formatBucketLabel = (value, fallback = 'Unknown') => {
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim();
+  if (!normalized) return fallback;
+
+  return normalized
+    .replace(/[-_]+/g, ' ')
+    .split(/\s+/)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+};
+
+const normalizeOverview = (raw) => {
+  const users = raw?.users || {};
+  const appointments = raw?.appointments || {};
+  const queue = raw?.queue || {};
+  const period = raw?.period || {};
+
+  return {
+    users: {
+      total: Number(users.total) || 0,
+      newInPeriod: Number(users.newInPeriod) || 0,
+      byRole: safeArray(users.byRole),
+    },
+    appointments: {
+      total: Number(appointments.total) || 0,
+      byStatus: safeArray(appointments.byStatus),
+      byType: safeArray(appointments.byType),
+    },
+    queue: {
+      total: Number(queue.total) || 0,
+      byPriority: safeArray(queue.byPriority),
+      avgWaitTime: Number(queue.avgWaitTime) || 0,
+    },
+    period: {
+      days: Number(period.days) || 0,
+    },
+  };
+};
+
 const Analytics = () => {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -35,14 +77,20 @@ const Analytics = () => {
         api.get('/analytics/doctor-performance', { params: { days: period } })
       ]);
 
-      setOverview(overviewRes.data);
-      setUserGrowth(processUserGrowth(userGrowthRes.data));
-      setAppointmentTrends(processAppointmentTrends(appointmentTrendsRes.data));
-      setQueuePerformance(queuePerfRes.data);
-      setDoctorPerformance(doctorPerfRes.data);
+      const normalizedOverview = normalizeOverview(overviewRes?.data);
+      setOverview(normalizedOverview);
+      setUserGrowth(processUserGrowth(userGrowthRes?.data));
+      setAppointmentTrends(processAppointmentTrends(appointmentTrendsRes?.data));
+      setQueuePerformance(safeArray(queuePerfRes?.data));
+      setDoctorPerformance(safeArray(doctorPerfRes?.data));
     } catch (error) {
       console.error('Error fetching analytics:', error);
       toast.error('Failed to fetch analytics data');
+      setOverview(null);
+      setUserGrowth([]);
+      setAppointmentTrends([]);
+      setQueuePerformance([]);
+      setDoctorPerformance([]);
     } finally {
       setLoading(false);
     }
@@ -50,49 +98,59 @@ const Analytics = () => {
 
   const processUserGrowth = (data) => {
     const groupedByDate = {};
-    data.forEach(item => {
-      const date = item._id.date;
+    safeArray(data).forEach(item => {
+      const date = item?._id?.date;
+      if (!date) return;
+
+      const role = typeof item?._id?.role === 'string' ? item._id.role : '';
+      const safeRole = ['patient', 'doctor', 'admin'].includes(role) ? role : null;
+
       if (!groupedByDate[date]) {
         groupedByDate[date] = { date, patient: 0, doctor: 0, admin: 0 };
       }
-      groupedByDate[date][item._id.role] = item.count;
+
+      if (safeRole) {
+        groupedByDate[date][safeRole] = Number(item?.count) || 0;
+      }
     });
     return Object.values(groupedByDate);
   };
 
   const processAppointmentTrends = (data) => {
     const groupedByDate = {};
-    data.forEach(item => {
-      const date = item._id.date;
+    safeArray(data).forEach(item => {
+      const date = item?._id?.date;
+      if (!date) return;
+
+      const status = typeof item?._id?.status === 'string' ? item._id.status : 'pending';
+
       if (!groupedByDate[date]) {
         groupedByDate[date] = { date, scheduled: 0, completed: 0, cancelled: 0, pending: 0 };
       }
-      groupedByDate[date][item._id.status] = item.count;
+
+      groupedByDate[date][status] = Number(item?.count) || 0;
     });
     return Object.values(groupedByDate);
   };
 
   const getUserRoleData = () => {
-    if (!overview) return [];
-    return overview.users.byRole.map(item => ({
-      name: item._id.charAt(0).toUpperCase() + item._id.slice(1),
-      value: item.count
+    return safeArray(overview?.users?.byRole).map(item => ({
+      name: formatBucketLabel(item?._id),
+      value: Number(item?.count) || 0
     }));
   };
 
   const getAppointmentStatusData = () => {
-    if (!overview) return [];
-    return overview.appointments.byStatus.map(item => ({
-      name: item._id.charAt(0).toUpperCase() + item._id.slice(1),
-      value: item.count
+    return safeArray(overview?.appointments?.byStatus).map(item => ({
+      name: formatBucketLabel(item?._id),
+      value: Number(item?.count) || 0
     }));
   };
 
   const getAppointmentTypeData = () => {
-    if (!overview) return [];
-    return overview.appointments.byType.map(item => ({
-      name: item._id || 'Not Specified',
-      value: item.count
+    return safeArray(overview?.appointments?.byType).map(item => ({
+      name: formatBucketLabel(item?._id, 'Not Specified'),
+      value: Number(item?.count) || 0
     }));
   };
 
@@ -108,11 +166,11 @@ const Analytics = () => {
         '--- User Statistics ---',
         `Total Users: ${overview?.users?.total || 0}`,
         `New Users in Period: ${overview?.users?.newInPeriod || 0}`,
-        ...overview?.users?.byRole.map(r => `${r._id}: ${r.count}`) || [],
+        ...safeArray(overview?.users?.byRole).map(r => `${formatBucketLabel(r?._id)}: ${Number(r?.count) || 0}`),
         '',
         '--- Appointment Statistics ---',
         `Total Appointments: ${overview?.appointments?.total || 0}`,
-        ...overview?.appointments?.byStatus.map(s => `${s._id}: ${s.count}`) || [],
+        ...safeArray(overview?.appointments?.byStatus).map(s => `${formatBucketLabel(s?._id)}: ${Number(s?.count) || 0}`),
         '',
         '--- Queue Statistics ---',
         `Total Queue Entries: ${overview?.queue?.total || 0}`,
@@ -121,7 +179,7 @@ const Analytics = () => {
         '--- Doctor Performance ---',
         'Doctor,Specialization,Total Appointments,Completed,Cancelled,Completion Rate',
         ...doctorPerformance.map(d => 
-          `"${d.doctorName}","${d.specialization || 'N/A'}",${d.totalAppointments},${d.completed},${d.cancelled},${d.completionRate.toFixed(1)}%`
+          `"${d?.doctorName || 'N/A'}","${d?.specialization || d?.specialty || 'N/A'}",${Number(d?.totalAppointments) || 0},${Number(d?.completed) || 0},${Number(d?.cancelled) || 0},${(Number(d?.completionRate) || 0).toFixed(1)}%`
         )
       ].join('\n');
 
@@ -148,12 +206,12 @@ const Analytics = () => {
     try {
       const headers = ['Doctor Name', 'Specialization', 'Total Appointments', 'Completed', 'Cancelled', 'Completion Rate (%)'];
       const csvData = doctorPerformance.map(d => [
-        d.doctorName,
-        d.specialization || 'N/A',
-        d.totalAppointments,
-        d.completed,
-        d.cancelled,
-        d.completionRate.toFixed(1)
+        d?.doctorName || 'N/A',
+        d?.specialization || d?.specialty || 'N/A',
+        Number(d?.totalAppointments) || 0,
+        Number(d?.completed) || 0,
+        Number(d?.cancelled) || 0,
+        (Number(d?.completionRate) || 0).toFixed(1)
       ]);
 
       const csvContent = [
@@ -452,7 +510,7 @@ const Analytics = () => {
               <h3 className="text-sm font-medium text-gray-500 mb-2">Appointment Success Rate</h3>
               <p className="text-2xl font-bold text-green-600">
                 {overview.appointments.total > 0 
-                  ? ((overview.appointments.byStatus.find(s => s._id === 'completed')?.count || 0) / overview.appointments.total * 100).toFixed(1)
+                  ? ((safeArray(overview.appointments.byStatus).find(s => s?._id === 'completed')?.count || 0) / overview.appointments.total * 100).toFixed(1)
                   : 0}%
               </p>
               <p className="text-xs text-gray-600 mt-1">Completed appointments</p>
@@ -462,7 +520,7 @@ const Analytics = () => {
               <h3 className="text-sm font-medium text-gray-500 mb-2">Queue Completion Rate</h3>
               <p className="text-2xl font-bold text-purple-600">
                 {overview.queue.total > 0 
-                  ? ((overview.queue.byPriority.reduce((sum, p) => sum + p.count, 0) / overview.queue.total) * 100).toFixed(1)
+                  ? ((safeArray(overview.queue.byPriority).reduce((sum, p) => sum + (Number(p?.count) || 0), 0) / overview.queue.total) * 100).toFixed(1)
                   : 0}%
               </p>
               <p className="text-xs text-gray-600 mt-1">Queue entries processed</p>
@@ -481,7 +539,7 @@ const Analytics = () => {
             <div className="border border-gray-200 rounded-lg p-4">
               <h3 className="text-sm font-medium text-gray-500 mb-2">Total Active Doctors</h3>
               <p className="text-2xl font-bold text-indigo-600">
-                {overview.users.byRole.find(r => r._id === 'doctor')?.count || 0}
+                {safeArray(overview.users.byRole).find(r => r?._id === 'doctor')?.count || 0}
               </p>
               <p className="text-xs text-gray-600 mt-1">Registered doctors</p>
             </div>
@@ -489,7 +547,7 @@ const Analytics = () => {
             <div className="border border-gray-200 rounded-lg p-4">
               <h3 className="text-sm font-medium text-gray-500 mb-2">Total Patients</h3>
               <p className="text-2xl font-bold text-pink-600">
-                {overview.users.byRole.find(r => r._id === 'patient')?.count || 0}
+                {safeArray(overview.users.byRole).find(r => r?._id === 'patient')?.count || 0}
               </p>
               <p className="text-xs text-gray-600 mt-1">Registered patients</p>
             </div>
@@ -543,7 +601,7 @@ const Analytics = () => {
                     <div className="text-sm font-medium text-gray-900">{doctor.doctorName}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{doctor.specialization || 'N/A'}</div>
+                    <div className="text-sm text-gray-500">{doctor.specialization || doctor.specialty || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{doctor.totalAppointments}</div>
@@ -557,7 +615,7 @@ const Analytics = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="text-sm font-medium text-gray-900">
-                        {doctor.completionRate.toFixed(1)}%
+                        {(Number(doctor.completionRate) || 0).toFixed(1)}%
                       </div>
                       <div className="ml-3 w-24 bg-gray-200 rounded-full h-2">
                         <div
@@ -568,7 +626,7 @@ const Analytics = () => {
                               ? 'bg-yellow-600'
                               : 'bg-red-600'
                           }`}
-                          style={{ width: `${doctor.completionRate}%` }}
+                          style={{ width: `${Number(doctor.completionRate) || 0}%` }}
                         ></div>
                       </div>
                     </div>

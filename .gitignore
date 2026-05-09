@@ -3,7 +3,6 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 yarn.lock
 
 # Environment variables
@@ -88,6 +87,8 @@ AI_IMAGE_ANALYSIS_PLAN.md
 TODO.md
 AI_RULES.md
 ISSUE.md
+deployment-action.md
+PRODUCTION_READINESS.md
 
 # ── Duplicate / superseded API collection ────────────────────────────────────
 CareQueue-API.postman_collection.json

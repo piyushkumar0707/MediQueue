@@ -15,15 +15,15 @@ import {
 
 const router = express.Router();
 
-// Per-user rate limit for PDF prescription downloads: 20 per hour
+// Per-user rate limit for PDF prescription downloads: 30 per 10 minutes
 const downloadPrescriptionRateLimit = createRateLimiter({
-  windowMs: 60 * 60 * 1000,
-  max: 20,
+  windowMs: 10 * 60 * 1000,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve downloaded prescriptions 20 times in the past hour. If you need help accessing your prescription, please contact your doctor or pharmacy.',
-    retryAfter: '1 hour'
+    message: 'You\'ve downloaded prescriptions 30 times in 10 minutes. Please wait 10 minutes before trying again.',
+    retryAfter: '10 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,

@@ -598,8 +598,8 @@ export const getPatientAppointments = asyncHandler(async (req, res) => {
 // @access  Private (Patient/Doctor)
 export const downloadAppointmentConfirmation = asyncHandler(async (req, res) => {
   const appointment = await Appointment.findById(req.params.id)
-    .populate('patient', 'personalInfo phone email')
-    .populate('doctor', 'personalInfo professionalInfo phone');
+    .populate('patient', 'personalInfo phoneNumber email')
+    .populate('doctor', 'personalInfo professionalInfo phoneNumber email');
 
   if (!appointment) {
     return res.status(404).json({

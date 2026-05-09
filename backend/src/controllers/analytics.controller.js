@@ -41,7 +41,12 @@ export const getAnalyticsOverview = asyncHandler(async (req, res) => {
       ]),
       Appointment.aggregate([
         { $match: { createdAt: { $gte: start, $lte: end } } },
-        { $group: { _id: '$appointmentType', count: { $sum: 1 } } }
+        {
+          $group: {
+            _id: { $ifNull: ['$type', '$appointmentType'] },
+            count: { $sum: 1 }
+          }
+        }
       ]),
       Queue.countDocuments({ createdAt: { $gte: start, $lte: end } }),
       Queue.aggregate([
@@ -149,14 +154,16 @@ export const getDoctorPerformance = asyncHandler(async (req, res) => {
   const data = await getOrSetCache(cacheKey, ANALYTICS_TTL, async () => {
     const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     return Appointment.aggregate([
-      { $match: { createdAt: { $gte: startDate }, doctorId: { $exists: true } } },
-      { $lookup: { from: 'users', localField: 'doctorId', foreignField: '_id', as: 'doctor' } },
+      { $match: { createdAt: { $gte: startDate } } },
+      { $addFields: { doctorRef: { $ifNull: ['$doctor', '$doctorId'] } } },
+      { $match: { doctorRef: { $ne: null } } },
+      { $lookup: { from: 'users', localField: 'doctorRef', foreignField: '_id', as: 'doctor' } },
       { $unwind: '$doctor' },
       {
         $group: {
-          _id: '$doctorId',
+          _id: '$doctorRef',
           doctorName: { $first: { $concat: ['$doctor.personalInfo.firstName', ' ', '$doctor.personalInfo.lastName'] } },
-          specialty: { $first: '$doctor.professionalInfo.specialty' },
+          specialty: { $first: { $ifNull: ['$doctor.professionalInfo.specialty', '$doctor.professionalInfo.specialization'] } },
           totalAppointments: { $sum: 1 },
           completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
           cancelled: { $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] } }

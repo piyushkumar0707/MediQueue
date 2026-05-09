@@ -117,11 +117,9 @@ const JoinQueue = () => {
         navigate('/patient/queue');
       }
     } catch (error) {
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error('Failed to join queue');
-      }
+      // api interceptor unwraps to error.response.data, so error IS the backend payload
+      const msg = error?.message || error?.error || 'Failed to join queue';
+      toast.error(msg);
     } finally {
       setJoining(false);
     }

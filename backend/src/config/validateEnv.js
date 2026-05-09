@@ -47,7 +47,7 @@ export const validateEnv = () => {
     const provided = keys.filter(key => !!process.env[key]);
     if (provided.length === 0) {
       logger.warn(`[ENV] ${providerName} not configured - related features may be unavailable`);
-      return;
+      return { providedCount: 0, complete: false };
     }
 
     if (provided.length !== keys.length) {
@@ -58,10 +58,23 @@ export const validateEnv = () => {
       }
       logger.warn(msg);
     }
+
+    return {
+      providedCount: provided.length,
+      complete: provided.length === keys.length
+    };
   };
 
-  validateProviderGroup(emailKeys, 'Email provider');
+  const emailValidation = validateProviderGroup(emailKeys, 'Email provider');
   validateProviderGroup(twilioKeys, 'Twilio provider');
+
+  if (emailValidation.complete && !process.env.BREVO_API_KEY) {
+    logger.warn('[ENV] BREVO_API_KEY not set — SMTP will work, but Brevo API fallback is disabled');
+  }
+
+  if (!emailValidation.complete && process.env.BREVO_API_KEY) {
+    logger.warn('[ENV] BREVO_API_KEY is set but SMTP configuration is incomplete');
+  }
 
   // Validate FRONTEND_URL format when set (supports comma-separated for multi-env)
   if (process.env.FRONTEND_URL) {

@@ -24,6 +24,7 @@ import toast from 'react-hot-toast';
 import io from 'socket.io-client';
 
 const AdminDashboard = () => {
+  const accessToken = useAuthStore((state) => state.accessToken);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -65,7 +66,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    connectSocket();
+    fetchSystemHealth();
     
     // Fetch stats every 30 seconds
     const statsInterval = setInterval(fetchDashboardData, 30000);
@@ -77,15 +78,34 @@ const AdminDashboard = () => {
       unmountingRef.current = true;
       clearInterval(statsInterval);
       clearInterval(healthInterval);
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
     };
   }, []);
 
+  useEffect(() => {
+    connectSocket();
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [accessToken]);
+
   const connectSocket = () => {
     const BACKEND_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-    const { accessToken } = useAuthStore.getState();
+
+    // Do not attempt handshake until auth token is available.
+    if (!accessToken) {
+      setSocketConnected(false);
+      return;
+    }
+
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+
     socketRef.current = io(BACKEND_URL, {
       auth: { token: accessToken },
       transports: ['websocket', 'polling'],
@@ -131,14 +151,10 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const startTime = Date.now();
-      
       const [statsRes, usersRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/recent-users?limit=5')
       ]);
-
-      const responseTime = Date.now() - startTime;
       
       // Map backend response to frontend state - handle both nested and flat structures
       const backendData = statsRes.data?.data || statsRes.data;
@@ -160,8 +176,7 @@ const AdminDashboard = () => {
       // Handle users response structure
       const usersData = usersRes.data?.data || usersRes.data;
       setRecentUsers(Array.isArray(usersData) ? usersData : []);
-      
-      setSystemHealth(prev => ({ ...prev, apiResponseTime: responseTime }));
+
       setLoading(false);
       
       if (refreshing) {
@@ -179,14 +194,17 @@ const AdminDashboard = () => {
   const fetchSystemHealth = async () => {
     try {
       const BACKEND_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      const startTime = Date.now();
       const response = await fetch(`${BACKEND_URL}/health`);
       const data = await response.json();
       const { uptime } = data;
+      const responseTime = Date.now() - startTime;
       
       setSystemHealth(prev => ({
         ...prev,
         serverStatus: 'online',
         databaseStatus: 'connected',
+        apiResponseTime: responseTime,
         uptime: uptime,
       }));
     } catch (error) {

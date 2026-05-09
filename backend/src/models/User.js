@@ -349,13 +349,13 @@ userSchema.methods.addRefreshToken = async function(token, deviceInfo, ipAddress
 // Method to remove refresh token
 userSchema.methods.removeRefreshToken = async function(token) {
   this.refreshTokens = this.refreshTokens.filter(t => t.token !== token);
-  await this.save();
+  await this.save({ validateModifiedOnly: true });
 };
 
 // Method to remove all refresh tokens (logout from all devices)
 userSchema.methods.removeAllRefreshTokens = async function() {
   this.refreshTokens = [];
-  await this.save();
+  await this.save({ validateModifiedOnly: true });
 };
 
 // Static method to find user by phone or email

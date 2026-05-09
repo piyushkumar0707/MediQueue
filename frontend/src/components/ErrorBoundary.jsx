@@ -1,6 +1,5 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -59,11 +58,8 @@ class ErrorBoundary extends React.Component {
 }
 
 function ErrorFallback({ error, errorInfo, errorCount, onReset }) {
-  const navigate = useNavigate();
-
   const handleGoHome = () => {
-    navigate('/');
-    window.location.reload();
+    window.location.href = '/';
   };
 
   return (

@@ -46,7 +46,7 @@ jobs:
       FRONTEND_URL: http://localhost:5173
       EMAIL_FROM: ci@example.com
       EMAIL_USER: ci@example.com
-      EMAIL_PASS: ci-placeholder-pass
+      EMAIL_PASSWORD: ci-placeholder-pass
       TWILIO_ACCOUNT_SID: ci_placeholder
       TWILIO_AUTH_TOKEN: ci_placeholder
       TWILIO_PHONE_NUMBER: +10000000000
@@ -111,7 +111,7 @@ jobs:
       FRONTEND_URL: http://localhost:5173
       EMAIL_FROM: ci@example.com
       EMAIL_USER: ci@example.com
-      EMAIL_PASS: ci-placeholder-pass
+      EMAIL_PASSWORD: ci-placeholder-pass
       TWILIO_ACCOUNT_SID: ci_placeholder
       TWILIO_AUTH_TOKEN: ci_placeholder
       TWILIO_PHONE_NUMBER: +10000000000
@@ -174,7 +174,7 @@ jobs:
       FRONTEND_URL: http://localhost:5173
       EMAIL_FROM: ci@example.com
       EMAIL_USER: ci@example.com
-      EMAIL_PASS: ci-placeholder-pass
+      EMAIL_PASSWORD: ci-placeholder-pass
       TWILIO_ACCOUNT_SID: ci_placeholder
       TWILIO_AUTH_TOKEN: ci_placeholder
       TWILIO_PHONE_NUMBER: +10000000000

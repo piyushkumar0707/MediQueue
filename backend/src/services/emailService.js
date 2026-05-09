@@ -2,6 +2,9 @@ import pkg from 'nodemailer';
 const { createTransport } = pkg;
 import { logger } from '../utils/logger.js';
 
+const DEFAULT_FROM = '"CareQueue" <noreply@carequeue.com>';
+const DEFAULT_BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
+
 class EmailService {
   constructor() {
     this.transporter = null;
@@ -15,75 +18,200 @@ class EmailService {
 
   initializeTransporter() {
     try {
-      // Check if email credentials are configured
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD || 
-          process.env.EMAIL_USER === 'your-email@gmail.com') {
-        logger.warn('Email service not configured. Emails will not be sent.');
+      const smtpHost = process.env.EMAIL_HOST;
+      const smtpPort = Number.parseInt(process.env.EMAIL_PORT || '587', 10);
+      const smtpUser = process.env.EMAIL_USER;
+      const smtpPassword = process.env.EMAIL_PASSWORD;
+
+      if (!smtpHost || !smtpUser || !smtpPassword) {
+        logger.warn('SMTP email service is incomplete. SMTP delivery is disabled.');
+        if (!process.env.BREVO_API_KEY) {
+          logger.warn('BREVO_API_KEY is not configured. Emails will not be sent.');
+        }
         return;
       }
 
-      // Configure email service with explicit Gmail SMTP settings
+      const resolvedPort = Number.isNaN(smtpPort) ? 587 : smtpPort;
       this.transporter = createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // true for 465, false for other ports
+        host: smtpHost,
+        port: resolvedPort,
+        secure: resolvedPort === 465,
         auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD
+          user: smtpUser,
+          pass: smtpPassword
         },
         tls: {
           rejectUnauthorized: true
         }
       });
 
-      // Verify connection configuration
-      this.transporter.verify((error, success) => {
+      // Verify SMTP connection configuration
+      this.transporter.verify((error) => {
         if (error) {
-          logger.error('Email service configuration error:', error);
-          logger.info('💡 Make sure you:');
-          logger.info('   1. Have 2FA enabled on your Gmail account');
-          logger.info('   2. Created an App Password (not regular password)');
-          logger.info('   3. Removed all spaces from the App Password');
+          logger.error('SMTP email service configuration error:', error);
         } else {
-          logger.info('✅ Email service is ready to send messages');
+          logger.info(`SMTP email service is ready (${smtpHost}:${resolvedPort})`);
         }
       });
+
+      if (process.env.BREVO_API_KEY) {
+        logger.info('Brevo API fallback is enabled for email delivery.');
+      } else {
+        logger.warn('BREVO_API_KEY not set. SMTP fallback channel is disabled.');
+      }
     } catch (error) {
       logger.error('Failed to initialize email transporter:', error);
     }
   }
 
-  async sendEmail(to, subject, html, text) {
-    try {
-      if (!this.transporter) {
-        logger.warn('Email transporter not initialized. Email not sent.');
-        return { success: false, message: 'Email service not configured' };
-      }
+  parseSender(fromValue) {
+    const fallbackSender = {
+      name: 'CareQueue',
+      email: 'noreply@carequeue.com'
+    };
 
-      const mailOptions = {
-        from: process.env.EMAIL_FROM || '"CareQueue" <noreply@carequeue.com>',
-        to,
+    if (!fromValue || typeof fromValue !== 'string') {
+      return fallbackSender;
+    }
+
+    const trimmed = fromValue.trim();
+    const nameWithEmail = trimmed.match(/^"?([^"<]*)"?\s*<([^>]+)>$/);
+
+    if (nameWithEmail) {
+      const name = (nameWithEmail[1] || fallbackSender.name).trim() || fallbackSender.name;
+      const email = (nameWithEmail[2] || fallbackSender.email).trim() || fallbackSender.email;
+      return { name, email };
+    }
+
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      return { ...fallbackSender, email: trimmed };
+    }
+
+    return fallbackSender;
+  }
+
+  async sendViaBrevoApi({ to, subject, html, text, from }) {
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) {
+      return {
+        success: false,
+        error: 'BREVO_API_KEY is not configured'
+      };
+    }
+
+    try {
+      const sender = this.parseSender(from || process.env.EMAIL_FROM || DEFAULT_FROM);
+      const payload = {
+        sender,
+        to: [{ email: to }],
         subject,
-        html,
-        text: text || this.stripHtml(html)
+        htmlContent: html,
+        textContent: text
       };
 
-      const info = await this.transporter.sendMail(mailOptions);
-      logger.info(`Email sent to ${to}: ${info.messageId}`);
-      
-      return { success: true, messageId: info.messageId };
-    } catch (error) {
-      logger.error(`Failed to send email to ${to}:`, error);
-      const errorResponse = { success: false };
-      if (process.env.NODE_ENV === 'development') {
-        errorResponse.error = error.message;
+      const response = await fetch(process.env.BREVO_API_URL || DEFAULT_BREVO_API_URL, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'api-key': apiKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const responseText = await response.text();
+      let responseBody = null;
+      if (responseText) {
+        try {
+          responseBody = JSON.parse(responseText);
+        } catch {
+          responseBody = null;
+        }
       }
-      return errorResponse;
+
+      if (!response.ok) {
+        const errorDetail = responseBody?.message || response.statusText;
+        logger.error(`Brevo API fallback failed for ${to}: ${response.status} ${errorDetail}`);
+        return {
+          success: false,
+          error: `Brevo API fallback failed with status ${response.status}`
+        };
+      }
+
+      const messageId = responseBody?.messageId || responseBody?.messageIds?.[0] || 'brevo-api-fallback';
+      logger.info(`Email sent via Brevo API fallback to ${to}: ${messageId}`);
+
+      return {
+        success: true,
+        channel: 'brevo-api-fallback',
+        messageId
+      };
+    } catch (error) {
+      logger.error(`Brevo API fallback error for ${to}:`, error);
+      return {
+        success: false,
+        error: error.message
+      };
     }
   }
 
+  async sendEmail(to, subject, html, text) {
+    const plainText = text || this.stripHtml(html);
+    const from = process.env.EMAIL_FROM || DEFAULT_FROM;
+    const mailOptions = {
+      from,
+      to,
+      subject,
+      html,
+      text: plainText
+    };
+
+    let smtpError = null;
+
+    try {
+      if (this.transporter) {
+        const info = await this.transporter.sendMail(mailOptions);
+        logger.info(`Email sent via SMTP to ${to}: ${info.messageId}`);
+        return {
+          success: true,
+          channel: 'smtp',
+          messageId: info.messageId
+        };
+      }
+
+      logger.warn(`SMTP transporter not initialized for ${to}. Attempting Brevo API fallback.`);
+    } catch (error) {
+      smtpError = error;
+      logger.error(`SMTP send failed for ${to}:`, error);
+      logger.warn(`Attempting Brevo API fallback for ${to}.`);
+    }
+
+    const fallbackResult = await this.sendViaBrevoApi({
+      to,
+      subject,
+      html,
+      text: plainText,
+      from
+    });
+
+    if (fallbackResult.success) {
+      if (smtpError) {
+        logger.warn(`SMTP delivery failed for ${to}, but Brevo API fallback succeeded.`);
+      }
+      return fallbackResult;
+    }
+
+    const errorResponse = { success: false };
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.error = smtpError?.message || fallbackResult.error || 'Email delivery failed';
+    }
+
+    logger.error(`Email delivery failed for ${to}: SMTP and Brevo API fallback were unsuccessful.`);
+    return errorResponse;
+  }
+
   stripHtml(html) {
-    return html.replace(/<[^>]*>?/gm, '');
+    return (html || '').replace(/<[^>]*>?/gm, '');
   }
 
   // Email Templates
