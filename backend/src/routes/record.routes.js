@@ -20,42 +20,42 @@ import {
 
 const router = express.Router();
 
-// Per-user rate limit for file uploads: 30 per 10 minutes
+// Per-user rate limit for file uploads: 20 per 10 minutes
 const uploadRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 30,
+  max: 20,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve uploaded files 30 times in 10 minutes. Please wait 10 minutes before uploading again.',
+    message: 'You\'ve uploaded too many files in a short time. Please wait 10 minutes before uploading again.',
     retryAfter: '10 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Per-user rate limit for AI summarization: 30 per 10 minutes
+// Per-user rate limit for AI summarization: 10 per 60 minutes — matches README quota spec + Groq cost control
 const summarizeRateLimit = createRateLimiter({
-  windowMs: 10 * 60 * 1000,
-  max: 30,
+  windowMs: 60 * 60 * 1000,
+  max: 10,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve used the AI summary feature 30 times in 10 minutes. Please wait 10 minutes before generating another summary.',
-    retryAfter: '10 minutes'
+    message: 'You\'ve used the AI summary feature 10 times this hour. Please wait before generating another summary.',
+    retryAfter: '60 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Per-user rate limit for PDF report downloads: 30 per 10 minutes
+// Per-user rate limit for PDF report downloads: 20 per 10 minutes
 const downloadReportRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 30,
+  max: 20,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve downloaded medical reports 30 times in 10 minutes. Please wait 10 minutes before trying again.',
+    message: 'You\'ve downloaded medical reports too many times in a short period. Please wait 10 minutes before trying again.',
     retryAfter: '10 minutes'
   },
   standardHeaders: true,

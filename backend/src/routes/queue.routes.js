@@ -15,15 +15,15 @@ import {
 
 const router = express.Router();
 
-// Per-user rate limit for AI triage: 30 requests per 10 minutes
+// Per-user rate limit for AI triage: 5 requests per 60 minutes — Groq API cost control
 const triageRateLimit = createRateLimiter({
-  windowMs: 10 * 60 * 1000,
-  max: 30,
+  windowMs: 60 * 60 * 1000,
+  max: 5,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve used the priority suggestion feature 30 times in 10 minutes. Please wait 10 minutes before trying again, or select a priority manually.',
-    retryAfter: '10 minutes'
+    message: 'You\'ve used the AI priority suggestion 5 times this hour. Please select a priority manually or try again later.',
+    retryAfter: '60 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -32,14 +32,14 @@ const triageRateLimit = createRateLimiter({
 // AI triage route
 router.post('/triage', protect, authorize('patient'), triageRateLimit, triageSymptoms);
 
-// Per-user rate limit for queue joins: 30 per 10 minutes
+// Per-user rate limit for queue joins: 10 per 10 minutes — patients join once per visit
 const joinQueueRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 30,
+  max: 10,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve joined 30 queues in 10 minutes. Please wait 10 minutes before joining another queue.',
+    message: 'You\'ve joined too many queues in a short time. Please wait 10 minutes before joining another queue.',
     retryAfter: '10 minutes'
   },
   standardHeaders: true,

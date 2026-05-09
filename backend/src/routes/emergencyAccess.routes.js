@@ -15,15 +15,15 @@ import {
 
 const router = express.Router();
 
-// Per-user rate limit for emergency access requests: 30 per 10 minutes
+// Per-user rate limit for emergency access requests: 5 per 60 minutes — high volume is an abuse signal
 const emergencyRequestRateLimit = createRateLimiter({
-  windowMs: 10 * 60 * 1000,
-  max: 30,
+  windowMs: 60 * 60 * 1000,
+  max: 5,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
-    message: 'You\'ve requested emergency access 30 times in 10 minutes. Please wait 10 minutes before requesting access again.',
-    retryAfter: '10 minutes'
+    message: 'You\'ve submitted too many emergency access requests this hour. Please wait before requesting access again.',
+    retryAfter: '60 minutes'
   },
   standardHeaders: true,
   legacyHeaders: false,

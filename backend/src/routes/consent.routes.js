@@ -16,9 +16,10 @@ import {
 
 const router = express.Router();
 
+// 15 consent mutations per 10 minutes — medical consents change slowly by nature
 const consentMutationRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 30,
+  max: 15,
   keyGenerator: (req) => req.user?.userId || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
