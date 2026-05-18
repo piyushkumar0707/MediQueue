@@ -46,6 +46,9 @@ import Analytics from './pages/admin/Analytics';
 // Shared Pages
 import Profile from './pages/Profile';
 import Help from './pages/Help';
+
+// Landing Page
+import LandingPage from './pages/LandingPage';
 import NotificationCenter from './pages/shared/NotificationCenter';
 
 // Protected Route Component
@@ -130,8 +133,8 @@ function App() {
           <Route path="help" element={<Help />} />
         </Route>
 
-        {/* Default Redirect */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Landing Page */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
