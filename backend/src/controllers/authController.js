@@ -14,7 +14,7 @@ import redisClient from '../config/redis.js';
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'Strict',
+  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
 };
 
 const setAuthCookies = (res, accessToken, refreshToken) => {

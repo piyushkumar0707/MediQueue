@@ -91,10 +91,10 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Send no body — backend reads refreshToken from httpOnly cookie automatically
+        // Send refresh token in the body for cross-site configuration fallback
         const response = await axios.post(
           `${API_URL}/auth/refresh-token`,
-          {},
+          { refreshToken: _refreshToken },
           { withCredentials: true }
         );
 
