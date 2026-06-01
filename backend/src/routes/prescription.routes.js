@@ -18,7 +18,7 @@ const router = express.Router();
 // Per-user rate limit for PDF prescription downloads: 15 per 10 minutes
 const downloadPrescriptionRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 15,
+  max: 45,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 

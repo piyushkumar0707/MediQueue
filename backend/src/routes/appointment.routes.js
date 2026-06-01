@@ -19,7 +19,7 @@ const router = express.Router();
 // Per-user rate limit for appointment bookings: 10 per 10 minutes
 const bookingRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 10,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
@@ -33,7 +33,7 @@ const bookingRateLimit = createRateLimiter({
 // Per-user rate limit for PDF confirmation downloads: 15 per 10 minutes
 const downloadConfirmationRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 15,
+  max: 45,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 

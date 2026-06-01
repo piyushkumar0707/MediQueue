@@ -18,7 +18,7 @@ const router = express.Router();
 // Per-user rate limit for AI triage: 5 requests per 60 minutes — Groq API cost control
 const triageRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: 15,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
@@ -35,7 +35,7 @@ router.post('/triage', protect, authorize('patient'), triageRateLimit, triageSym
 // Per-user rate limit for queue joins: 10 per 10 minutes — patients join once per visit
 const joinQueueRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 10,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 

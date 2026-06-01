@@ -21,7 +21,7 @@ const router = express.Router();
 // Brute-force sensitive: 5 attempts per 15 minutes per IP (OWASP recommended)
 const loginLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 15,
   standardHeaders: true,
   legacyHeaders: false,
   message: { 
@@ -34,7 +34,7 @@ const loginLimiter = createRateLimiter({
 // General auth limiter: 5 requests per 15 minutes per IP
 const authLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 15,
   standardHeaders: true,
   legacyHeaders: false,
   message: { 
@@ -47,7 +47,7 @@ const authLimiter = createRateLimiter({
 // Refresh token limiter: generous — triggered on every page load (60 per 10 min)
 const refreshLimiter = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 60,
+  max: 180,
   standardHeaders: true,
   legacyHeaders: false,
   message: { 
@@ -60,7 +60,7 @@ const refreshLimiter = createRateLimiter({
 // OTP limiter: 5 requests per 15 minutes per IP — OTP abuse = email/SMS cost spike
 const otpLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 15,
   standardHeaders: true,
   legacyHeaders: false,
   message: { 
@@ -83,7 +83,7 @@ router.post('/reset-password', authLimiter, validateResetPassword, validate, aut
 // MFA code limiter: 5 attempts per 15 minutes — TOTP codes are time-limited, few legit retries needed
 const mfaLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 15,
   standardHeaders: true,
   legacyHeaders: false,
   message: { 

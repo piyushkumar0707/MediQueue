@@ -18,7 +18,7 @@ const router = express.Router();
 // Per-user rate limit for emergency access requests: 5 per 60 minutes — high volume is an abuse signal
 const emergencyRequestRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: 15,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 

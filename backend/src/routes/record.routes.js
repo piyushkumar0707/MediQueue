@@ -23,7 +23,7 @@ const router = express.Router();
 // Per-user rate limit for file uploads: 20 per 10 minutes
 const uploadRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 20,
+  max: 60,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
@@ -37,7 +37,7 @@ const uploadRateLimit = createRateLimiter({
 // Per-user rate limit for AI summarization: 10 per 60 minutes — matches README quota spec + Groq cost control
 const summarizeRateLimit = createRateLimiter({
   windowMs: 60 * 60 * 1000,
-  max: 10,
+  max: 30,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
@@ -51,7 +51,7 @@ const summarizeRateLimit = createRateLimiter({
 // Per-user rate limit for PDF report downloads: 20 per 10 minutes
 const downloadReportRateLimit = createRateLimiter({
   windowMs: 10 * 60 * 1000,
-  max: 20,
+  max: 60,
   keyGenerator: (req) => req.user?.userId || req.ip,
   message: { 
     success: false, 
