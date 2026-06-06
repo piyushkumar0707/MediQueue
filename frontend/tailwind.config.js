@@ -57,7 +57,10 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans:  ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['"DM Serif Display"', 'Georgia', 'serif'],
+        mono:  ['"IBM Plex Mono"', '"Courier New"', 'monospace'],
+        sora:  ['Sora', 'system-ui', 'sans-serif'],
       },
       spacing: {
         '128': '32rem',
