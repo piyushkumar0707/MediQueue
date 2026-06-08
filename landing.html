@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediQueue — Healthcare Operations Platform</title>
+  <meta name="description" content="MediQueue is a production-grade healthcare operations platform combining real-time digital queuing (CareQueue) and patient-owned encrypted medical records (Health Vault) — eliminating waiting rooms and centralizing care." />
+  <meta property="og:title" content="MediQueue — The Waiting Room Is Obsolete." />
+  <meta property="og:description" content="Real-time queue management + AES-256-GCM encrypted health records. Built for the next era of clinical operations." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0c0e;
+      --bg-2:     #0e1012;
+      --bg-3:     #111316;
+      --fg:       #e8e4dc;
+      --fg-dim:   #8a877f;
+      --fg-muted: #3a3830;
+      --accent:   #00c2a8;
+      --accent-dim: #008f7a;
+      --border:   #1e2124;
+      --border-2: #2a2d31;
+      --serif:    'DM Serif Display', Georgia, serif;
+      --mono:     'IBM Plex Mono', 'Courier New', monospace;
+      --sans:     'Sora', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--fg-muted); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* ── REVEAL ANIMATION ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-d1 { transition-delay: 0.08s; }
+    .reveal-d2 { transition-delay: 0.16s; }
+    .reveal-d3 { transition-delay: 0.24s; }
+    .reveal-d4 { transition-delay: 0.32s; }
+    .reveal-d5 { transition-delay: 0.40s; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,12,14,0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--fg);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent) !important;
+      border: 1px solid var(--accent);
+      padding: 6px 16px;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--accent); color: var(--bg) !important; }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 0;
+      padding: 0 48px;
+      padding-top: 60px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 380px;
+      width: 1px;
+      height: 100%;
+      background: var(--border);
+    }
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 64px 80px 0;
+      border-right: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 1px;
+      background: var(--accent);
+    }
+    .hero-headline {
+      font-family: var(--serif);
+      font-size: clamp(52px, 6.5vw, 96px);
+      line-height: 1.02;
+      letter-spacing: -0.01em;
+      color: var(--fg);
+      margin-bottom: 32px;
+    }
+    .hero-headline em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .hero-sub {
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.8;
+      color: var(--fg-dim);
+      max-width: 480px;
+      margin-bottom: 52px;
+      border-left: 2px solid var(--fg-muted);
+      padding-left: 20px;
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: var(--bg);
+      border: 1px solid var(--accent);
+      padding: 14px 32px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      display: inline-block;
+    }
+    .btn-primary:hover { background: transparent; color: var(--accent); }
+    .btn-ghost {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: transparent;
+      color: var(--fg-dim);
+      border: 1px solid var(--border-2);
+      padding: 14px 32px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      display: inline-block;
+    }
+    .btn-ghost:hover { border-color: var(--fg-dim); color: var(--fg); }
+
+    /* ── HERO RIGHT — QUEUE WIDGET ── */
+    .hero-right {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 0 80px 48px;
+      gap: 28px;
+    }
+    .queue-widget {
+      border: 1px solid var(--border-2);
+      background: var(--bg-2);
+      padding: 0;
+      overflow: hidden;
+    }
+    .queue-widget-header {
+      background: var(--bg-3);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .widget-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+    }
+    .live-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+    }
+    .live-dot::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .queue-body { padding: 20px; }
+    .queue-number-display {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .queue-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--fg-muted);
+      margin-bottom: 8px;
+    }
+    .queue-number {
+      font-family: var(--mono);
+      font-size: 72px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .queue-caption {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--fg-dim);
+      margin-top: 6px;
+    }
+    .queue-rows { display: flex; flex-direction: column; gap: 8px; }
+    .queue-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      transition: border-color 0.3s;
+    }
+    .queue-row.active-row { border-color: var(--accent); background: rgba(0,194,168,0.04); }
+    .qr-left { display: flex; align-items: center; gap: 12px; }
+    .qr-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      width: 28px;
+    }
+    .qr-info {}
+    .qr-name { font-size: 12px; font-weight: 500; color: var(--fg); }
+    .qr-dept { font-family: var(--mono); font-size: 10px; color: var(--fg-dim); }
+    .qr-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid;
+    }
+    .badge-calling { color: var(--accent); border-color: var(--accent); animation: blink-badge 1.4s infinite; }
+    .badge-waiting { color: var(--fg-muted); border-color: var(--fg-muted); }
+    .badge-soon    { color: #e8b64a; border-color: #e8b64a; }
+    @keyframes blink-badge {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── STATS BAND ── */
+    #stats-band {
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .stat-cell {
+      padding: 44px 52px;
+      border-right: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-cell::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 2px;
+      background: var(--accent);
+      transition: width 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+    .stat-cell:hover::after { width: 100%; }
+    .stat-cell:hover { background: var(--bg-2); }
+    .stat-value {
+      font-family: var(--mono);
+      font-size: clamp(28px, 3.5vw, 48px);
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+    }
+    .stat-desc {
+      font-size: 13px;
+      color: var(--fg-dim);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      padding: 80px 48px 0;
+      margin-bottom: 64px;
+    }
+    .section-eyebrow {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-eyebrow::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-2);
+    }
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(36px, 4vw, 60px);
+      line-height: 1.08;
+      color: var(--fg);
+    }
+
+    /* ── FEATURES SECTION ── */
+    #features { border-bottom: 1px solid var(--border); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--border);
+    }
+    .feature-col { border-right: 1px solid var(--border); }
+    .feature-col:last-child { border-right: none; }
+
+    /* Tab system */
+    .tab-list {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      list-style: none;
+    }
+    .tab-btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 16px 24px;
+      cursor: pointer;
+      margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn:hover { color: var(--fg); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panels { position: relative; min-height: 440px; }
+    .tab-panel { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.35s; padding: 40px 40px; }
+    .tab-panel.active { opacity: 1; pointer-events: all; position: relative; }
+
+    .feature-item {
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .feature-item:last-child { border-bottom: none; }
+    .feature-glyph {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 12px;
+      letter-spacing: 0.05em;
+    }
+    .feature-name {
+      font-family: var(--serif);
+      font-size: 22px;
+      color: var(--fg);
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+    .feature-desc {
+      font-size: 13px;
+      color: var(--fg-dim);
+      line-height: 1.7;
+    }
+
+    /* Right col — asymmetric info panel */
+    .info-panel { padding: 48px; height: 100%; }
+    .role-card {
+      border: 1px solid var(--border-2);
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+      cursor: default;
+    }
+    .role-card:hover { border-color: var(--accent); }
+    .role-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--bg-3);
+      border-bottom: 1px solid var(--border);
+    }
+    .role-name {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+    .role-tag {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 2px 8px;
+    }
+    .role-body { padding: 16px 20px; }
+    .role-perms { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .role-perms li {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--fg-dim);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .role-perms li::before {
+      content: '→';
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* ── VAULT / SECURITY SECTION ── */
+    #vault {
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .vault-left { padding: 80px 64px 80px 48px; border-right: 1px solid var(--border); }
+    .vault-right { padding: 80px 48px 80px 64px; }
+
+    .vault-title {
+      font-family: var(--serif);
+      font-size: clamp(32px, 3.5vw, 52px);
+      line-height: 1.1;
+      color: var(--fg);
+      margin-bottom: 24px;
+    }
+    .vault-title em { font-style: italic; color: var(--accent); }
+    .vault-body {
+      font-size: 14px;
+      color: var(--fg-dim);
+      line-height: 1.8;
+      margin-bottom: 40px;
+    }
+    .vault-specs { display: flex; flex-direction: column; gap: 0; }
+    .vault-spec {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    .vault-spec:last-child { border-bottom: none; }
+    .spec-key {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      min-width: 130px;
+      padding-top: 3px;
+    }
+    .spec-val {
+      font-size: 13px;
+      color: var(--fg);
+      line-height: 1.6;
+    }
+
+    /* Audit log terminal */
+    .audit-log {
+      border: 1px solid var(--border-2);
+      background: var(--bg-2);
+      overflow: hidden;
+      font-family: var(--mono);
+    }
+    .audit-log-header {
+      background: var(--bg-3);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .audit-log-title {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+    }
+    .audit-status {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+    .audit-entries { padding: 20px; display: flex; flex-direction: column; gap: 0; }
+    .audit-entry {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      line-height: 1.5;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.4s, transform 0.4s;
+    }
+    .audit-entry.appeared { opacity: 1; transform: translateX(0); }
+    .audit-entry:last-child { border-bottom: none; }
+    .ae-ts { color: var(--fg-muted); }
+    .ae-action { color: var(--fg-dim); }
+    .ae-hash { color: var(--accent); word-break: break-all; }
+    .ae-user { color: var(--fg); }
+    .ae-ok { color: #6bcc82; }
+
+    /* ── AI TRIAGE SECTION ── */
+    #ai-triage {
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 420px 1fr;
+    }
+    .triage-left {
+      padding: 80px 0 80px 48px;
+      border-right: 1px solid var(--border);
+    }
+    .triage-right { padding: 80px 48px 80px 64px; }
+    .triage-terminal {
+      border: 1px solid var(--border-2);
+      background: var(--bg-2);
+      overflow: hidden;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+    .tt-header {
+      background: var(--bg-3);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tt-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .tt-dot-r { background: #c0392b; }
+    .tt-dot-y { background: #e8b64a; }
+    .tt-dot-g { background: var(--accent); }
+    .tt-label {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+      margin-left: auto;
+    }
+    .tt-body { padding: 20px; line-height: 1.8; }
+    .tt-prompt { color: var(--fg-muted); }
+    .tt-output { color: var(--fg-dim); }
+    .tt-key { color: var(--fg-dim); }
+    .tt-val-hi { color: var(--accent); }
+    .tt-val-warn { color: #e8b64a; }
+    .tt-val-ok { color: #6bcc82; }
+    .tt-cursor {
+      display: inline-block;
+      width: 7px; height: 12px;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      animation: blink-cur 1s infinite step-start;
+    }
+    @keyframes blink-cur {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .triage-features { display: flex; flex-direction: column; gap: 0; }
+    .triage-feat {
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 20px;
+      align-items: flex-start;
+      transition: background 0.2s;
+    }
+    .triage-feat:last-child { border-bottom: none; }
+    .tf-glyph {
+      font-family: var(--mono);
+      font-size: 18px;
+      color: var(--accent);
+      font-weight: 600;
+      line-height: 1;
+      padding-top: 4px;
+    }
+    .tf-content {}
+    .tf-title { font-size: 15px; font-weight: 600; color: var(--fg); margin-bottom: 6px; }
+    .tf-desc { font-size: 13px; color: var(--fg-dim); line-height: 1.6; }
+
+    /* ── AUTH SECTION ── */
+    #auth {
+      border-bottom: 1px solid var(--border);
+      padding: 80px 48px;
+    }
+    .auth-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      border: 1px solid var(--border);
+      margin-top: 56px;
+    }
+    .auth-card {
+      padding: 40px 36px;
+      border-right: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      transition: background 0.25s;
+    }
+    .auth-card:last-child { border-right: none; }
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 0;
+      background: var(--accent);
+      transition: height 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    .auth-card:hover::before { height: 100%; }
+    .auth-card:hover { background: var(--bg-2); }
+    .ac-index {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: var(--fg-muted);
+      margin-bottom: 20px;
+    }
+    .ac-title { font-family: var(--serif); font-size: 26px; color: var(--fg); margin-bottom: 16px; line-height: 1.2; }
+    .ac-desc { font-size: 13px; color: var(--fg-dim); line-height: 1.7; margin-bottom: 24px; }
+    .ac-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ac-tag {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border: 1px solid var(--border-2);
+      color: var(--fg-dim);
+    }
+
+    /* ── ANALYTICS SECTION ── */
+    #analytics {
+      border-bottom: 1px solid var(--border);
+      padding: 80px 48px;
+    }
+    .analytics-body {
+      display: grid;
+      grid-template-columns: 1fr 480px;
+      gap: 64px;
+      margin-top: 56px;
+      align-items: start;
+    }
+    .analytics-desc { font-size: 14px; color: var(--fg-dim); line-height: 1.8; }
+    .analytics-features { display: flex; flex-direction: column; gap: 0; margin-top: 32px; }
+    .anf {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .anf:last-child { border-bottom: none; }
+    .anf-icon { font-family: var(--mono); font-size: 11px; color: var(--accent); min-width: 24px; }
+    .anf-title { font-size: 14px; font-weight: 600; color: var(--fg); margin-bottom: 4px; }
+    .anf-desc { font-size: 12px; color: var(--fg-dim); line-height: 1.6; }
+
+    /* Mini chart */
+    .mini-chart-wrap { border: 1px solid var(--border-2); padding: 24px; background: var(--bg-2); }
+    .mc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .mc-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-dim); }
+    .mc-val { font-family: var(--mono); font-size: 28px; font-weight: 600; color: var(--accent); }
+    .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; }
+    .bar {
+      flex: 1;
+      background: var(--border);
+      position: relative;
+      transition: background 0.2s;
+    }
+    .bar::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: var(--accent);
+      transition: height 1.2s cubic-bezier(0.16,1,0.3,1);
+      height: 0;
+    }
+    .bar.animated::after { height: var(--h); }
+    .bar:hover { background: var(--bg-3); }
+    .chart-labels {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .chart-label { flex: 1; font-family: var(--mono); font-size: 9px; color: var(--fg-muted); text-align: center; }
+    .mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 20px; border: 1px solid var(--border); }
+    .mini-stat { padding: 16px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .mini-stat:nth-child(2n) { border-right: none; }
+    .mini-stat:nth-child(3), .mini-stat:nth-child(4) { border-bottom: none; }
+    .ms-val { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--accent); }
+    .ms-label { font-family: var(--mono); font-size: 10px; color: var(--fg-dim); margin-top: 4px; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 56px 48px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: end;
+    }
+    .footer-left {}
+    .footer-logo {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--fg);
+      margin-bottom: 12px;
+    }
+    .footer-logo span { color: var(--accent); }
+    .footer-tagline { font-size: 13px; color: var(--fg-dim); margin-bottom: 28px; }
+    .stack-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stack-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border: 1px solid var(--border-2);
+      color: var(--fg-muted);
+      background: var(--bg-2);
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .stack-badge:hover { color: var(--accent); border-color: var(--accent); }
+    .footer-right { text-align: right; }
+    .footer-links { display: flex; justify-content: flex-end; gap: 28px; margin-bottom: 24px; list-style: none; }
+    .footer-links a {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--accent); }
+    .footer-copy { font-family: var(--mono); font-size: 10px; color: var(--fg-muted); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) {
+      #hero { grid-template-columns: 1fr; }
+      #hero::before { display: none; }
+      .hero-left { border-right: none; padding-right: 0; }
+      .hero-right { padding-left: 0; border-top: 1px solid var(--border); }
+      #vault, #ai-triage { grid-template-columns: 1fr; }
+      .vault-left, .triage-left { border-right: none; border-bottom: 1px solid var(--border); }
+      .auth-grid { grid-template-columns: 1fr; }
+      .auth-card { border-right: none; border-bottom: 1px solid var(--border); }
+      .auth-card:last-child { border-bottom: none; }
+      #stats-band { grid-template-columns: 1fr; }
+      .stat-cell { border-right: none; border-bottom: 1px solid var(--border); }
+      .stat-cell:last-child { border-bottom: none; }
+      .features-grid { grid-template-columns: 1fr; }
+      .feature-col { border-right: none; border-bottom: 1px solid var(--border); }
+      .analytics-body { grid-template-columns: 1fr; }
+      footer { grid-template-columns: 1fr; }
+      .footer-right { text-align: left; }
+      .footer-links { justify-content: flex-start; }
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+      #hero, #vault, #ai-triage, #auth, #analytics, footer, .vault-left, .vault-right, .triage-left, .triage-right { padding-left: 24px; padding-right: 24px; }
+      .section-header { padding-left: 24px; padding-right: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ NAV ══════════════ -->
+<nav>
+  <a href="#" class="nav-logo">Medi<span>Queue</span></a>
+  <ul class="nav-links">
+    <li><a href="#features">System</a></li>
+    <li><a href="#vault">Vault</a></li>
+    <li><a href="#ai-triage">AI Triage</a></li>
+    <li><a href="#auth">Security</a></li>
+    <li><a href="https://github.com/piyushkumar0707/MediQueue" target="_blank" rel="noopener">GitHub</a></li>
+    <li><a href="https://medi-queue-ten.vercel.app/login" target="_blank" rel="noopener" class="nav-cta">Live Demo</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section id="hero">
+  <div class="hero-left">
+    <p class="hero-eyebrow reveal">MediQueue · Healthcare Ops Platform</p>
+    <h1 class="hero-headline reveal reveal-d1">
+      The Waiting<br/>Room<br/><em>Is Obsolete.</em>
+    </h1>
+    <p class="hero-sub reveal reveal-d2">
+      // CareQueue + Health Vault<br/>
+      // Real-time digital queuing · AES-256-GCM encrypted records<br/>
+      // Three roles · One platform · Zero compromise
+    </p>
+    <div class="hero-actions reveal reveal-d3">
+      <a href="https://medi-queue-ten.vercel.app/login" target="_blank" rel="noopener" class="btn-primary" id="demo-btn">View Live Demo</a>
+      <a href="https://github.com/piyushkumar0707/MediQueue" target="_blank" rel="noopener" class="btn-ghost" id="github-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:8px;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-right reveal reveal-d2">
+    <div class="queue-widget">
+      <div class="queue-widget-header">
+        <span class="widget-title">CareQueue · Live Feed</span>
+        <span class="live-dot">LIVE</span>
+      </div>
+      <div class="queue-body">
+        <div class="queue-number-display">
+          <div class="queue-label">Now Serving</div>
+          <div class="queue-number" id="queue-counter">—</div>
+          <div class="queue-caption">General Medicine · Dr. Sharma</div>
+        </div>
+        <div class="queue-rows" id="queue-rows">
+          <div class="queue-row active-row">
+            <div class="qr-left">
+              <span class="qr-num">#07</span>
+              <div class="qr-info">
+                <div class="qr-name">Arjun Mehta</div>
+                <div class="qr-dept">General Medicine</div>
+              </div>
+            </div>
+            <span class="qr-badge badge-calling">Calling</span>
+          </div>
+          <div class="queue-row">
+            <div class="qr-left">
+              <span class="qr-num">#08</span>
+              <div class="qr-info">
+                <div class="qr-name">Priya Nair</div>
+                <div class="qr-dept">Cardiology</div>
+              </div>
+            </div>
+            <span class="qr-badge badge-soon">Next</span>
+          </div>
+          <div class="queue-row">
+            <div class="qr-left">
+              <span class="qr-num">#09</span>
+              <div class="qr-info">
+                <div class="qr-name">Rohan Singh</div>
+                <div class="qr-dept">Orthopaedics</div>
+              </div>
+            </div>
+            <span class="qr-badge badge-waiting">Waiting</span>
+          </div>
+          <div class="queue-row">
+            <div class="qr-left">
+              <span class="qr-num">#10</span>
+              <div class="qr-info">
+                <div class="qr-name">Fatima Khan</div>
+                <div class="qr-dept">Dermatology</div>
+              </div>
+            </div>
+            <span class="qr-badge badge-waiting">Waiting</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border-2);padding:18px 20px;background:var(--bg-2);">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-muted);margin-bottom:10px;">Socket.io Event Stream</div>
+      <div id="socket-log" style="font-family:var(--mono);font-size:10px;line-height:1.9;color:var(--fg-dim);"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ STATS BAND ══════════════ -->
+<div id="stats-band">
+  <div class="stat-cell reveal">
+    <div class="stat-value" data-count="3" data-suffix=" roles">0</div>
+    <div class="stat-label">User Roles</div>
+    <div class="stat-desc">Patient · Doctor · Admin — each with a dedicated, permission-scoped dashboard.</div>
+  </div>
+  <div class="stat-cell reveal reveal-d2">
+    <div class="stat-value" data-count="116" data-suffix=" routes">0</div>
+    <div class="stat-label">API Endpoints</div>
+    <div class="stat-desc">Across 12 route modules — auth, queue, records, consent, audit, emergency, analytics, notifications, prescriptions &amp; more.</div>
+  </div>
+  <div class="stat-cell reveal reveal-d3">
+    <div class="stat-value" data-suffix="AES-256-GCM">AES-256-GCM</div>
+    <div class="stat-label">Encryption Standard</div>
+    <div class="stat-desc">Military-grade encryption for every Health Vault record. Patient-owned keys, consent-gated access.</div>
+  </div>
+</div>
+
+<!-- ══════════════ FEATURES ══════════════ -->
+<section id="features">
+  <div class="section-header">
+    <div class="section-eyebrow reveal">System Architecture</div>
+    <h2 class="section-title reveal reveal-d1">Two systems.<br/>One platform.</h2>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-col">
+      <div class="tab-list" role="tablist">
+        <button class="tab-btn active" role="tab" data-tab="carequeue" id="tab-carequeue">CareQueue</button>
+        <button class="tab-btn" role="tab" data-tab="healthvault" id="tab-healthvault">Health Vault</button>
+      </div>
+      <div class="tab-panels">
+        <div class="tab-panel active" id="panel-carequeue" role="tabpanel">
+          <div class="feature-item reveal">
+            <div class="feature-glyph">[ 01 ] Real-Time Queue Engine</div>
+            <div class="feature-name">Server-Pushed Position Updates</div>
+            <div class="feature-desc">Socket.io persistent connections push queue state to every connected patient. No polling. No refresh. Patients track their live position from anywhere — home, parking lot, another floor.</div>
+          </div>
+          <div class="feature-item reveal reveal-d1">
+            <div class="feature-glyph">[ 02 ] Remote Join</div>
+            <div class="feature-name">Eliminate the Physical Waiting Room</div>
+            <div class="feature-desc">Patients join the queue from their phone before arriving. The system estimates wait time, notifies when they're next, and lets them arrive precisely on time — no crowded lobbies.</div>
+          </div>
+          <div class="feature-item reveal reveal-d2">
+            <div class="feature-glyph">[ 03 ] Doctor Controls</div>
+            <div class="feature-name">Call · Skip · Defer from Dashboard</div>
+            <div class="feature-desc">Doctors manage their queue in real time. Every action — call next, skip, defer — triggers an immediate push to all affected patients. The admin panel reflects every state change with an audit timestamp.</div>
+          </div>
+        </div>
+        <div class="tab-panel" id="panel-healthvault" role="tabpanel">
+          <div class="feature-item">
+            <div class="feature-glyph">[ 01 ] Granular Consent</div>
+            <div class="feature-name">Per-Doctor, Per-Record Access Control</div>
+            <div class="feature-desc">Patients grant or revoke consent on individual records — not blanket access. A cardiologist sees only what you've authorized. Revoke instantly. Every consent event is timestamped and immutable.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-glyph">[ 02 ] Encrypted Storage</div>
+            <div class="feature-name">AES-256-GCM · Field-Level Encryption</div>
+            <div class="feature-desc">Every medical record is encrypted at the field level before storage. MongoDB never sees plaintext. The encryption key lifecycle is patient-controlled, not server-controlled.</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-glyph">[ 03 ] Audit Trail</div>
+            <div class="feature-name">SHA-256 Integrity · Tamper-Evident Logs</div>
+            <div class="feature-desc">Every access, share, and modification generates a log entry chained with a SHA-256 hash. Any tampering with historical log entries invalidates the chain — detectable immediately by the integrity verifier.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-col">
+      <div class="info-panel">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:24px;">User Role Matrix</div>
+        <div class="role-card reveal">
+          <div class="role-card-header">
+            <span class="role-name">Patient</span>
+            <span class="role-tag">Self-Service</span>
+          </div>
+          <div class="role-body">
+            <ul class="role-perms">
+              <li>Join queue remotely — track live position</li>
+              <li>Upload &amp; manage encrypted health records</li>
+              <li>Grant / revoke per-doctor consent on individual records</li>
+              <li>View full access audit trail for own records</li>
+              <li>Receive real-time notifications when called</li>
+            </ul>
+          </div>
+        </div>
+        <div class="role-card reveal reveal-d1">
+          <div class="role-card-header">
+            <span class="role-name">Doctor</span>
+            <span class="role-tag">Clinical Access</span>
+          </div>
+          <div class="role-body">
+            <ul class="role-perms">
+              <li>Manage live queue — call, skip, defer patients</li>
+              <li>View consented patient records only</li>
+              <li>Emergency access with mandatory admin review trail</li>
+              <li>AI triage advisory — with human override preserved</li>
+              <li>Session-limited record access windows</li>
+            </ul>
+          </div>
+        </div>
+        <div class="role-card reveal reveal-d2">
+          <div class="role-card-header">
+            <span class="role-name">Admin</span>
+            <span class="role-tag">Oversight</span>
+          </div>
+          <div class="role-body">
+            <ul class="role-perms">
+              <li>Full analytics dashboard — queue &amp; vault metrics</li>
+              <li>Review emergency access requests &amp; approve/deny</li>
+              <li>Audit log inspector with SHA-256 chain verification</li>
+              <li>User management — roles, suspensions, MFA status</li>
+              <li>System health monitoring &amp; Redis cache metrics</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ VAULT / SECURITY ══════════════ -->
+<section id="vault">
+  <div class="vault-left">
+    <div class="section-eyebrow reveal" style="margin-bottom:20px;">Health Vault</div>
+    <h2 class="vault-title reveal reveal-d1">
+      Your records.<br/>Your keys.<br/><em>Your consent.</em>
+    </h2>
+    <p class="vault-body reveal reveal-d2">
+      Health Vault treats medical data as patient property — not hospital property. Encryption happens client-side before storage. No plaintext ever reaches the database. Doctors see only what you explicitly authorize, for as long as you allow.
+    </p>
+    <div class="vault-specs reveal reveal-d3">
+      <div class="vault-spec">
+        <span class="spec-key">Encryption</span>
+        <span class="spec-val">AES-256-GCM — authenticated encryption with associated data. Each record encrypted with a unique IV. Integrity verified on every read.</span>
+      </div>
+      <div class="vault-spec">
+        <span class="spec-key">Consent Model</span>
+        <span class="spec-val">Granular per-doctor, per-record ACL. Consent grants are time-scoped and revocable. Revocation takes effect immediately — mid-session.</span>
+      </div>
+      <div class="vault-spec">
+        <span class="spec-key">Audit Chain</span>
+        <span class="spec-val">Every access logged with SHA-256 hash chaining. Immutable. Any modification to historical entries breaks the integrity chain — detected by verifier.</span>
+      </div>
+      <div class="vault-spec">
+        <span class="spec-key">Emergency Access</span>
+        <span class="spec-val">Doctors can request emergency access to unconsented records. Access is logged, time-limited, and queued for mandatory admin review.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="vault-right">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;">Audit Log · Integrity Verified</div>
+    <div class="audit-log">
+      <div class="audit-log-header">
+        <span class="audit-log-title">system.audit.chain · mediqueue-prod</span>
+        <span class="audit-status">✓ CHAIN INTACT</span>
+      </div>
+      <div class="audit-entries" id="audit-entries">
+        <div class="audit-entry">
+          <div><span class="ae-ts">[2026-06-06T15:44:02Z]</span> <span class="ae-action">RECORD_ACCESS</span></div>
+          <div>actor: <span class="ae-user">dr.sharma@mediqueue</span> · record: <span class="ae-user">MRN-00481</span> · consent: <span class="ae-ok">GRANTED</span></div>
+          <div>hash: <span class="ae-hash">sha256:a3f9c2d1e8b74f6a2c1d9e3f8a2b1c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2</span></div>
+        </div>
+        <div class="audit-entry">
+          <div><span class="ae-ts">[2026-06-06T15:44:18Z]</span> <span class="ae-action">CONSENT_REVOKE</span></div>
+          <div>actor: <span class="ae-user">patient.mehta@mediqueue</span> · revoked: <span class="ae-user">dr.verma</span> · scope: <span class="ae-user">MRN-00481/lab-results</span></div>
+          <div>hash: <span class="ae-hash">sha256:b4e0d3f2f9c85a7b3d2e0f4a9b3c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4</span></div>
+        </div>
+        <div class="audit-entry">
+          <div><span class="ae-ts">[2026-06-06T15:46:55Z]</span> <span class="ae-action">EMERGENCY_ACCESS_REQ</span></div>
+          <div>actor: <span class="ae-user">dr.patel@mediqueue</span> · reason: <span class="ae-val-warn">"Acute cardiac event — patient unconscious"</span></div>
+          <div>status: <span class="ae-val-warn">PENDING_ADMIN_REVIEW</span> · ttl: 3600s</div>
+          <div>hash: <span class="ae-hash">sha256:c5f1e4a3a0d96b8c4e3f1a5b0c4d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6</span></div>
+        </div>
+        <div class="audit-entry">
+          <div><span class="ae-ts">[2026-06-06T15:47:11Z]</span> <span class="ae-action">EMERGENCY_ACCESS_APPROVED</span></div>
+          <div>reviewer: <span class="ae-user">admin.ops@mediqueue</span> · granted to: <span class="ae-user">dr.patel</span> · duration: <span class="ae-val-warn">60min</span></div>
+          <div>hash: <span class="ae-hash">sha256:d6a2f5b4b1e07c9d5f4a2b6c1d5e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8</span></div>
+        </div>
+        <div class="audit-entry">
+          <div><span class="ae-ts">[2026-06-06T15:51:03Z]</span> <span class="ae-action">INTEGRITY_CHECK</span></div>
+          <div>verifier: <span class="ae-user">system.integrity-daemon</span> · entries_verified: <span class="ae-user">1,842</span></div>
+          <div>chain_status: <span class="ae-ok">✓ ALL HASHES VALID — NO TAMPERING DETECTED</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ AI TRIAGE ══════════════ -->
+<section id="ai-triage">
+  <div class="triage-left">
+    <div class="section-eyebrow reveal" style="margin-bottom:20px;">AI Triage</div>
+    <h2 class="vault-title reveal reveal-d1" style="font-size:clamp(28px,3vw,44px);">
+      Groq LLaMA.<br/>Advisory only.<br/><em>Human decides.</em>
+    </h2>
+    <div style="margin-top:32px;" class="reveal reveal-d2">
+      <div class="triage-terminal">
+        <div class="tt-header">
+          <div class="tt-dot tt-dot-r"></div>
+          <div class="tt-dot tt-dot-y"></div>
+          <div class="tt-dot tt-dot-g"></div>
+          <div class="tt-label">groq-llama · triage-advisory</div>
+        </div>
+        <div class="tt-body">
+          <div><span class="tt-prompt">$ </span><span class="tt-output">POST /api/triage/assess</span></div>
+          <div style="margin-top:8px;"><span class="tt-key">symptoms: </span><span class="tt-val-hi">"chest tightness, shortness of breath, diaphoresis"</span></div>
+          <div><span class="tt-key">age: </span><span class="tt-output">58</span> &nbsp;<span class="tt-key">vitals: </span><span class="tt-output">BP 160/100, HR 98</span></div>
+          <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+            <div><span class="tt-key">triage_level: </span><span class="tt-val-warn">URGENT (Level 2)</span></div>
+            <div><span class="tt-key">recommendation: </span><span class="tt-output">"Cardiac evaluation — ECG priority"</span></div>
+            <div><span class="tt-key">confidence: </span><span class="tt-val-hi">0.87</span></div>
+            <div><span class="tt-key">model: </span><span class="tt-output">llama3-70b-8192</span></div>
+            <div><span class="tt-key">override_preserved: </span><span class="tt-val-ok">true</span></div>
+            <div><span class="tt-key">advisory_only: </span><span class="tt-val-ok">true</span> <span class="tt-cursor"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="triage-right">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:32px;" class="reveal">AI Capabilities</div>
+    <div class="triage-features">
+      <div class="triage-feat reveal">
+        <div class="tf-glyph">⟳</div>
+        <div class="tf-content">
+          <div class="tf-title">Groq LLaMA 3 · 70B</div>
+          <div class="tf-desc">Ultra-low-latency inference via Groq's LPU architecture. Triage assessments in under 200ms — fast enough for real clinical workflows.</div>
+        </div>
+      </div>
+      <div class="triage-feat reveal reveal-d1">
+        <div class="tf-glyph">⊘</div>
+        <div class="tf-content">
+          <div class="tf-title">Advisory-Only Architecture</div>
+          <div class="tf-desc">The AI presents a structured recommendation with confidence score. It cannot take action. Human clinicians retain full authority and can override with a single interaction — this is non-negotiable.</div>
+        </div>
+      </div>
+      <div class="triage-feat reveal reveal-d2">
+        <div class="tf-glyph">◈</div>
+        <div class="tf-content">
+          <div class="tf-title">Structured Symptom Parsing</div>
+          <div class="tf-desc">Free-text symptom input is parsed into structured clinical entities before LLM processing. Reduces hallucination surface and grounds the model in factual patient data.</div>
+        </div>
+      </div>
+      <div class="triage-feat reveal reveal-d3">
+        <div class="tf-glyph">▲</div>
+        <div class="tf-content">
+          <div class="tf-title">Priority Queue Integration</div>
+          <div class="tf-desc">A high-urgency triage result can flag a patient for priority queue insertion — still requiring doctor confirmation. The system suggests; the clinician decides.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ AUTH / SECURITY ══════════════ -->
+<section id="auth">
+  <div class="section-header" style="padding-left:0;padding-right:0;">
+    <div class="section-eyebrow reveal">Security Infrastructure</div>
+    <h2 class="section-title reveal reveal-d1">Authentication<br/>without compromise.</h2>
+  </div>
+  <div class="auth-grid">
+    <div class="auth-card reveal">
+      <div class="ac-index">01 — Identity</div>
+      <div class="ac-title">Two-Factor Authentication</div>
+      <div class="ac-desc">OTP (email/SMS) and TOTP-based MFA (compatible with Authenticator apps). MFA required for any sensitive vault operation — consent modification, emergency access, admin actions.</div>
+      <div class="ac-tags">
+        <span class="ac-tag">OTP</span>
+        <span class="ac-tag">TOTP / HOTP</span>
+        <span class="ac-tag">Speakeasy</span>
+        <span class="ac-tag">QR Enroll</span>
+      </div>
+    </div>
+    <div class="auth-card reveal reveal-d1">
+      <div class="ac-index">02 — Tokens</div>
+      <div class="ac-title">JWT · Zero localStorage</div>
+      <div class="ac-desc">Access tokens are short-lived (15m). Refresh tokens are stored exclusively in HttpOnly, SameSite=Strict cookies — never in localStorage or sessionStorage. XSS cannot steal tokens.</div>
+      <div class="ac-tags">
+        <span class="ac-tag">HttpOnly Cookie</span>
+        <span class="ac-tag">SameSite=Strict</span>
+        <span class="ac-tag">15m Access TTL</span>
+        <span class="ac-tag">7d Refresh TTL</span>
+      </div>
+    </div>
+    <div class="auth-card reveal reveal-d2">
+      <div class="ac-index">03 — Audit</div>
+      <div class="ac-title">Tamper-Evident Logs</div>
+      <div class="ac-desc">Every auth event, consent change, and record access is logged with a SHA-256 hash chained to the previous entry. The integrity daemon verifies the full chain on schedule — detecting any post-hoc modification.</div>
+      <div class="ac-tags">
+        <span class="ac-tag">SHA-256</span>
+        <span class="ac-tag">Hash Chain</span>
+        <span class="ac-tag">Integrity Daemon</span>
+        <span class="ac-tag">Immutable Log</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ ANALYTICS ══════════════ -->
+<section id="analytics">
+  <div class="section-header" style="padding-left:0;padding-right:0;">
+    <div class="section-eyebrow reveal">Admin Analytics</div>
+    <h2 class="section-title reveal reveal-d1">Full operational<br/>visibility.</h2>
+  </div>
+  <div class="analytics-body">
+    <div>
+      <p class="analytics-desc reveal">
+        The admin dashboard surfaces live queue metrics, vault access patterns, security events, and user management — all in a single pane. Redis-backed real-time counters ensure sub-second metric refresh. Every data point has a drill-down to the underlying audit entry.
+      </p>
+      <div class="analytics-features">
+        <div class="anf reveal">
+          <span class="anf-icon">→</span>
+          <div>
+            <div class="anf-title">Live Queue Metrics</div>
+            <div class="anf-desc">Active queue depth per department, average wait time, served vs. deferred ratio, doctor throughput — updated via Socket.io in real time.</div>
+          </div>
+        </div>
+        <div class="anf reveal reveal-d1">
+          <span class="anf-icon">→</span>
+          <div>
+            <div class="anf-title">Security Event Log</div>
+            <div class="anf-desc">Failed auth attempts, MFA bypass attempts, emergency access events, and consent anomalies — surfaced with severity classification and linked audit hashes.</div>
+          </div>
+        </div>
+        <div class="anf reveal reveal-d2">
+          <span class="anf-icon">→</span>
+          <div>
+            <div class="anf-title">Vault Access Patterns</div>
+            <div class="anf-desc">Which records are being accessed, by whom, how often, and under what consent scope — with timeline visualization and consent lifecycle tracking.</div>
+          </div>
+        </div>
+        <div class="anf reveal reveal-d3">
+          <span class="anf-icon">→</span>
+          <div>
+            <div class="anf-title">User &amp; Role Management</div>
+            <div class="anf-desc">Create, suspend, or re-role users. View MFA enrollment status. Force password resets. All admin actions themselves are audit-logged and tamper-evident.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-d2">
+      <div class="mini-chart-wrap">
+        <div class="mc-header">
+          <span class="mc-title">Patients Served Today</span>
+          <span class="mc-val" id="served-counter">0</span>
+        </div>
+        <div class="bar-chart" id="bar-chart">
+          <div class="bar" style="--h:40%"></div>
+          <div class="bar" style="--h:62%"></div>
+          <div class="bar" style="--h:55%"></div>
+          <div class="bar" style="--h:80%"></div>
+          <div class="bar" style="--h:95%"></div>
+          <div class="bar" style="--h:72%"></div>
+          <div class="bar" style="--h:88%"></div>
+        </div>
+        <div class="chart-labels">
+          <span class="chart-label">Mon</span>
+          <span class="chart-label">Tue</span>
+          <span class="chart-label">Wed</span>
+          <span class="chart-label">Thu</span>
+          <span class="chart-label">Fri</span>
+          <span class="chart-label">Sat</span>
+          <span class="chart-label">Sun</span>
+        </div>
+      </div>
+      <div class="mini-stats">
+        <div class="mini-stat">
+          <div class="ms-val">98.4%</div>
+          <div class="ms-label">Queue SLA met</div>
+        </div>
+        <div class="mini-stat">
+          <div class="ms-val">0</div>
+          <div class="ms-label">Chain violations</div>
+        </div>
+        <div class="mini-stat">
+          <div class="ms-val">1,842</div>
+          <div class="ms-label">Audit entries</div>
+        </div>
+        <div class="mini-stat">
+          <div class="ms-val">3</div>
+          <div class="ms-label">Active doctors</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ DEMO ACCOUNTS ══════════════ -->
+<section id="demo" style="border-bottom:1px solid var(--border);padding:80px 48px;">
+  <div class="section-header" style="padding-left:0;padding-right:0;margin-bottom:48px;">
+    <div class="section-eyebrow reveal">Try It Now</div>
+    <h2 class="section-title reveal reveal-d1">Demo accounts.<br/>All three roles. <em style="font-style:italic;color:var(--accent);">Live.</em></h2>
+    <p style="font-size:14px;color:var(--fg-dim);margin-top:20px;max-width:600px;line-height:1.8;" class="reveal reveal-d2">The live deployment is seeded with one account per role. Use any of the credentials below — MFA is disabled on demo accounts so you can explore immediately.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border-2);margin-bottom:40px;" class="reveal reveal-d2" id="demo-cards">
+
+    <!-- PATIENT -->
+    <div class="demo-role-card" style="border-right:1px solid var(--border);position:relative;overflow:hidden;transition:background .25s;">
+      <div style="position:absolute;top:0;left:0;width:0;height:3px;background:var(--accent);transition:width .4s cubic-bezier(.16,1,.3,1);" class="demo-top-bar"></div>
+      <div style="padding:32px 32px 12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-muted);">01 — Patient</span>
+          <span style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:3px 10px;">Self-Service</span>
+        </div>
+        <div style="font-family:var(--serif);font-size:24px;color:var(--fg);margin-bottom:6px;">Aarav Patel</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);margin-bottom:24px;">General Patient · B+ · Age 30</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;line-height:2;background:var(--bg-3);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:18px 32px;">
+        <div><span style="color:var(--fg-muted);">email    </span> <span style="color:var(--fg);">demo.patient@mediqueue.local</span></div>
+        <div><span style="color:var(--fg-muted);">password </span> <span style="color:var(--accent);">DemoPass@123</span></div>
+        <div><span style="color:var(--fg-muted);">mfa      </span> <span style="color:#6bcc82;">disabled (demo)</span></div>
+      </div>
+      <div style="padding:20px 32px 28px;">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-muted);margin-bottom:12px;">What you can explore</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;">
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>Join queue &amp; track live position</li>
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>Upload &amp; manage encrypted records</li>
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>Grant/revoke per-doctor consent</li>
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>View audit trail of record access</li>
+        </ul>
+      </div>
+      <div style="padding:0 32px 32px;">
+        <a href="https://medi-queue-ten.vercel.app/login" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:11px 20px;text-decoration:none;display:block;text-align:center;transition:background .2s,color .2s;" onmouseover="this.style.background='var(--accent)';this.style.color='var(--bg)'" onmouseout="this.style.background='transparent';this.style.color='var(--accent)'">Login as Patient →</a>
+      </div>
+    </div>
+
+    <!-- DOCTOR -->
+    <div class="demo-role-card" style="border-right:1px solid var(--border);position:relative;overflow:hidden;transition:background .25s;">
+      <div style="position:absolute;top:0;left:0;width:0;height:3px;background:var(--accent);transition:width .4s cubic-bezier(.16,1,.3,1);" class="demo-top-bar"></div>
+      <div style="padding:32px 32px 12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-muted);">02 — Doctor</span>
+          <span style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:3px 10px;">Clinical Access</span>
+        </div>
+        <div style="font-family:var(--serif);font-size:24px;color:var(--fg);margin-bottom:6px;">Dr. Meera Shah</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);margin-bottom:24px;">General Medicine · MBBS, MD · 12 yrs exp</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;line-height:2;background:var(--bg-3);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:18px 32px;">
+        <div><span style="color:var(--fg-muted);">email    </span> <span style="color:var(--fg);">demo.doctor@mediqueue.local</span></div>
+        <div><span style="color:var(--fg-muted);">password </span> <span style="color:var(--accent);">DemoPass@123</span></div>
+        <div><span style="color:var(--fg-muted);">mfa      </span> <span style="color:#6bcc82;">disabled (demo)</span></div>
+      </div>
+      <div style="padding:20px 32px 28px;">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-muted);margin-bottom:12px;">What you can explore</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;">
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>Manage live queue — call, skip, defer</li>
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>View consented patient records</li>
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>Request emergency record access</li>
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>AI triage advisory panel</li>
+        </ul>
+      </div>
+      <div style="padding:0 32px 32px;">
+        <a href="https://medi-queue-ten.vercel.app/login" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:11px 20px;text-decoration:none;display:block;text-align:center;transition:background .2s,color .2s;" onmouseover="this.style.background='var(--accent)';this.style.color='var(--bg)'" onmouseout="this.style.background='transparent';this.style.color='var(--accent)'">Login as Doctor →</a>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="demo-role-card" style="position:relative;overflow:hidden;transition:background .25s;">
+      <div style="position:absolute;top:0;left:0;width:0;height:3px;background:var(--accent);transition:width .4s cubic-bezier(.16,1,.3,1);" class="demo-top-bar"></div>
+      <div style="padding:32px 32px 12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-muted);">03 — Admin</span>
+          <span style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:3px 10px;">Oversight</span>
+        </div>
+        <div style="font-family:var(--serif);font-size:24px;color:var(--fg);margin-bottom:6px;">Nikhil Rao</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);margin-bottom:24px;">Platform Admin · Full system access</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;line-height:2;background:var(--bg-3);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:18px 32px;">
+        <div><span style="color:var(--fg-muted);">email    </span> <span style="color:var(--fg);">demo.admin@mediqueue.local</span></div>
+        <div><span style="color:var(--fg-muted);">password </span> <span style="color:var(--accent);">DemoPass@123</span></div>
+        <div><span style="color:var(--fg-muted);">mfa      </span> <span style="color:#6bcc82;">disabled (demo)</span></div>
+      </div>
+      <div style="padding:20px 32px 28px;">
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-muted);margin-bottom:12px;">What you can explore</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;">
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>Full analytics &amp; queue metrics dashboard</li>
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>Review &amp; approve emergency access</li>
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>Audit log with SHA-256 chain verifier</li>
+          <li style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);display:flex;gap:8px;"><span style="color:var(--accent);">→</span>User management &amp; MFA oversight</li>
+        </ul>
+      </div>
+      <div style="padding:0 32px 32px;">
+        <a href="https://medi-queue-ten.vercel.app/login" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:11px 20px;text-decoration:none;display:block;text-align:center;transition:background .2s,color .2s;" onmouseover="this.style.background='var(--accent)';this.style.color='var(--bg)'" onmouseout="this.style.background='transparent';this.style.color='var(--accent)'">Login as Admin →</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- shared password callout -->
+  <div style="border:1px solid var(--border-2);padding:20px 28px;background:var(--bg-2);display:flex;align-items:center;gap:24px;flex-wrap:wrap;" class="reveal reveal-d3">
+    <div style="font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-muted);">Shared password</div>
+    <div style="font-family:var(--mono);font-size:18px;font-weight:600;color:var(--accent);letter-spacing:.06em;">DemoPass@123</div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--fg-dim);flex:1;">All three demo accounts use the same password. MFA is pre-disabled. Copy the email for the role you want, paste it with this password, and you're in.</div>
+    <a href="https://medi-queue-ten.vercel.app/login" target="_blank" rel="noopener" class="btn-primary" style="white-space:nowrap;">Open Login Page →</a>
+  </div>
+</section>
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer>
+  <div class="footer-left">
+    <div class="footer-logo">Medi<span>Queue</span></div>
+    <div class="footer-tagline">A production-grade healthcare operations platform. Built to be deployed.</div>
+    <div class="stack-badges">
+      <span class="stack-badge">Node.js</span>
+      <span class="stack-badge">React</span>
+      <span class="stack-badge">MongoDB</span>
+      <span class="stack-badge">Redis</span>
+      <span class="stack-badge">Socket.io</span>
+      <span class="stack-badge">Docker</span>
+      <span class="stack-badge">Groq LLaMA</span>
+      <span class="stack-badge">JWT</span>
+    </div>
+  </div>
+  <div class="footer-right">
+    <ul class="footer-links">
+      <li><a href="#features">System</a></li>
+      <li><a href="#vault">Vault</a></li>
+      <li><a href="#ai-triage">AI</a></li>
+      <li><a href="#auth">Security</a></li>
+      <li><a href="https://github.com/piyushkumar0707/MediQueue" target="_blank" rel="noopener">GitHub ↗</a></li>
+      <li><a href="https://medi-queue-ten.vercel.app/login" target="_blank" rel="noopener">Live Demo ↗</a></li>
+    </ul>
+    <div class="footer-copy">
+      <div>piyushkumar0707/MediQueue · MIT License</div>
+      <div style="margin-top:4px;">CareQueue + Health Vault · All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ── INTERSECTION OBSERVER REVEAL ── */
+  const revealEls = document.querySelectorAll('.reveal');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        revealObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => revealObs.observe(el));
+
+  /* ── QUEUE COUNTER ANIMATION ── */
+  const queueCounter = document.getElementById('queue-counter');
+  let counterDone = false;
+  const counterObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && !counterDone) {
+        counterDone = true;
+        animateCounter(queueCounter, 0, 7, 1200, val => `#${String(val).padStart(2,'0')}`);
+        counterObs.disconnect();
+      }
+    });
+  }, { threshold: 0.5 });
+  if (queueCounter) counterObs.observe(queueCounter);
+
+  /* ── STATS COUNT-UP ── */
+  document.querySelectorAll('.stat-value[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    const suffix = el.dataset.suffix || '';
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          animateCounter(el, 0, target, 900, val => val + suffix);
+          obs.disconnect();
+        }
+      });
+    }, { threshold: 0.5 });
+    obs.observe(el);
+  });
+
+  function animateCounter(el, from, to, duration, fmt) {
+    const start = performance.now();
+    function step(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const val = Math.round(from + (to - from) * eased);
+      el.textContent = fmt(val);
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ── SERVED COUNTER ── */
+  const servedCounter = document.getElementById('served-counter');
+  let servedDone = false;
+  const servedObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && !servedDone) {
+        servedDone = true;
+        animateCounter(servedCounter, 0, 247, 1400, v => v);
+        servedObs.disconnect();
+      }
+    });
+  }, { threshold: 0.4 });
+  if (servedCounter) servedObs.observe(servedCounter);
+
+  /* ── BAR CHART ANIMATION ── */
+  const barChart = document.getElementById('bar-chart');
+  if (barChart) {
+    const barObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          barChart.querySelectorAll('.bar').forEach((bar, i) => {
+            setTimeout(() => bar.classList.add('animated'), i * 80);
+          });
+          barObs.disconnect();
+        }
+      });
+    }, { threshold: 0.4 });
+    barObs.observe(barChart);
+  }
+
+  /* ── AUDIT LOG STAGGER ── */
+  const auditEntries = document.querySelectorAll('.audit-entry');
+  const auditObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        auditEntries.forEach((entry, i) => {
+          setTimeout(() => entry.classList.add('appeared'), i * 150);
+        });
+        auditObs.disconnect();
+      }
+    });
+  }, { threshold: 0.2 });
+  const auditSection = document.getElementById('audit-entries');
+  if (auditSection) auditObs.observe(auditSection);
+
+  /* ── TAB SYSTEM ── */
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabPanels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const panel = document.getElementById('panel-' + target);
+      if (panel) panel.classList.add('active');
+    });
+  });
+
+  /* ── SIMULATED SOCKET.IO FEED ── */
+  const socketLog = document.getElementById('socket-log');
+  const socketEvents = [
+    { color: '#00c2a8', text: 'queue:position_update · patient#P-0048 → pos=4' },
+    { color: '#8a877f', text: 'queue:notify_next · patient#P-0047 → "You are next"' },
+    { color: '#00c2a8', text: 'queue:called · token#Q-0007 → dr.sharma' },
+    { color: '#e8b64a', text: 'queue:position_update · patient#P-0049 → pos=3' },
+    { color: '#8a877f', text: 'health_vault:consent_revoke · patient#P-0031' },
+    { color: '#6bcc82', text: 'queue:joined · patient#P-0052 · dept=cardiology' },
+    { color: '#00c2a8', text: 'queue:position_update · patient#P-0048 → pos=3' },
+    { color: '#8a877f', text: 'auth:mfa_verified · user#U-0019 · method=totp' },
+    { color: '#e8b64a', text: 'triage:assessment · patient#P-0052 → level=URGENT' },
+    { color: '#00c2a8', text: 'queue:served · token#Q-0007 · duration=8m22s' },
+  ];
+  let socketIdx = 0;
+  let socketLines = [];
+  function addSocketLine() {
+    const ev = socketEvents[socketIdx % socketEvents.length];
+    socketIdx++;
+    const ts = new Date().toISOString().substring(11, 19);
+    const line = document.createElement('div');
+    line.style.cssText = `opacity:0;transform:translateY(4px);transition:opacity .3s,transform .3s;`;
+    line.innerHTML = `<span style="color:#3a3830">[${ts}]</span> <span style="color:${ev.color}">${ev.text}</span>`;
+    socketLines.push(line);
+    if (socketLines.length > 5) {
+      const old = socketLines.shift();
+      old.style.opacity = '0';
+      setTimeout(() => { if (old.parentNode) old.parentNode.removeChild(old); }, 300);
+    }
+    socketLog.appendChild(line);
+    setTimeout(() => { line.style.opacity = '1'; line.style.transform = 'translateY(0)'; }, 20);
+  }
+  // Stagger initial lines
+  for (let i = 0; i < 4; i++) setTimeout(addSocketLine, i * 300);
+  setInterval(addSocketLine, 2200);
+
+  /* ── LIVE QUEUE SIMULATION ── */
+  const names = [
+    ['Arjun Mehta','General Medicine'],
+    ['Priya Nair','Cardiology'],
+    ['Rohan Singh','Orthopaedics'],
+    ['Fatima Khan','Dermatology'],
+    ['Suresh Iyer','Neurology'],
+    ['Ananya Gupta','Gynaecology'],
+    ['Ravi Kumar','Ophthalmology'],
+  ];
+  let currentToken = 7;
+  function cycleQueue() {
+    currentToken++;
+    if (queueCounter && counterDone) {
+      queueCounter.textContent = `#${String(currentToken).padStart(2,'0')}`;
+    }
+    const rows = document.querySelectorAll('.queue-row');
+    rows.forEach((row, i) => {
+      const n = (currentToken + i) % names.length;
+      const nameEl = row.querySelector('.qr-name');
+      const deptEl = row.querySelector('.qr-dept');
+      const numEl  = row.querySelector('.qr-num');
+      if (nameEl) nameEl.textContent = names[n][0];
+      if (deptEl) deptEl.textContent = names[n][1];
+      if (numEl)  numEl.textContent  = `#${String(currentToken + i).padStart(2,'0')}`;
+      const badge = row.querySelector('.qr-badge');
+      row.classList.remove('active-row');
+      if (badge) {
+        badge.className = 'qr-badge';
+        if (i === 0) { badge.classList.add('badge-calling'); badge.textContent = 'Calling'; row.classList.add('active-row'); }
+        else if (i === 1) { badge.classList.add('badge-soon'); badge.textContent = 'Next'; }
+        else { badge.classList.add('badge-waiting'); badge.textContent = 'Waiting'; }
+      }
+    });
+  }
+  setInterval(cycleQueue, 6000);
+
+})();
+</script>
+</body>
+</html>

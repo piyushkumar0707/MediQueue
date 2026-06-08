@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Layouts
@@ -138,6 +139,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
+      <VercelAnalytics />
     </ErrorBoundary>
   );
 }
