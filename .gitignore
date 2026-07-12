@@ -59,8 +59,8 @@ logs/
 .eslintcache
 .stylelintcache
 
-# ── Dev/debug scripts (not production code) ──────────────────────────────────
-backend/scripts/
+# ── Dev/debug scripts — INCLUDED in repo (needed for Railway seed commands) ───
+# backend/scripts/ is intentionally tracked
 
 # ── Generated / tool output ──────────────────────────────────────────────────
 repomix-output.xml

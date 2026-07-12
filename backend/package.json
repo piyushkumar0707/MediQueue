@@ -10,6 +10,7 @@
     "seed:demo": "node scripts/seed-demo.mjs",
     "seed:demo:reset": "node scripts/reset-demo.mjs",
     "seed:demo:fresh": "npm run seed:demo:reset && npm run seed:demo",
+    "ensure:demo": "node scripts/ensure-demo-users.mjs",
     "db:nuke-seed": "node scripts/nuke-and-seed.mjs",
     "test": "node tests/run-jest.mjs",
     "test:coverage": "node tests/run-jest.mjs --coverage",

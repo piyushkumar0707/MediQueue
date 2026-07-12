@@ -22,6 +22,19 @@ const Login = () => {
   const [mfaLoading, setMfaLoading] = useState(false);
   const [mfaError, setMfaError] = useState('');
 
+  // Demo credential accounts
+  const DEMO_ACCOUNTS = [
+    { label: 'Patient', email: 'demo.patient@mediqueue.local', icon: '👤' },
+    { label: 'Doctor',  email: 'demo.doctor@mediqueue.local',  icon: '🩺' },
+    { label: 'Admin',   email: 'demo.admin@mediqueue.local',   icon: '🛡️' },
+  ];
+
+  const fillDemo = (email) => {
+    setFormData({ phoneOrEmail: email, password: 'DemoPass@123' });
+    setValidationErrors({});
+    if (error) clearError();
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -229,28 +242,25 @@ const Login = () => {
               )}
             </div>
 
-            {import.meta.env.VITE_DEMO_MODE === 'true' && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-900">Demo Credentials</p>
-                <div className="space-y-2 text-xs text-amber-800">
-                  <p>
-                    <span className="font-semibold">Patient:</span>{' '}
-                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">demo.patient@mediqueue.local</span>{' / '}
-                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">DemoPass@123</span>
-                  </p>
-                  <p>
-                    <span className="font-semibold">Doctor:</span>{' '}
-                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">demo.doctor@mediqueue.local</span>{' / '}
-                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">DemoPass@123</span>
-                  </p>
-                  <p>
-                    <span className="font-semibold">Admin:</span>{' '}
-                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">demo.admin@mediqueue.local</span>{' / '}
-                    <span className="rounded bg-white px-1.5 py-0.5 font-mono">DemoPass@123</span>
-                  </p>
-                </div>
+            {/* Demo Credentials — always visible for easy demo access */}
+            <div className="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-indigo-600">🚀 Try a Demo Account</p>
+              <div className="grid grid-cols-3 gap-2">
+                {DEMO_ACCOUNTS.map(({ label, email, icon }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => fillDemo(email)}
+                    disabled={isLoading}
+                    className="flex flex-col items-center gap-1 rounded-lg border border-indigo-200 bg-white px-2 py-2.5 text-center shadow-sm transition hover:border-indigo-400 hover:bg-indigo-50 hover:shadow-md active:scale-95 disabled:opacity-50"
+                  >
+                    <span className="text-lg">{icon}</span>
+                    <span className="text-xs font-semibold text-indigo-700">{label}</span>
+                  </button>
+                ))}
               </div>
-            )}
+              <p className="mt-2 text-center text-xs text-indigo-400">Password: <span className="font-mono font-semibold text-indigo-600">DemoPass@123</span></p>
+            </div>
 
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
