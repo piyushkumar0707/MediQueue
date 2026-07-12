@@ -246,10 +246,16 @@ const Prescriptions = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {prescription.patient.personalInfo.firstName} {prescription.patient.personalInfo.lastName}
-                    </div>
-                    <div className="text-sm text-gray-500">{prescription.patient.phoneNumber}</div>
+                    {prescription.patient ? (
+                      <>
+                        <div className="text-sm font-medium text-gray-900">
+                          {prescription.patient.personalInfo?.firstName} {prescription.patient.personalInfo?.lastName}
+                        </div>
+                        <div className="text-sm text-gray-500">{prescription.patient.phoneNumber}</div>
+                      </>
+                    ) : (
+                      <span className="text-sm text-gray-400 italic">Patient account deleted</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900 max-w-xs truncate">
@@ -268,12 +274,14 @@ const Prescriptions = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => viewPatientHistory(prescription.patient._id)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-3"
-                    >
-                      View Patient
-                    </button>
+                    {prescription.patient && (
+                      <button
+                        onClick={() => viewPatientHistory(prescription.patient._id)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
+                        View Patient
+                      </button>
+                    )}
                     <button
                       onClick={() => downloadPrescription(prescription)}
                       className="text-green-600 hover:text-green-900"

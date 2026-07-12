@@ -299,20 +299,26 @@ const DoctorAppointments = () => {
                         )}
                       </div>
                       <div className="mt-3 flex space-x-3">
-                        <button
-                          onClick={() => navigate(`/doctor/patients/${appointment.patient._id}/records`)}
-                          className="px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-medium transition"
-                        >
-                          View Patient Records
-                        </button>
-                        {appointment.status === 'scheduled' || appointment.status === 'confirmed' ? (
-                          <button
-                            onClick={() => navigate('/doctor/prescriptions/create', { state: { patientId: appointment.patient._id } })}
-                            className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-sm font-medium transition"
-                          >
-                            Create Prescription
-                          </button>
-                        ) : null}
+                        {appointment.patient ? (
+                          <>
+                            <button
+                              onClick={() => navigate(`/doctor/patients/${appointment.patient._id}/records`)}
+                              className="px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-medium transition"
+                            >
+                              View Patient Records
+                            </button>
+                            {appointment.status === 'scheduled' || appointment.status === 'confirmed' ? (
+                              <button
+                                onClick={() => navigate('/doctor/prescriptions/create', { state: { patientId: appointment.patient._id } })}
+                                className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-sm font-medium transition"
+                              >
+                                Create Prescription
+                              </button>
+                            ) : null}
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-400 italic">Patient account deleted</span>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import ErrorBoundary from './components/ErrorBoundary';
+import useAuthStore from './store/useAuthStore';
 
 // Layouts
 import AuthLayout from './components/layouts/AuthLayout';
@@ -56,6 +58,32 @@ import NotificationCenter from './pages/shared/NotificationCenter';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [initFinished, setInitFinished] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      if (isAuthenticated) {
+        try {
+          await initializeAuth();
+        } catch (e) {
+          console.error('Failed to initialize auth', e);
+        }
+      }
+      setInitFinished(true);
+    };
+    init();
+  }, [initializeAuth, isAuthenticated]);
+
+  if (isAuthenticated && !initFinished) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <Toaster position="top-right" toastOptions={{ duration: 3000 }} />

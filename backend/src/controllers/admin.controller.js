@@ -2,6 +2,10 @@ import User from '../models/User.js';
 import Appointment from '../models/Appointment.js';
 import Queue from '../models/Queue.js';
 import EmergencyAccess from '../models/EmergencyAccess.js';
+import Prescription from '../models/Prescription.js';
+import Consent from '../models/Consent.js';
+import MedicalRecord from '../models/MedicalRecord.js';
+import Notification from '../models/Notification.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import redisClient from '../config/redis.js';
 import { logger } from '../utils/logger.js';
@@ -314,27 +318,24 @@ export const updateUser = asyncHandler(async (req, res) => {
  */
 export const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
-  
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found'
-    });
-  }
-  
-  // Prevent deleting yourself
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
   if (user._id.toString() === req.user.userId) {
-    return res.status(400).json({
-      success: false,
-      message: 'You cannot delete your own account'
-    });
+    return res.status(400).json({ success: false, message: 'You cannot delete your own account' });
   }
-  
+
+  const userId = user._id;
+  await Promise.all([
+    Appointment.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
+    Queue.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
+    Prescription.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
+    Consent.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
+    EmergencyAccess.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
+    MedicalRecord.deleteMany({ patient: userId }),
+    MedicalRecord.updateMany({ 'sharedWith.doctor': userId }, { $pull: { sharedWith: { doctor: userId } } }),
+    Notification.deleteMany({ $or: [{ recipient: userId }, { sender: userId }] }),
+  ]);
+
   await user.deleteOne();
   await invalidateAdminStatsCache();
-
-  res.json({
-    success: true,
-    message: 'User deleted successfully'
-  });
+  res.json({ success: true, message: 'User and related data deleted successfully' });
 });

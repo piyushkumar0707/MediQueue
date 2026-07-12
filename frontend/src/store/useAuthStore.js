@@ -268,6 +268,22 @@ const useAuthStore = create(
        */
       clearError: () => {
         set({ error: null });
+      },
+
+      /**
+       * Initialize auth (silent refresh on load)
+       */
+      initializeAuth: async () => {
+        if (!get().isAuthenticated) return; // persisted flag
+        set({ isLoading: true });
+        try {
+          const response = await api.post('/auth/refresh-token', {});
+          const { accessToken, refreshToken } = response.data || response;
+          setAuthTokens(accessToken, refreshToken);
+          set({ accessToken, refreshToken, isLoading: false });
+        } catch {
+          get().logout();
+        }
       }
     }),
     {

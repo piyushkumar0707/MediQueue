@@ -267,12 +267,16 @@ const QueueManagement = () => {
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => navigate(`/doctor/prescriptions/create?patientId=${patient.patient._id}&queueEntryId=${patient._id}`)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
-                    >
-                      Create Prescription
-                    </button>
+                    {patient.patient ? (
+                      <button
+                        onClick={() => navigate(`/doctor/prescriptions/create?patientId=${patient.patient._id}&queueEntryId=${patient._id}`)}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                      >
+                        Create Prescription
+                      </button>
+                    ) : (
+                      <span className="text-sm text-gray-400 italic">Patient account deleted</span>
+                    )}
                     <button
                       onClick={() => handleComplete(patient._id)}
                       disabled={completingPatient === patient._id}
