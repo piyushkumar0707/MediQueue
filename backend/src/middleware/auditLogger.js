@@ -153,8 +153,8 @@ function sanitizeBody(body) {
 export const logFailedAuth = async (email, reason, req) => {
   try {
     await AuditLog.create({
-      userId: null, // No user ID for failed login
-      action: 'LOGIN',
+      // userId intentionally omitted — no authenticated user for failed logins
+      action: 'LOGIN_FAILED',
       category: 'AUTH',
       description: `Failed login attempt for email: ${email}. Reason: ${reason}`,
       ipAddress: req.ip || req.socket?.remoteAddress,
