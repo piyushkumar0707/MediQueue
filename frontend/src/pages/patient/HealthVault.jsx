@@ -269,23 +269,32 @@ const HealthVault = () => {
 
   const downloadRecordReport = async (record) => {
     try {
-      const response = await api.get(`/records/${record._id}/download-report`, {
+      const hasFiles = record.files && record.files.length > 0;
+      const endpoint = hasFiles 
+        ? `/records/${record._id}/view-file?fileIndex=0` 
+        : `/records/${record._id}/download-report`;
+      
+      const response = await api.get(endpoint, {
         responseType: 'blob',
       });
 
-      const blob = new Blob([response], { type: 'application/pdf' });
+      const fileType = hasFiles ? (record.files[0]?.fileType || 'application/octet-stream') : 'application/pdf';
+      const blob = new Blob([response], { type: fileType });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `medical-record-${record._id.slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      const defaultFilename = `medical-record-${record._id.slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = hasFiles ? (record.files[0]?.fileName || defaultFilename) : defaultFilename;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      toast.success('Medical record report downloaded');
+      toast.success(hasFiles ? 'Medical record file downloaded' : 'Medical record report downloaded');
     } catch (error) {
-      toast.error('Failed to download report');
+      toast.error('Failed to download file');
     }
   };
 

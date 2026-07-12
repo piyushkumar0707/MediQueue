@@ -112,22 +112,32 @@ const PatientRecords = () => {
     }
   };
 
-  const downloadRecord = async (recordId, filename) => {    try {
-      const response = await api.get(`/records/${recordId}/download-report`, {
+  const downloadRecord = async (record, filename) => {
+    try {
+      const hasFiles = record.files && record.files.length > 0;
+      const endpoint = hasFiles 
+        ? `/records/${record._id}/view-file?fileIndex=0` 
+        : `/records/${record._id}/download-report`;
+      
+      const response = await api.get(endpoint, {
         responseType: 'blob',
       });
       
-      const blob = new Blob([response], { type: 'application/pdf' });
+      const fileType = hasFiles ? (record.files[0]?.fileType || 'application/octet-stream') : 'application/pdf';
+      const blob = new Blob([response], { type: fileType });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = filename || `medical-record-${recordId.slice(-8)}.pdf`;
+      
+      const defaultFilename = `medical-record-${record._id.slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = filename || defaultFilename;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      toast.success('Medical record downloaded');
+      toast.success(hasFiles ? 'Medical record file downloaded' : 'Medical record report downloaded');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file');
@@ -349,7 +359,7 @@ const PatientRecords = () => {
                         </button>
                         {record.sharedWith?.find(s => s.canDownload) && (
                           <button
-                            onClick={() => downloadRecord(record._id, record.files[0]?.fileName)}
+                            onClick={() => downloadRecord(record, record.files?.[0]?.fileName)}
                             className="px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium transition"
                           >
                             Download
