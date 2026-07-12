@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { downloadRecordFile } from '../../utils/downloadRecord';
 
 const PatientRecords = () => {
   const { patientId } = useParams();
@@ -112,35 +113,13 @@ const PatientRecords = () => {
     }
   };
 
-  const downloadRecord = async (record, filename) => {
+  const downloadRecord = async (record) => {
     try {
-      const hasFiles = record.files && record.files.length > 0;
-      const endpoint = hasFiles 
-        ? `/records/${record._id}/view-file?fileIndex=0` 
-        : `/records/${record._id}/download-report`;
-      
-      const response = await api.get(endpoint, {
-        responseType: 'blob',
-      });
-      
-      const fileType = hasFiles ? (record.files[0]?.fileType || 'application/octet-stream') : 'application/pdf';
-      const blob = new Blob([response], { type: fileType });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      const defaultFilename = `medical-record-${record._id.slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
-      link.download = filename || defaultFilename;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.success(hasFiles ? 'Medical record file downloaded' : 'Medical record report downloaded');
+      await downloadRecordFile(record);
+      toast.success('Medical record downloaded');
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download file');
+      toast.error('Failed to download file. Please try again.');
     }
   };
 
@@ -359,7 +338,7 @@ const PatientRecords = () => {
                         </button>
                         {record.sharedWith?.find(s => s.canDownload) && (
                           <button
-                            onClick={() => downloadRecord(record, record.files?.[0]?.fileName)}
+                            onClick={() => downloadRecord(record)}
                             className="px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium transition"
                           >
                             Download

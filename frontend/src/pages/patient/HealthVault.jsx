@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { downloadRecordFile } from '../../utils/downloadRecord';
 
 const HealthVault = () => {
   const [records, setRecords] = useState([]);
@@ -269,32 +270,11 @@ const HealthVault = () => {
 
   const downloadRecordReport = async (record) => {
     try {
-      const hasFiles = record.files && record.files.length > 0;
-      const endpoint = hasFiles 
-        ? `/records/${record._id}/view-file?fileIndex=0` 
-        : `/records/${record._id}/download-report`;
-      
-      const response = await api.get(endpoint, {
-        responseType: 'blob',
-      });
-
-      const fileType = hasFiles ? (record.files[0]?.fileType || 'application/octet-stream') : 'application/pdf';
-      const blob = new Blob([response], { type: fileType });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      const defaultFilename = `medical-record-${record._id.slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
-      link.download = hasFiles ? (record.files[0]?.fileName || defaultFilename) : defaultFilename;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.success(hasFiles ? 'Medical record file downloaded' : 'Medical record report downloaded');
+      await downloadRecordFile(record);
+      toast.success('Medical record downloaded');
     } catch (error) {
-      toast.error('Failed to download file');
+      toast.error('Failed to download file. Please try again.');
+      console.error('Download error:', error);
     }
   };
 
