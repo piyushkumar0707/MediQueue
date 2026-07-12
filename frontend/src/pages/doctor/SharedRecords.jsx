@@ -104,6 +104,7 @@ const SharedRecords = () => {
 
   // Group records by patient
   const recordsByPatient = filteredRecords.reduce((acc, record) => {
+    if (!record.patient) return acc;
     const patientId = record.patient._id;
     if (!acc[patientId]) {
       acc[patientId] = {
@@ -310,7 +311,7 @@ const SharedRecords = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-700">Patient</label>
                     <p className="mt-1 text-gray-900">
-                      {selectedRecord.patient.personalInfo?.firstName} {selectedRecord.patient.personalInfo?.lastName}
+                      {selectedRecord.patient ? `${selectedRecord.patient.personalInfo?.firstName} ${selectedRecord.patient.personalInfo?.lastName}` : 'Deleted Patient'}
                     </p>
                   </div>
                   <div>
