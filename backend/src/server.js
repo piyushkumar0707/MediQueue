@@ -74,8 +74,8 @@ notificationService.setSocketIO(io);
 // Initialize email service
 emailService.initialize();
 
-// Trust proxy if behind load balancer (for x-forwarded-proto)
-if (process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true') {
+// Trust proxy if behind load balancer (for x-forwarded-proto & rate limiting)
+if (process.env.NODE_ENV === 'production' || process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true') {
   app.set('trust proxy', 1);
 }
 
