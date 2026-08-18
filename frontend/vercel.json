@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/v1/:path*", "destination": "https://mediqueue-production-47c3.up.railway.app/api/v1/:path*" },
+    { "source": "/api/v1/:path*", "destination": "https://mediqueue-production-ef21.up.railway.app/api/v1/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
