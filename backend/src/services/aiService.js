@@ -68,7 +68,7 @@ export async function callAI(systemPrompt, userPrompt, schema, options = {}) {
   const {
     promptVersion = 'unknown',
     temperature   = 0.1,
-    model         = 'llama-3.1-8b-instant',
+    model         = 'groq/compound',
     timeoutMs     = 8000,
     maxRetries    = 1,
   } = options;
@@ -171,7 +171,9 @@ export function buildImagePrompt(recordType) {
 }
 
 // ─── Image analysis (multimodal) ─────────────────────────────────────────────
-const IMAGE_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+// Note: vision/multimodal models are not available on this Groq plan.
+// groq/compound-mini is used as a text-only fallback (image bytes are ignored).
+const IMAGE_MODEL = 'groq/compound-mini';
 
 /**
  * analyzeImage — calls Groq vision model with a base64-encoded image.
