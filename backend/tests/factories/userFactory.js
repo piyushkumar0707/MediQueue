@@ -1,11 +1,10 @@
 import User from '../../src/models/User.js';
 
-// Use a per-process random base so parallel Jest workers don't collide on
-// unique-indexed fields (e.g. phoneNumber). Each worker picks a different
-// 4-digit prefix (1000–9999), giving 9000 possible slots × 10000 per slot.
-const WORKER_BASE = (1000 + Math.floor(Math.random() * 9000)) * 10000;
+// Use a per-process random 2-digit slot (00-99) so parallel Jest workers don't
+// collide on unique-indexed fields (e.g. phoneNumber, email).
+// Phone numbers are always exactly 10 digits: '9' + slot(2) + counter(7).
+const WORKER_SLOT = String(Math.floor(Math.random() * 100)).padStart(2, '0');
 let userCounter = 0;
-
 
 const nextCounter = () => {
   userCounter += 1;
@@ -14,17 +13,18 @@ const nextCounter = () => {
 
 export const buildUserPayload = (overrides = {}) => {
   const counter = nextCounter();
-  const uid = WORKER_BASE + counter;
+  const counterPart = String(counter).padStart(7, '0');
+  const phoneNumber = `9${WORKER_SLOT}${counterPart}`; // always 10 digits
 
   return {
-    phoneNumber: `${uid}`,
+    phoneNumber,
     countryCode: '+91',
-    email: `test.user.${uid}@example.com`,
+    email: `test.user.${WORKER_SLOT}${counterPart}@example.com`,
     password: 'Password@123',
     role: 'patient',
     personalInfo: {
       firstName: 'Test',
-      lastName: `User${uid}`,
+      lastName: `User${WORKER_SLOT}${counterPart}`,
       dateOfBirth: new Date('1995-01-01'),
       gender: 'other',
     },
