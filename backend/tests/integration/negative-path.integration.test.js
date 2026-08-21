@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import MedicalRecord from '../../src/models/MedicalRecord.js';
 import { startServerProcess, stopServerProcess, waitForHealth } from '../helpers/serverProcess.js';
 import { connectTestDatabase } from '../helpers/mongoose.js';
+import { clearRedis } from '../helpers/redis.js';
 import { createUser } from '../factories/userFactory.js';
 import { createAuthHeader } from '../helpers/auth.js';
 
@@ -33,6 +34,12 @@ describeIntegration('negative path integration', () => {
 
   afterAll(async () => {
     await stopServerProcess(serverProcess);
+  });
+
+  beforeEach(async () => {
+    // Flush Redis before each test so stale rate-limit keys from other
+    // parallel suites or previous runs don't leak in.
+    await clearRedis();
   });
 
   test('login with invalid credentials returns 401', async () => {
@@ -93,7 +100,9 @@ describeIntegration('negative path integration', () => {
 
   test('login route is rate-limited after repeated failed attempts', async () => {
     const statuses = [];
-    const maxRequests = 30;
+    // loginLimiter max is 15 — send 14 requests that should all be 401,
+    // then the 15th should trigger 429.
+    const maxRequests = 14;
 
     for (let i = 0; i < maxRequests + 1; i += 1) {
       const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
