@@ -3,7 +3,6 @@ import { fileURLToPath } from 'node:url';
 import MedicalRecord from '../../src/models/MedicalRecord.js';
 import { startServerProcess, stopServerProcess, waitForHealth } from '../helpers/serverProcess.js';
 import { connectTestDatabase } from '../helpers/mongoose.js';
-import { clearRedis } from '../helpers/redis.js';
 import { createUser } from '../factories/userFactory.js';
 import { createAuthHeader } from '../helpers/auth.js';
 
@@ -34,12 +33,6 @@ describeIntegration('negative path integration', () => {
 
   afterAll(async () => {
     await stopServerProcess(serverProcess);
-  });
-
-  beforeEach(async () => {
-    // Flush Redis before each test so stale rate-limit keys from other
-    // parallel suites or previous runs don't leak in.
-    await clearRedis();
   });
 
   test('login with invalid credentials returns 401', async () => {
