@@ -42,7 +42,7 @@ jobs:
       JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test_access_secret_32_chars_minimum' }}
       JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test_refresh_secret_32_chars_minimum' }}
       JWT_MFA_SECRET: ${{ secrets.JWT_MFA_SECRET || 'test_mfa_secret_here_32_chars_ok' }}
-      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'test_encryption_key_32chars!' }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'test_encryption_key_32_chars_!!' }}
       FRONTEND_URL: http://localhost:5173
       EMAIL_FROM: ci@example.com
       EMAIL_USER: ci@example.com
@@ -107,7 +107,7 @@ jobs:
       JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test_access_secret_32_chars_minimum' }}
       JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test_refresh_secret_32_chars_minimum' }}
       JWT_MFA_SECRET: ${{ secrets.JWT_MFA_SECRET || 'test_mfa_secret_here_32_chars_ok' }}
-      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'test_encryption_key_32chars!' }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'test_encryption_key_32_chars_!!' }}
       FRONTEND_URL: http://localhost:5173
       EMAIL_FROM: ci@example.com
       EMAIL_USER: ci@example.com
@@ -170,7 +170,7 @@ jobs:
       JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET || 'test_access_secret_32_chars_minimum' }}
       JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test_refresh_secret_32_chars_minimum' }}
       JWT_MFA_SECRET: ${{ secrets.JWT_MFA_SECRET || 'test_mfa_secret_here_32_chars_ok' }}
-      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'test_encryption_key_32chars!' }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY || 'test_encryption_key_32_chars_!!' }}
       FRONTEND_URL: http://localhost:5173
       EMAIL_FROM: ci@example.com
       EMAIL_USER: ci@example.com
