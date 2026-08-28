@@ -129,8 +129,8 @@ const PatientDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 sm:p-8 text-white">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
           Welcome back, {user?.personalInfo?.firstName || 'Patient'}!
         </h1>
         <p className="text-indigo-100">
@@ -158,7 +158,7 @@ const PatientDashboard = () => {
             </span>
           </div>
           
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             <div className="text-center p-3 bg-indigo-50 rounded-lg">
               <p className="text-2xl font-bold text-indigo-600">#{queueStatus.currentPosition}</p>
               <p className="text-xs text-gray-600 mt-1">Position</p>
@@ -183,7 +183,7 @@ const PatientDashboard = () => {
       )}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Link to="/patient/appointments" className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl shadow-md p-6 hover:shadow-xl transition cursor-pointer text-white">
           <div className="flex items-center justify-between">
             <div>

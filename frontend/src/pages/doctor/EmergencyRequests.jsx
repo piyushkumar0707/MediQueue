@@ -199,7 +199,7 @@ const EmergencyRequests = () => {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Emergency Access Requests</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Emergency Access Requests</h1>
           <p className="mt-2 text-gray-600">
             View and manage your emergency break-glass access requests
           </p>
@@ -216,7 +216,7 @@ const EmergencyRequests = () => {
       {/* Request Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-100 rounded-lg">

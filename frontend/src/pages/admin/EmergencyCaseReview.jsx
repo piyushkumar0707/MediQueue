@@ -147,8 +147,8 @@ const EmergencyReview = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Emergency Review</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold">Emergency Review</h1>
         <button
           onClick={fetchData}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -369,8 +369,8 @@ const EmergencyReview = () => {
 
       {/* Assign Doctor Modal */}
       {showAssignModal && selectedCase && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">Assign Doctor</h2>
             <p className="text-gray-600 mb-4">
               Patient: <strong>{selectedCase.patient.name}</strong>
@@ -419,8 +419,8 @@ const EmergencyReview = () => {
 
       {/* Change Priority Modal */}
       {showPriorityModal && selectedCase && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">Change Priority</h2>
             <p className="text-gray-600 mb-4">
               Patient: <strong>{selectedCase.patient.name}</strong>

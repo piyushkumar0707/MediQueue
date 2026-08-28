@@ -120,7 +120,7 @@ const NotificationCenter = () => {
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Notifications</h1>
             <p className="text-gray-600 mt-1">
               {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
             </p>

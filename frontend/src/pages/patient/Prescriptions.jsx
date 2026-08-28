@@ -169,7 +169,7 @@ Valid Until: ${new Date(rx.validUntil).toLocaleDateString()}
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Prescriptions</h1>
           <p className="text-gray-600 mt-1">View and download your prescription history</p>
@@ -179,7 +179,7 @@ Valid Until: ${new Date(rx.validUntil).toLocaleDateString()}
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+          className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
         >
           <option value="all">All Prescriptions</option>
           <option value="active">Active</option>
@@ -222,7 +222,7 @@ Valid Until: ${new Date(rx.validUntil).toLocaleDateString()}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-4">
                     <div>
                       <span className="text-gray-600">Doctor:</span>
                       <p className="font-medium text-gray-900">

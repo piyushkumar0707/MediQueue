@@ -121,7 +121,7 @@ const SharedRecords = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Shared Medical Records</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Shared Medical Records</h1>
           <p className="text-gray-600 mt-1">Access medical records shared with you by patients</p>
         </div>
       </div>

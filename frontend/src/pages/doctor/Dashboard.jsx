@@ -146,8 +146,8 @@ const DoctorDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 sm:p-8 text-white">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
           Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, Dr. {user?.personalInfo?.firstName || 'Doctor'}!
         </h1>
         <p className="text-indigo-100">
@@ -161,7 +161,7 @@ const DoctorDashboard = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         <Link to="/doctor/queue" className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-md p-6 hover:shadow-xl transition cursor-pointer text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -226,8 +226,8 @@ const DoctorDashboard = () => {
       {/* Current Patient */}
       {currentPatient ? (
         <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-xl shadow-lg p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Current Patient</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold">Current Patient</h2>
             <span className="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-medium">
               In Progress
             </span>

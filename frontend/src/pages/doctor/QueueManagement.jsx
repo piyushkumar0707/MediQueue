@@ -157,15 +157,15 @@ const QueueManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Queue Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Queue Management</h1>
           <p className="text-gray-600 mt-1">Manage your patient queue efficiently</p>
         </div>
         <button
           onClick={handleCallNext}
           disabled={callingPatient || waitingQueue.length === 0}
-          className={`px-6 py-3 rounded-lg font-semibold transition flex items-center space-x-2 ${
+          className={`w-full sm:w-auto px-6 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
             callingPatient || waitingQueue.length === 0
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-indigo-600 text-white hover:bg-indigo-700'
@@ -179,7 +179,7 @@ const QueueManagement = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl shadow-lg p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -259,7 +259,7 @@ const QueueManagement = () => {
                       <p className="text-sm text-gray-600 mb-2">
                         <strong>Reason:</strong> {patient.reasonForVisit}
                       </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
                         <span>Check-in: {formatTime(patient.checkInTime)}</span>
                         <span>Called: {formatTime(patient.calledTime)}</span>
                         <span>Duration: {formatWaitTime(patient.calledTime)} min</span>
@@ -355,7 +355,7 @@ const QueueManagement = () => {
                         <p className="text-sm text-gray-600 mb-2">
                           <strong>Reason:</strong> {patient.reasonForVisit}
                         </p>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
                           <span>Check-in: {formatTime(patient.checkInTime)}</span>
                           <span>Waiting: {formatWaitTime(patient.checkInTime)} min</span>
                           <span>Position: {index + 1}</span>

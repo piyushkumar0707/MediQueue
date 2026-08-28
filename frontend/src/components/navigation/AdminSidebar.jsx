@@ -54,7 +54,7 @@ const AdminSidebar = ({ onNavigate }) => {
               end={item.exact}
               onClick={onNavigate}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-medium transition-colors ${
+                `flex items-center gap-3 px-4 sm:px-6 py-2.5 min-h-[44px] text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-primary-50 text-primary-600 border-r-4 border-primary-600'
                     : 'text-gray-600 hover:bg-gray-50 border-r-4 border-transparent'
@@ -67,10 +67,11 @@ const AdminSidebar = ({ onNavigate }) => {
           );
         })}
       </nav>
-      <div className="p-6 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 flex-shrink-0">
         <button
           onClick={logout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px]
+                     text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
         >
           <LogOut className="w-4 h-4" />
           Logout

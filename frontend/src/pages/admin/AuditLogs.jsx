@@ -183,8 +183,8 @@ const AuditLogs = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Audit Logs</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold">Audit Logs</h1>
         <div className="flex gap-2">
           {activeTab === 'logs' && (
             <button

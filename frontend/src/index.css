@@ -15,12 +15,23 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold;
   }
+
+  /* Eliminate 300ms tap delay on mobile for all interactive elements */
+  button,
+  a,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"],
+  label {
+    touch-action: manipulation;
+  }
 }
 
 @layer components {
   /* Button Styles */
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    touch-action: manipulation;
   }
 
   .btn-primary {
@@ -61,10 +72,71 @@
   .badge-error {
     @apply bg-error-100 text-error-800;
   }
+
+  /* ─── Responsive Layout Utilities ──────────────────────────────────── */
+
+  /**
+   * .page-container
+   * Standard page-level wrapper — consistent horizontal padding + vertical
+   * breathing room at every breakpoint. Use inside layout <main> elements.
+   */
+  .page-container {
+    @apply px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 max-w-7xl mx-auto w-full;
+  }
+
+  /**
+   * .modal-responsive
+   * Drop-in shell for all modals. Handles width, max-height, overflow,
+   * and landscape phone orientation. Apply to the inner modal panel div,
+   * not the backdrop.
+   */
+  .modal-responsive {
+    @apply w-full max-w-lg mx-4 sm:mx-auto rounded-xl shadow-xl bg-white
+           max-h-[90vh] overflow-y-auto;
+  }
+
+  /**
+   * .card-on-mobile / .table-on-desktop
+   * Use as a pair to implement the table→card pattern for entity-action
+   * tables (Appointments, Prescriptions, HealthVault, UserManagement).
+   *
+   * Usage:
+   *   <div className="card-on-mobile"> ... card list ... </div>
+   *   <div className="table-on-desktop"> ... <table> ... </table> </div>
+   */
+  .card-on-mobile {
+    @apply block sm:hidden;
+  }
+
+  .table-on-desktop {
+    @apply hidden sm:block overflow-x-auto;
+  }
+
+  /**
+   * .scroll-table
+   * For audit/log/analytics tables: horizontal scroll with no card-stack.
+   * The sticky-column class is applied directly on the <th>/<td> element.
+   */
+  .scroll-table {
+    @apply overflow-x-auto w-full;
+  }
+
+  .scroll-table table {
+    @apply min-w-full;
+  }
+
+  .sticky-col {
+    @apply sticky left-0 bg-white z-10;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Safe-area padding for bottom nav on notched phones (iOS) */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }

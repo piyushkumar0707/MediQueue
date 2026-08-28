@@ -343,7 +343,7 @@ const HealthVault = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Health Vault</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Health Vault</h1>
           <p className="text-gray-600 mt-1">Manage your medical records securely</p>
         </div>
         <button
@@ -406,12 +406,12 @@ const HealthVault = () => {
 
       {/* Filter */}
       <div className="bg-white rounded-xl shadow-md p-4">
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <label className="text-gray-700 font-medium">Filter by Type:</label>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           >
             <option value="all">All Records</option>
             {recordTypes.map(type => (
@@ -455,7 +455,7 @@ const HealthVault = () => {
                     {record.description && (
                       <p className="text-gray-600 mb-3">{record.description}</p>
                     )}
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-1 text-sm text-gray-500">
                       <span>📅 {new Date(record.recordDate).toLocaleDateString()}</span>
                       <span>📎 {record.files.length} file(s)</span>
                       {record.sharedWith.length > 0 && (
@@ -463,7 +463,7 @@ const HealthVault = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap gap-1 mt-2 sm:mt-0">
                     <button
                       onClick={() => handleViewDetails(record)}
                       className="px-3 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium text-sm"

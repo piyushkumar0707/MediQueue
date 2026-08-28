@@ -91,7 +91,7 @@ const DoctorAppointments = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Appointments</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Appointments</h1>
           <p className="text-gray-600 mt-1">View and manage all your appointments</p>
         </div>
         <button
@@ -108,7 +108,7 @@ const DoctorAppointments = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Total</p>
-              <p className="text-3xl font-bold text-gray-900">{appointments.length}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900">{appointments.length}</p>
             </div>
             <div className="p-3 bg-gray-100 rounded-full">
               <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,7 +122,7 @@ const DoctorAppointments = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Today</p>
-              <p className="text-3xl font-bold text-blue-600">
+              <p className="text-2xl sm:text-3xl font-bold text-blue-600">
                 {appointments.filter(a => {
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
@@ -144,7 +144,7 @@ const DoctorAppointments = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Upcoming</p>
-              <p className="text-3xl font-bold text-indigo-600">
+              <p className="text-2xl sm:text-3xl font-bold text-indigo-600">
                 {appointments.filter(a => {
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
@@ -166,7 +166,7 @@ const DoctorAppointments = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Completed</p>
-              <p className="text-3xl font-bold text-green-600">
+              <p className="text-2xl sm:text-3xl font-bold text-green-600">
                 {appointments.filter(a => a.status === 'completed').length}
               </p>
             </div>
