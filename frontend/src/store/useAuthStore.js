@@ -164,31 +164,32 @@ const useAuthStore = create(
       },
 
       /**
-       * Refresh access token
+       * Refresh access token.
+       * Safe to call on page load even when refreshToken is null in store
+       * (store doesn't persist tokens — backend uses the httpOnly cookie instead).
        */
       refreshAccessToken: async () => {
         const { refreshToken } = get();
-        
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-        
+
         try {
+          // Send body token if available; backend will fall back to httpOnly cookie
           const response = await api.post('/auth/refresh-token', {
-            refreshToken
+            refreshToken: refreshToken || undefined,
           });
-          
-          const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
-          
+
+          // api interceptor already unwraps response.data, so response IS
+          // { success, data: { accessToken, refreshToken } }
+          const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
+
           set({
             accessToken: newAccessToken,
-            refreshToken: newRefreshToken
+            refreshToken: newRefreshToken,
           });
           setAuthTokens(newAccessToken, newRefreshToken);
-          
+
           return newAccessToken;
         } catch (error) {
-          // Refresh token expired or invalid, logout user
+          // Refresh token expired/invalid — clear auth state
           get().logout();
           throw error;
         }

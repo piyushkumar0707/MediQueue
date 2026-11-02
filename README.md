@@ -7,6 +7,7 @@
 **🌟 Live Demo:** [https://medi-queue-ten.vercel.app/login](https://medi-queue-ten.vercel.app/login)  
 *(See [Demo Credentials](#recruiter-demo-mode--live-link) below)*
 
+[![MIT License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongoosejs.com)
@@ -452,3 +453,14 @@ MediQueue integrates Groq LLaMA 3.1 for two advisory features. The design follow
 
 ---
 
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, setup, and PR process. For security issues, see [SECURITY.md](SECURITY.md) — do not open a public issue.
+
+## Security
+
+To report a vulnerability privately, email **121piyush466mits@gmail.com** with subject [SECURITY] MediQueue. See [SECURITY.md](SECURITY.md) for scope, disclosure policy, and the patient-data notice.
+
+## License
+
+Released under the [MIT License](LICENSE). Copyright © 2026 Piyush Kumar Singh.

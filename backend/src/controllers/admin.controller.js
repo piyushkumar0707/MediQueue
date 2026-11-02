@@ -2,10 +2,10 @@ import User from '../models/User.js';
 import Appointment from '../models/Appointment.js';
 import Queue from '../models/Queue.js';
 import EmergencyAccess from '../models/EmergencyAccess.js';
-import Prescription from '../models/Prescription.js';
 import Consent from '../models/Consent.js';
-import MedicalRecord from '../models/MedicalRecord.js';
 import Notification from '../models/Notification.js';
+import MedicalRecord from '../models/MedicalRecord.js';
+import Prescription from '../models/Prescription.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import redisClient from '../config/redis.js';
 import { logger } from '../utils/logger.js';
@@ -322,20 +322,63 @@ export const deleteUser = asyncHandler(async (req, res) => {
   if (user._id.toString() === req.user.userId) {
     return res.status(400).json({ success: false, message: 'You cannot delete your own account' });
   }
-
+  
   const userId = user._id;
-  await Promise.all([
-    Appointment.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
-    Queue.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
-    Prescription.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
-    Consent.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
-    EmergencyAccess.deleteMany({ $or: [{ patient: userId }, { doctor: userId }] }),
-    MedicalRecord.deleteMany({ patient: userId }),
-    MedicalRecord.updateMany({ 'sharedWith.doctor': userId }, { $pull: { sharedWith: { doctor: userId } } }),
-    Notification.deleteMany({ $or: [{ recipient: userId }, { sender: userId }] }),
+  const userEmail = user.email;
+  const userRole = user.role;
+
+  // Step 1: Invalidate Redis auth cache IMMEDIATELY so any in-flight requests
+  // using this user's token are rejected on the next auth middleware check.
+  await invalidateUserCache(userId.toString());
+
+  // Step 2: Cascade cleanup — run in parallel for speed.
+  // Queue entries: remove from both sides (patient or doctor role)
+  const patientFilter = { patient: userId };
+  const doctorFilter = { doctor: userId };
+  const eitherSide = { $or: [patientFilter, doctorFilter] };
+
+  await Promise.allSettled([
+    // Remove all active queue entries for this user
+    Queue.deleteMany(eitherSide),
+
+    // Cancel any pending/confirmed appointments (keep as audit trail)
+    Appointment.updateMany(
+      {
+        $or: [patientFilter, doctorFilter],
+        status: { $in: ['scheduled', 'confirmed', 'checked-in'] },
+      },
+      {
+        $set: {
+          status: 'cancelled',
+          cancellationReason: 'Patient account deleted by administrator',
+        },
+      }
+    ),
+
+    // Delete consent records involving this user (both sides)
+    Consent.deleteMany(eitherSide),
+
+    // Delete emergency access records involving this user (both sides)
+    EmergencyAccess.deleteMany(eitherSide),
+
+    // Delete all notifications sent to this user
+    Notification.deleteMany({ recipient: userId }),
+
+    // Medical records and prescriptions: keep for audit, but this
+    // prevents them from appearing in active doctor dashboards by
+    // removing the consent that would gate access.
+    // (MedicalRecord.patient records are NOT deleted — they are
+    // historical data that may be needed for legal/medical audit.)
   ]);
 
+  // Step 3: Hard-delete the user document
   await user.deleteOne();
   await invalidateAdminStatsCache();
-  res.json({ success: true, message: 'User and related data deleted successfully' });
+
+  logger.info(`Admin ${req.user.userId} permanently deleted user ${userId} (${userEmail}, role: ${userRole})`);
+
+  res.json({
+    success: true,
+    message: 'User deleted successfully',
+  });
 });

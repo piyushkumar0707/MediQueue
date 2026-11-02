@@ -25,6 +25,9 @@ build/
 .github/*
 !.github/workflows/
 !.github/workflows/**
+!.github/ISSUE_TEMPLATE/
+!.github/ISSUE_TEMPLATE/**
+!.github/pull_request_template.md
 *.swp
 *.swo
 *~
