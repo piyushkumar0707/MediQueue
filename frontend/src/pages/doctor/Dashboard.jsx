@@ -141,7 +141,8 @@ const DoctorDashboard = () => {
     );
   }
 
-  const waitingQueue = queue.filter(q => q.status === 'waiting');
+  // Filter out any orphaned queue entries whose patient was deleted
+  const waitingQueue = queue.filter(q => q.status === 'waiting' && q.patient != null);
 
   return (
     <div className="space-y-6">
@@ -236,10 +237,12 @@ const DoctorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold mb-1">
-                  {currentPatient.patient.personalInfo.firstName} {currentPatient.patient.personalInfo.lastName}
+                  {currentPatient.patient?.personalInfo?.firstName ?? '[Deleted]'}{' '}
+                  {currentPatient.patient?.personalInfo?.lastName ?? 'User'}
                 </p>
                 <p className="text-green-100 mb-2">
-                  {currentPatient.patient.phoneNumber} • {currentPatient.patient.email}
+                  {currentPatient.patient?.phoneNumber ?? ''}
+                  {currentPatient.patient?.email ? ` • ${currentPatient.patient.email}` : ''}
                 </p>
                 <p className="text-sm">
                   <span className="font-semibold">Reason:</span> {currentPatient.reasonForVisit}
@@ -310,7 +313,8 @@ const DoctorDashboard = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">
-                      {patient.patient.personalInfo.firstName} {patient.patient.personalInfo.lastName}
+                      {patient.patient?.personalInfo?.firstName ?? '[Deleted]'}{' '}
+                      {patient.patient?.personalInfo?.lastName ?? 'User'}
                     </p>
                     <p className="text-sm text-gray-600">{patient.reasonForVisit}</p>
                     <div className="flex items-center space-x-2 mt-1">

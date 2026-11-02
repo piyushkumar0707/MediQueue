@@ -11,6 +11,9 @@ export const AI_FEATURES = {
 // ─── Groq client (lazy — only created when first AI call is made) ─────────────
 let _groq = null;
 
+const TEXT_MODEL = process.env.GROQ_TEXT_MODEL || 'openai/gpt-oss-20b';
+const IMAGE_MODEL = process.env.GROQ_IMAGE_MODEL || 'qwen/qwen3-27b';
+
 function getGroqClient() {
   if (!process.env.GROQ_API_KEY) return null;
   if (!_groq) _groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -58,7 +61,7 @@ function validateSchema(obj, schema) {
  * @param {object} options
  * @param {string} options.promptVersion  e.g. 'triage-v1'
  * @param {number} options.temperature    default 0.1
- * @param {string} options.model          default 'llama-3.1-8b-instant'
+ * @param {string} options.model          default configured by GROQ_TEXT_MODEL
  * @param {number} options.timeoutMs      default 8000
  * @param {number} options.maxRetries     default 1
  *
@@ -68,7 +71,7 @@ export async function callAI(systemPrompt, userPrompt, schema, options = {}) {
   const {
     promptVersion = 'unknown',
     temperature   = 0.1,
-    model         = 'llama-3.1-8b-instant',
+    model         = TEXT_MODEL,
     timeoutMs     = 8000,
     maxRetries    = 1,
   } = options;
@@ -171,8 +174,6 @@ export function buildImagePrompt(recordType) {
 }
 
 // ─── Image analysis (multimodal) ─────────────────────────────────────────────
-const IMAGE_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
-
 /**
  * analyzeImage — calls Groq vision model with a base64-encoded image.
  *

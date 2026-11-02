@@ -55,3 +55,4 @@ Once a fix is merged and released, we will:
 2. Publish a brief advisory describing the vulnerability class and the fix.
 
 We follow a responsible disclosure model: please give us a reasonable remediation window (typically 90 days) before any public disclosure.
+

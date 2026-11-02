@@ -46,3 +46,4 @@ Add any other context that helps reproduce the issue.
 > ⚠️ **Security vulnerabilities** — do NOT use this template. See [SECURITY.md](../../SECURITY.md) and email 121piyush466mits@gmail.com privately.
 >
 > ⚠️ **Do NOT attach real patient data** to any issue — use synthetic data only.
+

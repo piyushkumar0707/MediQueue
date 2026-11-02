@@ -136,3 +136,4 @@ The README has architecture and ER diagrams but no UI screenshots showing the Pa
 - `CareQueue-API-Complete.postman_collection.json` — no changes, just reference it
 
 **Suggested labels:** `good first issue`, `documentation`
+
