@@ -452,6 +452,3 @@ MediQueue integrates Groq LLaMA 3.1 for two advisory features. The design follow
 
 ---
 
-## License
-
-This project is proprietary and confidential.
