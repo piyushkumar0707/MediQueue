@@ -170,7 +170,7 @@ const EmergencyAccessReview = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Emergency Access Review</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Emergency Access Review</h1>
         <p className="mt-2 text-gray-600">
           Review and manage emergency break-glass access requests
         </p>
@@ -426,7 +426,7 @@ const EmergencyAccessReview = () => {
 
               {/* Access Details */}
               <div className="space-y-4 mb-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Doctor</label>
                     <p className="text-gray-900">
@@ -443,7 +443,7 @@ const EmergencyAccessReview = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Type</label>
                     <p className="text-gray-900">{formatEmergencyType(selectedAccess.emergencyType)}</p>
@@ -455,7 +455,7 @@ const EmergencyAccessReview = () => {
                 </div>
 
                 {(selectedAccess.location || selectedAccess.facilityName) && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {selectedAccess.location && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
@@ -486,7 +486,7 @@ const EmergencyAccessReview = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Requested At</label>
                     <p className="text-gray-900 text-sm">{formatDate(selectedAccess.requestedAt)}</p>

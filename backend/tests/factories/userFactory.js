@@ -1,5 +1,9 @@
 import User from '../../src/models/User.js';
 
+// Use a per-process random 2-digit slot (00-99) so parallel Jest workers don't
+// collide on unique-indexed fields (e.g. phoneNumber, email).
+// Phone numbers are always exactly 10 digits: '9' + slot(2) + counter(7).
+const WORKER_SLOT = String(Math.floor(Math.random() * 100)).padStart(2, '0');
 let userCounter = 0;
 
 const nextCounter = () => {
@@ -9,16 +13,18 @@ const nextCounter = () => {
 
 export const buildUserPayload = (overrides = {}) => {
   const counter = nextCounter();
+  const counterPart = String(counter).padStart(7, '0');
+  const phoneNumber = `9${WORKER_SLOT}${counterPart}`; // always 10 digits
 
   return {
-    phoneNumber: `900000${String(counter).padStart(4, '0')}`,
+    phoneNumber,
     countryCode: '+91',
-    email: `test.user.${counter}@example.com`,
+    email: `test.user.${WORKER_SLOT}${counterPart}@example.com`,
     password: 'Password@123',
     role: 'patient',
     personalInfo: {
       firstName: 'Test',
-      lastName: `User${counter}`,
+      lastName: `User${WORKER_SLOT}${counterPart}`,
       dateOfBirth: new Date('1995-01-01'),
       gender: 'other',
     },

@@ -405,7 +405,7 @@ export default function LandingPage() {
       <section
         id="hero"
         className="min-h-screen grid pt-[60px]"
-        style={{ gridTemplateColumns: '1fr 420px', borderBottom: `1px solid ${C.border}` }}
+        style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', borderBottom: `1px solid ${C.border}` }}
       >
         {/* Left */}
         <motion.div
@@ -479,7 +479,7 @@ export default function LandingPage() {
       <div
         ref={statsRef}
         className="grid"
-        style={{ gridTemplateColumns: 'repeat(3,1fr)', borderBottom: `1px solid ${C.border}` }}
+        style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', borderBottom: `1px solid ${C.border}` }}
       >
         {[
           {
@@ -533,7 +533,7 @@ export default function LandingPage() {
           </h2>
         </div>
 
-        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', borderTop: `1px solid ${C.border}` }}>
+        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', borderTop: `1px solid ${C.border}` }}>
           {/* Left — tabbed */}
           <div style={{ borderRight: `1px solid ${C.border}` }}>
             {/* Tab list */}
@@ -628,9 +628,9 @@ export default function LandingPage() {
       <section
         id="vault"
         className="grid"
-        style={{ gridTemplateColumns: '1fr 1fr', borderBottom: `1px solid ${C.border}` }}
+        style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', borderBottom: `1px solid ${C.border}` }}
       >
-        <div className="px-12 py-20" style={{ borderRight: `1px solid ${C.border}`, paddingRight: 64 }}>
+        <div className="px-4 sm:px-8 lg:px-12 py-12 sm:py-20" style={{ borderRight: `1px solid ${C.border}`, paddingRight: 64 }}>
           <Eyebrow>Health Vault</Eyebrow>
           <h2 className="font-serif leading-[1.1] mb-6" style={{ fontSize: 'clamp(30px,3.5vw,50px)', color: C.fg }}>
             Your records.<br />Your keys.<br /><em style={{ fontStyle: 'italic', color: C.accent }}>Your consent.</em>
@@ -652,7 +652,7 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-        <div className="px-12 py-20" style={{ paddingLeft: 64 }}>
+        <div className="px-4 sm:px-8 lg:px-12 py-12 sm:py-20" style={{ paddingLeft: 64 }}>
           <div className="font-mono text-[10px] tracking-[0.16em] uppercase mb-5" style={{ color: C.accent }}>Audit Log · Integrity Verified</div>
           <AuditLog />
         </div>
@@ -662,9 +662,9 @@ export default function LandingPage() {
       <section
         id="ai-triage"
         className="grid"
-        style={{ gridTemplateColumns: '420px 1fr', borderBottom: `1px solid ${C.border}` }}
+        style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', borderBottom: `1px solid ${C.border}` }}
       >
-        <div className="px-12 py-20" style={{ borderRight: `1px solid ${C.border}` }}>
+        <div className="px-4 sm:px-8 lg:px-12 py-12 sm:py-20" style={{ borderRight: `1px solid ${C.border}` }}>
           <Eyebrow>AI Triage</Eyebrow>
           <h2 className="font-serif leading-[1.1] mb-8" style={{ fontSize: 'clamp(26px,3vw,42px)', color: C.fg }}>
             Groq LLaMA.<br />Advisory only.<br /><em style={{ fontStyle: 'italic', color: C.accent }}>Human decides.</em>
@@ -718,12 +718,12 @@ export default function LandingPage() {
       </section>
 
       {/* ── AUTH / SECURITY ── */}
-      <section id="auth" className="px-12 py-20" style={{ borderBottom: `1px solid ${C.border}` }}>
+      <section id="auth" className="px-4 sm:px-8 lg:px-12 py-12 sm:py-20" style={{ borderBottom: `1px solid ${C.border}` }}>
         <Eyebrow>Security Infrastructure</Eyebrow>
         <h2 className="font-serif leading-[1.08] mb-14" style={{ fontSize: 'clamp(34px,4vw,56px)', color: C.fg }}>
           Authentication<br />without compromise.
         </h2>
-        <div className="grid border" style={{ gridTemplateColumns: 'repeat(3,1fr)', borderColor: C.border2 }}>
+        <div className="grid border" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', borderColor: C.border2 }}>
           {[
             { idx: '01', title: 'Two-Factor Authentication', desc: 'OTP (email/SMS) and TOTP-based MFA compatible with Authenticator apps. MFA required for any sensitive vault operation — consent modification, emergency access, admin actions.', tags: ['OTP','TOTP / HOTP','Speakeasy','QR Enroll'] },
             { idx: '02', title: 'JWT · Zero localStorage',    desc: 'Access tokens are short-lived (15m). Refresh tokens stored exclusively in HttpOnly, SameSite=Strict cookies — never in localStorage or sessionStorage. XSS cannot steal tokens.', tags: ['HttpOnly Cookie','SameSite=Strict','15m Access TTL','7d Refresh TTL'] },
@@ -756,12 +756,12 @@ export default function LandingPage() {
       </section>
 
       {/* ── ANALYTICS ── */}
-      <section id="analytics" className="px-12 py-20" style={{ borderBottom: `1px solid ${C.border}` }}>
+      <section id="analytics" className="px-4 sm:px-8 lg:px-12 py-12 sm:py-20" style={{ borderBottom: `1px solid ${C.border}` }}>
         <Eyebrow>Admin Analytics</Eyebrow>
         <h2 className="font-serif leading-[1.08] mb-14" style={{ fontSize: 'clamp(34px,4vw,56px)', color: C.fg }}>
           Full operational<br />visibility.
         </h2>
-        <div className="grid gap-16" style={{ gridTemplateColumns: '1fr 480px', alignItems: 'start' }}>
+        <div className="grid gap-16" style={{ gridTemplateColumns: '1fr', alignItems: 'start' }}>
           <div>
             <p className="text-[14px] leading-[1.85] mb-8" style={{ color: C.fgDim }}>
               The admin dashboard surfaces live queue metrics, vault access patterns, security events, and user management — all in a single pane. Redis-backed real-time counters ensure sub-second metric refresh. Every data point has a drill-down to the underlying audit entry.
@@ -786,7 +786,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── DEMO ACCOUNTS ── */}
-      <section id="demo" className="px-12 py-20" style={{ borderBottom: `1px solid ${C.border}` }}>
+      <section id="demo" className="px-4 sm:px-8 lg:px-12 py-12 sm:py-20" style={{ borderBottom: `1px solid ${C.border}` }}>
         <Eyebrow>Try It Now</Eyebrow>
         <h2 className="font-serif leading-[1.08] mb-4" style={{ fontSize: 'clamp(34px,4vw,56px)', color: C.fg }}>
           Demo accounts.<br />All three roles.{' '}
@@ -796,7 +796,7 @@ export default function LandingPage() {
           The live deployment is seeded with one account per role. Use any of the credentials below — MFA is disabled on demo accounts so you can explore immediately.
         </p>
 
-        <div className="grid border mb-10" style={{ gridTemplateColumns: 'repeat(3,1fr)', borderColor: C.border2 }}>
+        <div className="grid border mb-10" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', borderColor: C.border2 }}>
           {[
             {
               idx: '01', role: 'Patient', tag: 'Self-Service',
@@ -878,7 +878,7 @@ export default function LandingPage() {
 
         {/* Shared password callout */}
         <div
-          className="flex items-center gap-6 flex-wrap px-7 py-5 border"
+          className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 flex-wrap px-4 sm:px-7 py-5 border"
           style={{ borderColor: C.border2, background: C.bg2 }}
         >
           <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: C.fgMuted }}>Shared password</span>
@@ -900,8 +900,8 @@ export default function LandingPage() {
 
       {/* ── FOOTER ── */}
       <footer
-        className="grid px-12 py-14 gap-12"
-        style={{ gridTemplateColumns: '1fr 1fr', borderTop: `1px solid ${C.border}`, alignItems: 'end' }}
+        className="grid px-4 sm:px-8 lg:px-12 py-10 sm:py-14 gap-8 sm:gap-12"
+        style={{ gridTemplateColumns: '1fr', borderTop: `1px solid ${C.border}` }}
       >
         <div>
           <div className="font-mono text-[13px] font-medium tracking-[0.08em] mb-3" style={{ color: C.fg }}>

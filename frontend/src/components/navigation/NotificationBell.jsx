@@ -20,13 +20,12 @@ const NotificationBell = () => {
     setUnreadCount,
   } = useNotificationStore();
 
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuthStore();
 
   // Initialize Socket.io connection
   useEffect(() => {
-    if (!user) return;
+    if (!user || !accessToken) return;
 
-    const { accessToken } = useAuthStore.getState();
     const newSocket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
       auth: { token: accessToken },
     });
@@ -69,7 +68,7 @@ const NotificationBell = () => {
     return () => {
       newSocket.disconnect();
     };
-  }, [user?._id]);
+  }, [user?._id, accessToken]);
 
   // Fetch notifications on mount
   useEffect(() => {
