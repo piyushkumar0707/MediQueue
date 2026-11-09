@@ -94,7 +94,7 @@ export const encrypt = (data, keyBase64) => {
     const key = Buffer.from(keyBase64, 'base64');
     
     // Generate random IV
-    const iv = crypto.randomBytes(IV_LENGTH);
+    const iv = crypto.randomBytes(WRAP_IV_LENGTH);
     
     // Create cipher
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);

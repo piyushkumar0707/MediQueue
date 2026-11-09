@@ -5,6 +5,7 @@ import { startServerProcess, stopServerProcess, waitForHealth } from '../helpers
 import { connectTestDatabase } from '../helpers/mongoose.js';
 import { createUser } from '../factories/userFactory.js';
 import { createAuthHeader } from '../helpers/auth.js';
+import { LOGIN_RATE_LIMIT } from '../../src/config/loginRateLimit.js';
 
 const runIntegration = process.env.RUN_BACKEND_INTEGRATION_TESTS === 'true';
 const describeIntegration = runIntegration ? describe : describe.skip;
@@ -93,7 +94,7 @@ describeIntegration('negative path integration', () => {
 
   test('login route is rate-limited after repeated failed attempts', async () => {
     const statuses = [];
-    const maxRequests = 30;
+    const maxRequests = LOGIN_RATE_LIMIT.max;
 
     for (let i = 0; i < maxRequests + 1; i += 1) {
       const response = await fetch(`${baseUrl}/api/v1/auth/login`, {

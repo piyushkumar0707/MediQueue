@@ -15,6 +15,7 @@ import { callAI, redactPII, AI_FEATURES, analyzeImage } from '../services/aiServ
 import { extractTextFromPDF } from '../services/pdfTextExtractor.js';
 import mongoose from 'mongoose';
 import { EncryptedFileIntegrityError, fetchRecordFileBytes } from '../services/recordFileStorage.js';
+import { canAccessRecord } from '../services/recordAccessPolicy.js';
 
 // @desc    Upload medical record
 // @route   POST /api/records
@@ -226,7 +227,7 @@ export const getPatientRecords = asyncHandler(async (req, res) => {
       .sort({ recordDate: -1 });
     
     // Check for active consent
-    const activeConsent = await Consent.findOne({
+    const activeConsents = await Consent.find({
       patient: patientId,
       doctor: req.user.userId,
       status: 'active',
@@ -236,38 +237,26 @@ export const getPatientRecords = asyncHandler(async (req, res) => {
       ]
     });
     
-    let consentBasedRecords = [];
-    
-    if (activeConsent) {
-      let consentQuery = {
-        patient: patientId,
-        status: 'active'
-      };
-      
-      // Apply scope-based filtering
-      if (activeConsent.scope === 'record-types' && activeConsent.recordTypes && activeConsent.recordTypes.length > 0) {
-        consentQuery.recordType = { $in: activeConsent.recordTypes };
+    const consentRecordQueries = activeConsents.map((consent) => {
+      const consentQuery = { patient: patientId, status: 'active' };
+      if (consent.scope === 'record-types') {
+        consentQuery.recordType = { $in: consent.recordTypes || [] };
+      } else if (consent.scope === 'specific-records') {
+        consentQuery._id = { $in: consent.specificRecords || [] };
       }
-      
-      // Apply record type filter if provided
       if (recordType && recordType !== 'all') {
-        if (consentQuery.recordType) {
-          // If already has record type from consent, intersect with requested type
-          if (activeConsent.recordTypes.includes(recordType)) {
-            consentQuery.recordType = recordType;
-          } else {
-            consentQuery.recordType = { $in: [] }; // No match
-          }
+        if (consentQuery.recordType && !consent.recordTypes?.includes(recordType)) {
+          consentQuery.recordType = { $in: [] };
         } else {
           consentQuery.recordType = recordType;
         }
       }
-      
-      consentBasedRecords = await MedicalRecord.find(consentQuery)
+      return MedicalRecord.find(consentQuery)
         .populate('uploadedBy', 'personalInfo role')
         .populate('patient', 'personalInfo email phoneNumber')
         .sort({ recordDate: -1 });
-    }
+    });
+    const consentBasedRecords = (await Promise.all(consentRecordQueries)).flat();
     
     // Check for active emergency access
     const emergencyAccess = await EmergencyAccess.getActiveAccess(req.user.userId, patientId);
@@ -294,11 +283,22 @@ export const getPatientRecords = asyncHandler(async (req, res) => {
     const uniqueRecords = Array.from(
       new Map(allRecords.map(record => [record._id.toString(), record])).values()
     );
+    const accessContext = {
+      consents: activeConsents,
+      emergencyAccesses: emergencyAccess ? [emergencyAccess] : [],
+    };
+    const accessibleRecords = await Promise.all(uniqueRecords.map(async (record) => ({
+      record,
+      decision: await canAccessRecord(req.user, record, 'view', accessContext),
+    })));
+    const policyFilteredRecords = accessibleRecords
+      .filter(({ decision }) => decision.allowed)
+      .map(({ record }) => record);
     
     // Apply pagination
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
-    records = uniqueRecords.slice(startIndex, endIndex);
+    records = policyFilteredRecords.slice(startIndex, endIndex);
   }
   
   const count = records.length;
@@ -339,7 +339,7 @@ export const getSharedRecords = asyncHandler(async (req, res) => {
       { expiresAt: null },
       { expiresAt: { $gt: now } }
     ]
-  }).select('patient scope recordTypes specificRecords');
+  });
 
   // Build batched consent queries instead of one query per consent
   const allRecordConsentPatientIds = [];
@@ -409,7 +409,7 @@ export const getSharedRecords = asyncHandler(async (req, res) => {
     doctor: req.user.userId,
     status: 'active',
     expiresAt: { $gt: now }
-  }).select('patient');
+  }).select('doctor patient status expiresAt');
 
   const emergencyPatientIds = emergencyAccesses.map(access => access.patient);
   const emergencyBasedRecords = [];
@@ -437,11 +437,22 @@ export const getSharedRecords = asyncHandler(async (req, res) => {
   const uniqueRecords = Array.from(
     new Map(allRecords.map(record => [record._id.toString(), record])).values()
   );
+
+  const policyFiltered = await Promise.all(uniqueRecords.map(async (record) => ({
+    record,
+    decision: await canAccessRecord(req.user, record, 'view', {
+      consents: activeConsents,
+      emergencyAccesses,
+    }),
+  })));
+  const authorizedRecords = policyFiltered
+    .filter(({ decision }) => decision.allowed)
+    .map(({ record }) => record);
   
   // Apply record type filter if provided
-  let filteredRecords = uniqueRecords;
+  let filteredRecords = authorizedRecords;
   if (recordType && recordType !== 'all') {
-    filteredRecords = uniqueRecords.filter(record => record.recordType === recordType);
+    filteredRecords = authorizedRecords.filter(record => record.recordType === recordType);
   }
   
   // Apply pagination
@@ -476,70 +487,18 @@ export const getRecordById = asyncHandler(async (req, res) => {
     });
   }
   
-  // Check access - Allow patient, uploader, admin, explicitly shared doctors, doctors with active consent, or doctors with emergency access
-  let hasAccess = false;
-  let accessSource = null; // Track how access was granted
-  
-  // Check basic access (patient, uploader, admin, explicitly shared)
-  if (await record.canUserAccess(req.user.userId, req.user.role)) {
-    hasAccess = true;
-    accessSource = 'basic';
-  }
-  
-  // If not already granted access and user is a doctor, check for active consent
-  if (!hasAccess && req.user.role === 'doctor') {
-    const activeConsent = await Consent.findOne({
-      patient: record.patient._id,
-      doctor: req.user.userId,
-      status: 'active',
-      $or: [
-        { expiresAt: null },
-        { expiresAt: { $gt: new Date() } }
-      ]
-    });
-    
-    if (activeConsent) {
-      // Check if consent covers this record
-      if (activeConsent.scope === 'all-records') {
-        hasAccess = true;
-        accessSource = 'consent';
-      } else if (activeConsent.scope === 'record-types' && 
-                 activeConsent.recordTypes && 
-                 activeConsent.recordTypes.includes(record.recordType)) {
-        hasAccess = true;
-        accessSource = 'consent';
-      } else if (activeConsent.scope === 'specific-records' && 
-                 activeConsent.specificRecords && 
-                 activeConsent.specificRecords.some(id => id.toString() === record._id.toString())) {
-        hasAccess = true;
-        accessSource = 'consent';
-      }
-      
-      // Log consent access
-      if (hasAccess) {
-        await activeConsent.logAccess('viewed', record._id, req.ip);
-      }
-    }
-  }
-
-  // If still no access and user is a doctor, check for active emergency access
-  if (!hasAccess && req.user.role === 'doctor') {
-    const emergencyAccess = await EmergencyAccess.getActiveAccess(req.user.userId, record.patient._id);
-    
-    if (emergencyAccess) {
-      hasAccess = true;
-      accessSource = 'emergency';
-      
-      // Log emergency access
-      await emergencyAccess.logAccess(record._id, record.recordType, 'viewed', req.ip);
-    }
-  }
-  
-  if (!hasAccess) {
+  const accessDecision = await canAccessRecord(req.user, record, 'view');
+  if (!accessDecision.allowed) {
     return res.status(403).json({
       success: false,
       message: 'You do not have access to this record'
     });
+  }
+
+  if (accessDecision.source === 'consent') {
+    await accessDecision.consent.logAccess('viewed', record._id, req.ip);
+  } else if (accessDecision.source === 'emergency') {
+    await accessDecision.emergencyAccess.logAccess(record._id, record.recordType, 'viewed', req.ip);
   }
   
   // Log access
@@ -816,14 +775,8 @@ export const downloadRecordReport = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check authorization
-  const userId = req.user.userId;
-  const isPatient = record.patient._id.toString() === userId;
-  const isUploader = record.uploadedBy._id.toString() === userId;
-  const isSharedDoctor = record.sharedWith.some(share => share.doctor._id.toString() === userId);
-  const isAdmin = req.user.role === 'admin';
-
-  if (!isPatient && !isUploader && !isSharedDoctor && !isAdmin) {
+  const accessDecision = await canAccessRecord(req.user, record, 'download');
+  if (!accessDecision.allowed) {
     return res.status(403).json({
       success: false,
       message: 'Not authorized to access this record'
@@ -877,36 +830,13 @@ export const getFileViewUrl = asyncHandler(async (req, res) => {
   const record = await MedicalRecord.findById(req.params.id).select('+encryptionKey');
   if (!record) return res.status(404).json({ success: false, message: 'Record not found' });
 
-  // Check basic access first
-  let hasAccess = await record.canUserAccess(req.user.userId, req.user.role);
-
-  let activeConsent = null;
-  // If doctor without explicit share, check scoped consent.
-  if (!hasAccess && req.user.role === 'doctor') {
-    activeConsent = await Consent.findOne({
-      patient: record.patient._id ? record.patient._id : record.patient,
-      doctor: req.user.userId,
-      status: 'active',
-      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }]
-    });
-    if (activeConsent?.permissions?.canView !== false) {
-      if (activeConsent.scope === 'all-records') hasAccess = true;
-      if (activeConsent.scope === 'record-types' && activeConsent.recordTypes?.includes(record.recordType)) hasAccess = true;
-      if (activeConsent.scope === 'specific-records' && activeConsent.specificRecords?.some((id) => id.toString() === record._id.toString())) hasAccess = true;
-    }
-  }
-
-  const sharedAccess = req.user.role === 'doctor'
-    ? record.sharedWith?.find((share) => share.doctor.toString() === req.user.userId.toString())
-    : null;
-  if (req.query.download === 'true' && (
-    sharedAccess?.canDownload === false
-    || activeConsent?.permissions?.canDownload === false
-  )) {
+  const action = req.query.download === 'true' ? 'download' : 'view';
+  const accessDecision = await canAccessRecord(req.user, record, action);
+  if (!accessDecision.allowed && action === 'download') {
     return res.status(403).json({ success: false, message: 'Download access denied' });
   }
 
-  if (!hasAccess) {
+  if (!accessDecision.allowed) {
     return res.status(403).json({ success: false, message: 'Access denied' });
   }
 
@@ -958,22 +888,8 @@ export const summarizeRecord = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Record not found' });
   }
 
-  let hasAccess = await record.canUserAccess(req.user.userId, req.user.role);
-  if (!hasAccess && req.user.role === 'doctor') {
-    const activeConsent = await Consent.findOne({
-      patient: record.patient._id ? record.patient._id : record.patient,
-      doctor: req.user.userId,
-      status: 'active',
-      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }]
-    });
-    if (activeConsent?.permissions?.canView !== false) {
-      if (activeConsent.scope === 'all-records') hasAccess = true;
-      if (activeConsent.scope === 'record-types' && activeConsent.recordTypes?.includes(record.recordType)) hasAccess = true;
-      if (activeConsent.scope === 'specific-records' && activeConsent.specificRecords?.some((id) => id.toString() === record._id.toString())) hasAccess = true;
-    }
-  }
-
-  if (!hasAccess) {
+  const accessDecision = await canAccessRecord(req.user, record, 'summarize');
+  if (!accessDecision.allowed) {
     return res.status(403).json({ success: false, message: 'Access denied' });
   }
 
