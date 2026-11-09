@@ -4,8 +4,19 @@ import { logger } from '../utils/logger.js';
 // Encryption configuration
 const ALGORITHM = 'aes-256-gcm';
 const KEY_LENGTH = 32; // 256 bits
-const IV_LENGTH = 16; // 128 bits
+const WRAP_IV_LENGTH = 16; // Keep existing wrapped-key format compatible
+const FILE_IV_LENGTH = 12; // Recommended 96-bit GCM nonce, generated fresh per file
 const AUTH_TAG_LENGTH = 16;
+
+const getMasterKeyBuffer = () => {
+  const masterKey = process.env.ENCRYPTION_KEY;
+  if (!masterKey || Buffer.byteLength(masterKey, 'utf8') !== KEY_LENGTH) {
+    throw new Error('ENCRYPTION_KEY must be exactly 32 bytes');
+  }
+  return Buffer.from(masterKey, 'utf8');
+};
+
+export const buildRecordFileAAD = (recordId, fileId) => `${recordId.toString()}:${fileId.toString()}`;
 
 /**
  * Wrap (encrypt) a per-record encryption key with the master ENCRYPTION_KEY
@@ -14,14 +25,10 @@ const AUTH_TAG_LENGTH = 16;
  */
 export const wrapKey = (recordKeyBase64) => {
   try {
-    const masterKey = process.env.ENCRYPTION_KEY;
-    if (!masterKey || masterKey.length !== 32) {
-      throw new Error('ENCRYPTION_KEY must be exactly 32 characters');
-    }
-    
-    const masterKeyBuffer = Buffer.from(masterKey, 'utf8');
+    const masterKeyBuffer = getMasterKeyBuffer();
     const recordKey = Buffer.from(recordKeyBase64, 'base64');
-    const iv = crypto.randomBytes(IV_LENGTH);
+    if (recordKey.length !== KEY_LENGTH) throw new Error('Record encryption key must be 32 bytes');
+    const iv = crypto.randomBytes(WRAP_IV_LENGTH);
     
     const cipher = crypto.createCipheriv(ALGORITHM, masterKeyBuffer, iv);
     const encrypted = Buffer.concat([cipher.update(recordKey), cipher.final()]);
@@ -46,13 +53,8 @@ export const wrapKey = (recordKeyBase64) => {
  */
 export const unwrapKey = (wrappedKeyJson) => {
   try {
-    const masterKey = process.env.ENCRYPTION_KEY;
-    if (!masterKey || masterKey.length !== 32) {
-      throw new Error('ENCRYPTION_KEY must be exactly 32 characters');
-    }
-    
+    const masterKeyBuffer = getMasterKeyBuffer();
     const { iv, authTag, encrypted } = JSON.parse(wrappedKeyJson);
-    const masterKeyBuffer = Buffer.from(masterKey, 'utf8');
     const ivBuffer = Buffer.from(iv, 'base64');
     const authTagBuffer = Buffer.from(authTag, 'base64');
     const encryptedBuffer = Buffer.from(encrypted, 'base64');
@@ -165,12 +167,14 @@ export const hash = (data) => {
  * @param {string} keyBase64 - Base64 encoded encryption key
  * @returns {object} Encrypted file data with metadata
  */
-export const encryptFile = (fileBuffer, keyBase64) => {
+export const encryptFile = (fileBuffer, keyBase64, aad = '') => {
   try {
     const key = Buffer.from(keyBase64, 'base64');
-    const iv = crypto.randomBytes(IV_LENGTH);
+    if (key.length !== KEY_LENGTH) throw new Error('File encryption key must be 32 bytes');
+    const iv = crypto.randomBytes(FILE_IV_LENGTH);
     
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+    cipher.setAAD(Buffer.from(aad, 'utf8'));
     
     const encrypted = Buffer.concat([
       cipher.update(fileBuffer),
@@ -198,13 +202,17 @@ export const encryptFile = (fileBuffer, keyBase64) => {
  * @param {string} keyBase64 - Base64 encoded encryption key
  * @returns {Buffer} Decrypted file buffer
  */
-export const decryptFile = (encryptedBuffer, ivBase64, authTagBase64, keyBase64) => {
+export const decryptFile = (encryptedBuffer, ivBase64, authTagBase64, keyBase64, aad = '') => {
   try {
     const key = Buffer.from(keyBase64, 'base64');
     const iv = Buffer.from(ivBase64, 'base64');
     const authTag = Buffer.from(authTagBase64, 'base64');
+    if (key.length !== KEY_LENGTH) throw new Error('File decryption key must be 32 bytes');
+    if (iv.length !== FILE_IV_LENGTH) throw new Error('Invalid file encryption IV');
+    if (authTag.length !== AUTH_TAG_LENGTH) throw new Error('Invalid file authentication tag');
     
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    decipher.setAAD(Buffer.from(aad, 'utf8'));
     decipher.setAuthTag(authTag);
     
     const decrypted = Buffer.concat([
@@ -237,5 +245,6 @@ export default {
   decryptFile,
   generateToken,
   wrapKey,
-  unwrapKey
+  unwrapKey,
+  buildRecordFileAAD
 };

@@ -5,18 +5,16 @@ import EmergencyAccess from '../models/EmergencyAccess.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 import { parsePagination } from '../utils/pagination.js';
-import { generateEncryptionKey, wrapKey, unwrapKey } from '../services/encryption.service.js';
-import { getFileInfo, deleteFile } from '../middleware/upload.js';
+import { generateEncryptionKey, wrapKey, unwrapKey, encryptFile, buildRecordFileAAD } from '../services/encryption.service.js';
+import { deleteFile, uploadEncryptedBuffer } from '../middleware/upload.js';
 import path from 'path';
 import { generateMedicalRecordPDF } from '../services/pdfGenerators.js';
 import AuditLog from '../models/AuditLog.js';
 import redisClient from '../config/redis.js';
 import { callAI, redactPII, AI_FEATURES, analyzeImage } from '../services/aiService.js';
 import { extractTextFromPDF } from '../services/pdfTextExtractor.js';
-import { fetchFileAsBuffer } from '../utils/fileUtils.js';
-import axios from 'axios';
-import cloudinary from '../config/cloudinary.js';
 import mongoose from 'mongoose';
+import { EncryptedFileIntegrityError, fetchRecordFileBytes } from '../services/recordFileStorage.js';
 
 // @desc    Upload medical record
 // @route   POST /api/records
@@ -24,20 +22,9 @@ import mongoose from 'mongoose';
 export const uploadRecord = asyncHandler(async (req, res) => {
   const { patientId, recordType, title, description, recordDate, metadata, visibility } = req.body;
 
-  // Helper to clean up already-uploaded Cloudinary files on early exit
-  const cleanupFiles = () => {
-    if (req.files) {
-      req.files.forEach(file => {
-        const isImage = file.mimetype?.startsWith('image/');
-        deleteFile(file.filename, isImage ? 'image' : 'raw');
-      });
-    }
-  };
-
   // Validate patient exists
   const patient = await User.findById(patientId);
   if (!patient || patient.role !== 'patient') {
-    cleanupFiles();
     return res.status(404).json({
       success: false,
       message: 'Patient not found'
@@ -50,7 +37,6 @@ export const uploadRecord = asyncHandler(async (req, res) => {
   const isAdmin = req.user.role === 'admin';
   
   if (!isOwnRecord && !isDoctor && !isAdmin) {
-    cleanupFiles();
     return res.status(403).json({
       success: false,
       message: 'Unauthorized to upload records for this patient'
@@ -64,9 +50,6 @@ export const uploadRecord = asyncHandler(async (req, res) => {
       message: 'Please select at least one file to upload. Accepted formats: PDF, JPG, PNG, DICOM (max 10MB each)'
     });
   }
-  
-  // Process uploaded files
-  const files = req.files.map(file => getFileInfo(file));
   
   // Generate encryption key for this record
   const encryptionKey = generateEncryptionKey();
@@ -84,21 +67,51 @@ export const uploadRecord = asyncHandler(async (req, res) => {
     }
   }
   
-  // Create medical record
-  const record = await MedicalRecord.create({
+  // Allocate stable record and file IDs before encryption so both IDs can be authenticated as AAD.
+  const record = new MedicalRecord({
     patient: patientId,
     uploadedBy: req.user.userId,
     recordType: recordType || 'other',
     title,
     description: description || '',
     recordDate: recordDate || new Date(),
-    files,
+    files: req.files.map((file) => ({
+      fileName: file.originalname,
+      fileType: file.mimetype,
+      fileSize: file.size,
+      fileUrl: '',
+      cloudinaryPublicId: '',
+      encryptionVersion: 1,
+    })),
     metadata: parsedMetadata,
     isEncrypted: true,
     encryptionKey: wrappedKey,
     visibility: visibility || 'private',
     status: 'active'
   });
+
+  const uploadedPublicIds = [];
+  try {
+    for (let index = 0; index < req.files.length; index++) {
+      const incomingFile = req.files[index];
+      const storedFile = record.files[index];
+      const aad = buildRecordFileAAD(record._id, storedFile._id);
+      const encryptedFile = encryptFile(incomingFile.buffer, encryptionKey, aad);
+      const publicId = `${record._id}-${storedFile._id}.enc`;
+      const cloudinaryFile = await uploadEncryptedBuffer(encryptedFile.encrypted, publicId);
+
+      uploadedPublicIds.push(cloudinaryFile.public_id);
+      storedFile.fileUrl = cloudinaryFile.secure_url;
+      storedFile.cloudinaryPublicId = cloudinaryFile.public_id;
+      storedFile.encryptionIv = encryptedFile.iv;
+      storedFile.encryptionAuthTag = encryptedFile.authTag;
+    }
+
+    await record.save();
+  } catch (error) {
+    await Promise.all(uploadedPublicIds.map((publicId) => deleteFile(publicId, 'raw')));
+    throw error;
+  }
   
   // Populate references
   await record.populate([
@@ -508,7 +521,7 @@ export const getRecordById = asyncHandler(async (req, res) => {
       }
     }
   }
-  
+
   // If still no access and user is a doctor, check for active emergency access
   if (!hasAccess && req.user.role === 'doctor') {
     const emergencyAccess = await EmergencyAccess.getActiveAccess(req.user.userId, record.patient._id);
@@ -559,6 +572,10 @@ export const getRecordById = asyncHandler(async (req, res) => {
       } : null
     }))
   };
+  for (const file of transformedRecord.files || []) {
+    delete file.fileUrl;
+    delete file.cloudinaryPublicId;
+  }
   
   res.json({
     success: true,
@@ -853,43 +870,40 @@ Never diagnose. Never recommend treatment.`;
 const SUMMARY_SCHEMA = { summary: 'string', keyFindings: 'array', followUpNeeded: 'boolean' };
 const SUMMARIZE_QUOTA = 10; // per user per hour
 
-// Returns the Cloudinary resource_type for a given MIME type
-const getCloudinaryResourceType = (fileType = '') =>
-  fileType.startsWith('image/') ? 'image' : 'raw';
-
-const DIRECT_FILE_HOST_ALLOWLIST = new Set([
-  'www.w3.org',
-  'res.cloudinary.com',
-]);
-
-const isAllowlistedDirectFileUrl = (value = '') => {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === 'https:' && DIRECT_FILE_HOST_ALLOWLIST.has(parsed.hostname);
-  } catch {
-    return false;
-  }
-};
-
-// @desc    Get a short-lived signed URL to view a file attachment
+// @desc    Authorize, fetch, and serve a decrypted file attachment
 // @route   GET /api/records/:id/view-file?fileIndex=0
 // @access  Private
 export const getFileViewUrl = asyncHandler(async (req, res) => {
-  const record = await MedicalRecord.findById(req.params.id);
+  const record = await MedicalRecord.findById(req.params.id).select('+encryptionKey');
   if (!record) return res.status(404).json({ success: false, message: 'Record not found' });
 
   // Check basic access first
   let hasAccess = await record.canUserAccess(req.user.userId, req.user.role);
 
-  // If doctor without explicit share, check consent
+  let activeConsent = null;
+  // If doctor without explicit share, check scoped consent.
   if (!hasAccess && req.user.role === 'doctor') {
-    const activeConsent = await Consent.findOne({
+    activeConsent = await Consent.findOne({
       patient: record.patient._id ? record.patient._id : record.patient,
       doctor: req.user.userId,
       status: 'active',
       $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }]
     });
-    if (activeConsent) hasAccess = true;
+    if (activeConsent?.permissions?.canView !== false) {
+      if (activeConsent.scope === 'all-records') hasAccess = true;
+      if (activeConsent.scope === 'record-types' && activeConsent.recordTypes?.includes(record.recordType)) hasAccess = true;
+      if (activeConsent.scope === 'specific-records' && activeConsent.specificRecords?.some((id) => id.toString() === record._id.toString())) hasAccess = true;
+    }
+  }
+
+  const sharedAccess = req.user.role === 'doctor'
+    ? record.sharedWith?.find((share) => share.doctor.toString() === req.user.userId.toString())
+    : null;
+  if (req.query.download === 'true' && (
+    sharedAccess?.canDownload === false
+    || activeConsent?.permissions?.canDownload === false
+  )) {
+    return res.status(403).json({ success: false, message: 'Download access denied' });
   }
 
   if (!hasAccess) {
@@ -902,77 +916,29 @@ export const getFileViewUrl = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'File not found' });
   }
 
-  // Derive publicId from cloudinaryPublicId or extract from fileUrl
-  let publicId = file.cloudinaryPublicId;
-  if (!publicId && file.fileUrl) {
-    // Extract public ID from URL: .../upload/v123456/medical-records/filename.pdf
-    const match = file.fileUrl.match(/\/upload\/(?:v\d+\/)?(.+)$/);
-    if (match) publicId = match[1];
-  }
-
-  if (!publicId) {
-    return res.status(404).json({ success: false, message: 'File not found in storage' });
-  }
-
-  const proxyFileResponse = async (sourceUrl) => {
-    const fileRes = await axios.get(sourceUrl, { responseType: 'arraybuffer', timeout: 15000 });
-    const contentType = file.fileType || 'application/octet-stream';
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `inline; filename="${file.fileName || 'file'}"`);
-    res.setHeader('Content-Length', fileRes.data.byteLength);
-    res.send(Buffer.from(fileRes.data));
-  };
-
-  const canUseDirectFallback = isAllowlistedDirectFileUrl(file.fileUrl);
-
-  if (!publicId) {
-    if (canUseDirectFallback) {
-      try {
-        await proxyFileResponse(file.fileUrl);
-        return;
-      } catch (directError) {
-        logger.warn('Direct file proxy failed', {
-          recordId: record._id.toString(),
-          fileIndex,
-          error: directError.message,
-        });
-        return res.status(502).json({ success: false, message: 'Unable to retrieve file from storage' });
-      }
-    }
-
-    return res.status(404).json({ success: false, message: 'File not found in storage' });
-  }
-
-  const signedUrl = cloudinary.utils.private_download_url(publicId, null, {
-    resource_type: getCloudinaryResourceType(file.fileType),
-    type: 'upload',
-    expires_at: Math.floor(Date.now() / 1000) + 300, // 5 min for internal fetch
-  });
-
   try {
-    await proxyFileResponse(signedUrl);
-    return;
-  } catch (cloudinaryError) {
-    logger.warn('Signed Cloudinary proxy failed', {
+    const fileBytes = await fetchRecordFileBytes(record, file);
+    const originalName = file.fileName || 'medical-record';
+    const fallbackName = originalName.replace(/[^\x20-\x7E]|["\\/]/g, '_');
+    const encodedName = encodeURIComponent(originalName).replace(/['()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
+
+    res.setHeader('Content-Type', file.fileType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `${req.query.download === 'true' ? 'attachment' : 'inline'}; filename="${fallbackName}"; filename*=UTF-8''${encodedName}`);
+    res.setHeader('Content-Length', fileBytes.length);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, no-store');
+    return res.status(200).send(fileBytes);
+  } catch (fileError) {
+    logger.warn('Record file retrieval failed', {
       recordId: record._id.toString(),
       fileIndex,
-      error: cloudinaryError.message,
+      error: fileError.message,
     });
-
-    if (canUseDirectFallback) {
-      try {
-        await proxyFileResponse(file.fileUrl);
-        return;
-      } catch (directError) {
-        logger.warn('Direct fallback proxy failed', {
-          recordId: record._id.toString(),
-          fileIndex,
-          error: directError.message,
-        });
-      }
-    }
-
-    return res.status(502).json({ success: false, message: 'Unable to retrieve file from storage' });
+    const integrityFailure = fileError instanceof EncryptedFileIntegrityError;
+    return res.status(integrityFailure ? 422 : 502).json({
+      success: false,
+      message: integrityFailure ? 'File integrity verification failed' : 'Unable to retrieve file from storage',
+    });
   }
 });
 
@@ -987,16 +953,27 @@ export const summarizeRecord = asyncHandler(async (req, res) => {
   }
 
   // ── Authorization ────────────────────────────────────────────────────────
-  const record = await MedicalRecord.findById(req.params.id);
+  const record = await MedicalRecord.findById(req.params.id).select('+encryptionKey');
   if (!record) {
     return res.status(404).json({ success: false, message: 'Record not found' });
   }
 
-  const isOwner  = record.patient.toString() === req.user.userId;
-  const isDoctor = req.user.role === 'doctor';
-  const isAdmin  = req.user.role === 'admin';
+  let hasAccess = await record.canUserAccess(req.user.userId, req.user.role);
+  if (!hasAccess && req.user.role === 'doctor') {
+    const activeConsent = await Consent.findOne({
+      patient: record.patient._id ? record.patient._id : record.patient,
+      doctor: req.user.userId,
+      status: 'active',
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }]
+    });
+    if (activeConsent?.permissions?.canView !== false) {
+      if (activeConsent.scope === 'all-records') hasAccess = true;
+      if (activeConsent.scope === 'record-types' && activeConsent.recordTypes?.includes(record.recordType)) hasAccess = true;
+      if (activeConsent.scope === 'specific-records' && activeConsent.specificRecords?.some((id) => id.toString() === record._id.toString())) hasAccess = true;
+    }
+  }
 
-  if (!isOwner && !isDoctor && !isAdmin) {
+  if (!hasAccess) {
     return res.status(403).json({ success: false, message: 'Access denied' });
   }
 
@@ -1038,30 +1015,30 @@ export const summarizeRecord = asyncHandler(async (req, res) => {
     });
   }
 
-  // ── Get signed download URL ───────────────────────────────────────────────
-  const signedUrl = cloudinary.utils.private_download_url(targetFile.cloudinaryPublicId, null, {
-    resource_type: getCloudinaryResourceType(fileType),
-    type: 'upload',
-  });
+  let recordFileBytes;
+  try {
+    recordFileBytes = await fetchRecordFileBytes(record, targetFile);
+  } catch (fileError) {
+    logger.warn('AI record file retrieval failed', {
+      recordId: record._id.toString(),
+      fileIndex,
+      error: fileError.message,
+    });
+    const integrityFailure = fileError instanceof EncryptedFileIntegrityError;
+    return res.status(integrityFailure ? 422 : 502).json({
+      success: false,
+      message: integrityFailure ? 'File integrity verification failed' : 'Unable to retrieve file from storage',
+    });
+  }
 
   let result;
   let auditExtra = {};
 
   if (isPDF) {
     // ── PDF path ────────────────────────────────────────────────────────────
-    let pdfBuffer;
-    try {
-      logger.info(`[AI] Fetching PDF publicId=${targetFile.cloudinaryPublicId} via signed URL`);
-      const response = await axios.get(signedUrl, { responseType: 'arraybuffer', timeout: 15000 });
-      pdfBuffer = Buffer.from(response.data);
-    } catch (fetchErr) {
-      logger.error(`[AI] PDF fetch failed for record ${req.params.id}: ${fetchErr.message}`);
-      return res.status(502).json({ success: false, message: `Failed to fetch PDF from storage: ${fetchErr.message}` });
-    }
-
     let extracted;
     try {
-      extracted = await extractTextFromPDF(pdfBuffer);
+      extracted = await extractTextFromPDF(recordFileBytes);
     } catch (err) {
       if (err.code === 'IMAGE_ONLY') {
         return res.status(422).json({ success: false, code: 'IMAGE_ONLY', message: err.message });
@@ -1078,16 +1055,7 @@ export const summarizeRecord = asyncHandler(async (req, res) => {
 
   } else {
     // ── Image path ──────────────────────────────────────────────────────────
-    let imageBuffer;
-    try {
-      logger.info(`[AI] Fetching image publicId=${targetFile.cloudinaryPublicId} via signed URL`);
-      imageBuffer = await fetchFileAsBuffer(signedUrl);
-    } catch (fetchErr) {
-      logger.error(`[AI] Image fetch failed for record ${req.params.id}: ${fetchErr.message}`);
-      return res.status(502).json({ success: false, message: `Failed to fetch image from storage: ${fetchErr.message}` });
-    }
-
-    const base64 = imageBuffer.toString('base64');
+    const base64 = recordFileBytes.toString('base64');
     result = await analyzeImage(base64, fileType, record.recordType);
     auditExtra = { transcriptionConfidence: result.data?.transcriptionConfidence };
   }

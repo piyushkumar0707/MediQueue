@@ -1,5 +1,4 @@
 import multer from 'multer';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary from '../config/cloudinary.js';
 import { logger } from '../utils/logger.js';
 
@@ -18,21 +17,6 @@ const ALLOWED_FILE_TYPES = {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-// Cloudinary storage — files go to the 'medical-records' folder
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => {
-    // Images are delivered as-is; everything else as 'raw' (preserves original format)
-    const isImage = file.mimetype.startsWith('image/');
-    return {
-      folder: 'medical-records',
-      resource_type: isImage ? 'image' : 'raw',
-      // Keep original filename (sanitized) so it's human-readable in Cloudinary
-      public_id: `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`,
-    };
-  },
-});
-
 // File filter function
 const fileFilter = (req, file, cb) => {
   if (ALLOWED_FILE_TYPES[file.mimetype]) {
@@ -42,9 +26,10 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Multer instance backed by Cloudinary
+// Bounded Multer memory storage so the controller can encrypt bytes before Cloudinary upload.
 export const upload = multer({
-  storage,
+  // Keep files in memory only long enough to encrypt them before storage.
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: MAX_FILE_SIZE,
     files: 5,
@@ -96,28 +81,23 @@ export const deleteFile = async (publicId, resourceType = 'raw') => {
   }
 };
 
-/**
- * Map a multer-storage-cloudinary file object to the shape stored in MedicalRecord.files[].
- * After upload, multer populates:
- *   file.path       → secure HTTPS URL
- *   file.filename   → Cloudinary public_id
- *   file.mimetype, file.size, file.originalname
- */
-export const getFileInfo = (file) => {
-  return {
-    fileName: file.originalname,
-    fileUrl: file.path,          // Cloudinary secure URL
-    cloudinaryPublicId: file.filename, // stored so we can delete later
-    fileType: file.mimetype,
-    fileSize: file.size,
-  };
-};
+export const uploadEncryptedBuffer = (buffer, publicId) => new Promise((resolve, reject) => {
+  const uploadStream = cloudinary.uploader.upload_stream({
+    folder: 'medical-records',
+    public_id: publicId,
+    resource_type: 'raw',
+  }, (error, result) => {
+    if (error) return reject(error);
+    resolve(result);
+  });
+  uploadStream.end(buffer);
+});
 
 export default {
   upload,
   handleUploadErrors,
   deleteFile,
-  getFileInfo,
+  uploadEncryptedBuffer,
   ALLOWED_FILE_TYPES,
   MAX_FILE_SIZE,
 };
