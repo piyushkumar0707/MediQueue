@@ -28,7 +28,7 @@
 MediQueue solves two real-world healthcare problems in a single platform:
 
 - **CareQueue** — eliminates physical waiting rooms with a real-time digital queue. Patients join remotely, track their position live, and get notified when it's their turn.
-- **Health-Vault** — gives patients full ownership of their medical records with consent-based sharing, AES-256-GCM encryption at rest, and an immutable audit trail for every access.
+- **Health-Vault** — gives patients control over consent-based sharing of medical records; newly uploaded attachments are encrypted with AES-256-GCM.
 
 Three user roles — **Patient**, **Doctor**, **Admin** — each with their own dashboard, workflows, and permission boundary.
 
@@ -39,12 +39,12 @@ Three user roles — **Patient**, **Doctor**, **Admin** — each with their own 
 | Concern | Solution |
 |---|---|
 | Real-time queue updates | Socket.io v4 rooms (`user:<id>`) — server pushes diffs on every queue state change |
-| Medical record security | AES-256-GCM encryption via a dedicated backend service |
+| Medical record security | AES-256-GCM encryption for newly uploaded record attachments |
 | Authentication | Two-token JWT (15 min access + 7 day refresh) with a two-step OTP registration flow; tokens kept in memory only — never written to localStorage |
 | MFA | TOTP via speakeasy + backup codes; separate JWT_MFA_SECRET for MFA session tokens |
 | Authorization | Stateless `protect()` + `authorize(...roles)` middleware; Redis-cached user lookup (60s TTL) to avoid DB hit on every request |
 | Rate limiting | Redis-backed `createRateLimiter()` factory — per-user limits effective across multiple processes |
-| Audit compliance | Immutable `AuditLog` model with SHA-256 integrity hashes; middleware wraps every sensitive admin action |
+| Audit logging | `AuditLog` records activity for review; middleware adds logs to selected admin actions |
 | Emergency access | Doctors can request override access; all overrides are logged and surfaced to admins for review |
 | File uploads | Multer → Cloudinary storage with authenticated backend retrieval flows |
 | AI triage | Groq LLaMA 3.1 suggests priority from symptoms — human override always preserved, AI is advisory only |
@@ -60,7 +60,7 @@ Three user roles — **Patient**, **Doctor**, **Admin** — each with their own 
 - Register with email/SMS OTP verification (two-step flow)
 - Book appointments and join a live queue remotely
 - Real-time queue position tracking with estimated wait time
-- Upload, view, and delete medical records (encrypted)
+- Upload, view, and delete medical records; newly uploaded attachments are encrypted
 - Grant / revoke per-doctor consent to individual records
 - View prescriptions from completed consultations
 - In-app notification centre with real-time push
@@ -112,13 +112,13 @@ Three user roles — **Patient**, **Doctor**, **Admin** — each with their own 
 | `GET/POST/DELETE /api/v1/appointments` | Booking lifecycle; available slots |
 | `GET/POST /api/v1/queue` | Join queue, call-next, queue stats |
 | `POST /api/v1/queue/triage` | AI symptom triage — advisory suggestion only, never sets priority automatically |
-| `GET/POST/DELETE /api/v1/records` | Encrypted file upload, list, download, share, PDF export |
+| `GET/POST/DELETE /api/v1/records` | Attachment upload, list, download, share, PDF export |
 | `POST /api/v1/records/:id/summarize` | On-demand AI summary of a text-based PDF or image record |
 | `GET /api/v1/records/:id/view-file` | Stream file bytes through the backend with correct Content-Type |
 | `GET/POST/DELETE /api/v1/consent` | Grant, revoke, and query consent grants |
 | `GET/POST /api/v1/emergency-access` | Doctor override requests + admin review |
 | `GET/POST /api/v1/prescriptions` | Create and view prescriptions |
-| `GET /api/v1/audit` | Tamper-evident audit log queries (admin) |
+| `GET /api/v1/audit` | Audit log queries (admin) |
 | `GET /api/v1/analytics` | Dashboard metrics (Redis-cached 5 min) |
 | `GET/POST/PUT/DELETE /api/v1/admin` | User and emergency case management |
 | `GET/POST /api/v1/notifications` | Real-time notification inbox |
@@ -131,7 +131,46 @@ Three user roles — **Patient**, **Doctor**, **Admin** — each with their own 
 
 **Frontend:** React 18 · Vite · Tailwind CSS · Zustand · React Query · Axios · Socket.io-client · React Router v6
 
-**Security:** AES-256-GCM (medical records) · JWT dual-token + MFA (TOTP) · OTP via SMS + email · RBAC · Helmet (`default-src 'none'`) · Redis rate limiting · Immutable audit log · CORS origin allowlist
+**Security:** AES-256-GCM for new record attachments · JWT dual-token + optional MFA (TOTP) · OTP via SMS + email · role-based route authorization · Helmet (`default-src 'none'`) · Redis rate limiting · audit logging · CORS origin allowlist
+
+## Benchmarks (local, synthetic)
+
+These benchmarks use generated data on a local machine. Results describe the recorded runs only; they are not production capacity measurements.
+
+### Compound indexes
+
+Run from `backend/` with `npm run benchmark:indexes`. The benchmark creates 50,000 documents in each of 3 collections (150,000 total), uses 1,000 principals and 20 concurrent workers, and measures 2,000 queries per condition after warmup. Its code-derived query mix is 50% patient appointments, 33.3% waiting queue by doctor, and 16.7% unread notifications (the report rounds this to 50/33/17). It compares the same workload without the corresponding compound indexes and with model-aligned indexes.
+
+Recorded local run (2026-11-09):
+
+| Measure | Without indexes | With indexes |
+|---|---:|---:|
+| Average query latency | 79.704 ms | 5.292 ms |
+| P95 query latency | 103.183 ms | 8.266 ms |
+| Throughput | 242.27 req/s | 3,761.81 req/s |
+
+Average query latency was reduced by **93.36%** in this run. See [the compound index benchmark report](backend/docs/COMPOUND_INDEX_BENCHMARK.md) for methodology and caveats.
+
+### Socket.IO notification delivery
+
+Run from `backend/` with `npm run benchmark:socket`. The latest recorded run (2026-11-09 12:14:36 UTC) used 120 synthetic clients over 5 rounds, sending 600 notifications total (120 concurrent notification API requests per round). It delivered 600/600 notifications to the correct sockets (100%). Throughput was 224.25 notifications/second; connection setup P95 was 218.83 ms; request-start-to-receipt latency was 400.88 ms median and 688.30 ms P95. The script exits non-zero if notifications are lost, duplicated, or misrouted.
+
+This measures the notification API path only; queue screens continue to poll for queue position and status. See [the Socket.IO load test report](docs/SOCKET_IO_LOAD_TEST.md) for the recorded run and details.
+
+### Limitations
+
+- Single machine and one backend process.
+- Synthetic data and generated users; workloads are code-derived, not production traffic.
+- Results vary between machines and runs.
+- These runs do not establish production capacity.
+
+## Security notes
+
+- Newly uploaded record attachments use AES-256-GCM with a fresh 12-byte file IV. A per-record key encrypts the attachment and is wrapped with the master key from `ENCRYPTION_KEY`; the master key must be 32 bytes. The wrapped key uses a 16-byte IV.
+- Record and file IDs are supplied as authenticated additional data (AAD) for attachment encryption and checked during decryption.
+- Legacy attachments without encryption metadata remain readable as plaintext. Record fields and metadata are not encrypted by this attachment encryption flow.
+- The shared record access policy checks owner, admin, uploader, explicit share, emergency access, and consent rules.
+- TOTP MFA is opt-in for accounts; it is enabled through the account MFA setup flow.
 
 ---
 
@@ -271,7 +310,7 @@ Seed commands:
 
 ---
 
-## CI/CD Pipeline
+## CI
 
 GitHub Actions workflow is configured at `.github/workflows/ci.yml`.
 
@@ -280,18 +319,17 @@ GitHub Actions workflow is configured at `.github/workflows/ci.yml`.
 - Push to `main`
 - Pull request targeting `main`
 - Manual run (`workflow_dispatch`)
+- Scheduled run daily at 02:00 UTC
 
 ### Jobs
 
-- **Backend Lint and Test**
-    - Starts MongoDB and Redis service containers
-    - Installs backend dependencies
-    - Runs `npm run lint`
-    - Runs `npm test -- --passWithNoTests`
+- **Backend Lint and Test** runs backend lint and the default Jest suite; MongoDB and Redis service containers are available to it.
+- **Backend Integration (PR Gate)** runs `npm run test:integration` on pull requests only, with MongoDB and Redis services.
+- **Backend Integration Coverage (Advisory)** runs `npm run test:integration:coverage` on non-PR events. It is allowed to fail and uploads the coverage artifact.
+- **Frontend Build** installs frontend dependencies and runs `npm run build`.
+- **E2E Smoke (Playwright)** uses Chromium. Pull requests run tests tagged `@smoke`; pushes, scheduled runs, and manual runs execute the full Chromium E2E suite.
 
-- **Frontend Build**
-    - Installs frontend dependencies
-    - Runs `npm run build`
+The workflow has no deployment or Docker build job.
 
 ### Local parity commands (same checks as CI)
 
@@ -303,10 +341,12 @@ npm --prefix frontend run build
 
 ### Branch protection (recommended)
 
-Require both checks before merge into `main`:
+Require the PR checks before merge into `main`:
 
 - `Backend Lint and Test`
+- `Backend Integration (PR Gate)`
 - `Frontend Build`
+- `E2E Smoke (Playwright)`
 
 ---
 
