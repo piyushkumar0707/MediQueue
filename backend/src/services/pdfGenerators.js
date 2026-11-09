@@ -465,9 +465,9 @@ export const generatePrescriptionPDF = async (prescription, patient, doctor) => 
     }
 
     // Signature block
-    ensurePageSpace(doc, 110);
+    ensurePageSpace(doc, 122);
     const signatureWidth = 240;
-    const signatureHeight = 92;
+    const signatureHeight = 104;
     const signatureX = doc.page.width - 50 - signatureWidth;
     const signatureY = doc.y + 8;
 

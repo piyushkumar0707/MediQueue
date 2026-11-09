@@ -95,13 +95,11 @@ export const validateEnv = () => {
     logger.warn('[ENV] GROQ_API_KEY not set — AI triage and summarization features will be disabled');
   }
 
-  // Validate ENCRYPTION_KEY length (must be exactly 32 chars for AES-256)
-  if (process.env.ENCRYPTION_KEY && process.env.ENCRYPTION_KEY.length !== 32) {
-    const msg = `ENCRYPTION_KEY must be exactly 32 characters (current: ${process.env.ENCRYPTION_KEY.length})`;
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(msg);
-    } else {
-      logger.warn(`[ENV] ${msg}`);
-    }
+  // Fail fast: wrapped per-record keys require a configured 32-byte AES-256 key.
+  const encryptionKeyBytes = process.env.ENCRYPTION_KEY
+    ? Buffer.byteLength(process.env.ENCRYPTION_KEY, 'utf8')
+    : 0;
+  if (encryptionKeyBytes !== 32) {
+    throw new Error(`ENCRYPTION_KEY must be configured and exactly 32 bytes (current byte length: ${encryptionKeyBytes})`);
   }
 };

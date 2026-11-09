@@ -48,7 +48,7 @@ const medicalRecordSchema = new mongoose.Schema({
   files: [{
     fileName: {
       type: String,
-      required: true
+      required: true // Original filename; ciphertext storage names are internal
     },
     fileUrl: {
       type: String,
@@ -59,7 +59,7 @@ const medicalRecordSchema = new mongoose.Schema({
     },
     fileType: {
       type: String,
-      required: true
+      required: true // Original MIME type, used when serving decrypted bytes
     },
     fileSize: {
       type: Number,
@@ -68,6 +68,15 @@ const medicalRecordSchema = new mongoose.Schema({
     uploadedAt: {
       type: Date,
       default: Date.now
+    },
+    encryptionVersion: {
+      type: Number // Missing means legacy plaintext; version 1 uses AES-256-GCM with record/file AAD
+    },
+    encryptionIv: {
+      type: String // Base64 encoded per-file 12-byte IV
+    },
+    encryptionAuthTag: {
+      type: String // Base64 encoded AES-256-GCM authentication tag
     }
   }],
   metadata: {
@@ -126,7 +135,18 @@ const medicalRecordSchema = new mongoose.Schema({
     default: 'active'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: {
+    transform(_doc, ret) {
+      // Cloudinary storage details must never be used as client-facing file URLs.
+      delete ret.encryptionKey;
+      for (const file of ret.files || []) {
+        delete file.fileUrl;
+        delete file.cloudinaryPublicId;
+      }
+      return ret;
+    }
+  }
 });
 
 // Indexes for efficient queries

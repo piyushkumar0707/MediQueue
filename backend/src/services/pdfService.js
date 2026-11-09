@@ -76,6 +76,7 @@ class PDFService {
     
     for (let i = 0; i < pageCount; i++) {
       doc.switchToPage(i);
+      const originalBottomMargin = doc.page.margins.bottom;
       
       // Footer line
       doc.moveTo(50, doc.page.height - 50)
@@ -84,14 +85,21 @@ class PDFService {
          .stroke();
       
       // Footer text
-      doc.fontSize(8)
-         .fillColor('#6B7280')
-         .text(
-           `Page ${i + 1} of ${pageCount} | Generated on ${new Date().toLocaleDateString('en-IN')} | MediQueue Health Services`,
-           50,
-           doc.page.height - 40,
-           { align: 'center', width: doc.page.width - 100 }
-         );
+      // Keep the footer inside the printable area without letting PDFKit
+      // create a new page for text that intentionally sits below the body margin.
+      doc.page.margins.bottom = 20;
+      try {
+        doc.fontSize(8)
+           .fillColor('#6B7280')
+           .text(
+             `Page ${i + 1} of ${pageCount} | Generated on ${new Date().toLocaleDateString('en-IN')} | MediQueue Health Services`,
+             50,
+             doc.page.height - 40,
+             { align: 'center', width: doc.page.width - 100 }
+           );
+      } finally {
+        doc.page.margins.bottom = originalBottomMargin;
+      }
     }
     
     return doc;

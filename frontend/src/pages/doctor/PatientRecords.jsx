@@ -113,10 +113,23 @@ const PatientRecords = () => {
     }
   };
 
-  const downloadRecord = async (record) => {
+  const downloadRecord = async (recordId, filename) => {
     try {
-      await downloadRecordFile(record);
-      toast.success('Medical record downloaded');
+      const response = await api.get(`/records/${recordId}/view-file?fileIndex=0&download=true`, {
+        responseType: 'blob',
+      });
+      
+      const blob = new Blob([response], { type: response.type || 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename || `medical-record-${recordId.slice(-8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Original medical record file downloaded');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file. Please try again.');
