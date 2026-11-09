@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import Notification from '../models/Notification.js';
 import notificationService from '../services/notificationService.js';
 import AuditLog from '../models/AuditLog.js';
+import { canAccessRecord } from '../services/recordAccessPolicy.js';
 import mongoose from 'mongoose';
 
 // @desc    Get my consents (patient view)
@@ -393,12 +394,7 @@ export const checkConsent = asyncHandler(async (req, res) => {
     });
   }
 
-  const hasConsent = await Consent.hasConsent(
-    req.user.userId,
-    patientId,
-    recordId,
-    record.recordType
-  );
+  const hasConsent = (await canAccessRecord(req.user, record, 'view')).source === 'consent';
 
   res.json({
     success: true,

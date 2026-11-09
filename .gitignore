@@ -57,6 +57,11 @@ logs/
 # Cache
 .cache/
 .parcel-cache/
+**/.jest-cache/
+
+# Local verification artifacts
+backend/.npm-ci-check/
+.worktrees/
 
 # Misc
 .eslintcache

@@ -18,6 +18,7 @@ import { logger } from './utils/logger.js';
 import notificationService from './services/notificationService.js';
 import emailService from './services/emailService.js';
 import { initializeAppointmentSchedulers } from './services/appointmentScheduler.js';
+import { joinAuthenticatedRooms } from './services/socketRoomJoin.js';
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -200,9 +201,8 @@ io.on('connection', (socket) => {
   logger.info(`Client connected: ${socket.id} user:${userId} role:${role}`);
 
   // Join rooms using server-verified identity — client-sent values are ignored
-  socket.on('join', () => {
-    socket.join(`user:${userId}`);
-    socket.join(`role:${role}`);
+  socket.on('join', async (acknowledge) => {
+    await joinAuthenticatedRooms(socket, { userId, role }, acknowledge);
     logger.info(`User ${userId} (${role}) joined rooms`);
   });
 

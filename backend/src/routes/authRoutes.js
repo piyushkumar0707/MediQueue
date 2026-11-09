@@ -1,5 +1,6 @@
 import express from 'express';
 import { createRateLimiter } from '../utils/rateLimiter.js';
+import { LOGIN_RATE_LIMIT } from '../config/loginRateLimit.js';
 import * as authController from '../controllers/authController.js';
 import { verifyOtpOnly } from '../controllers/verifyOtpController.js';
 import { setupMfa, verifyMfaSetup, validateMfa, disableMfa } from '../controllers/mfaController.js';
@@ -18,10 +19,9 @@ import {
 
 const router = express.Router();
 
-// Brute-force sensitive: 5 attempts per 15 minutes per IP (OWASP recommended)
+// Brute-force sensitive: 15 attempts per 15 minutes per IP
 const loginLimiter = createRateLimiter({
-  windowMs: 15 * 60 * 1000,
-  max: 15,
+  ...LOGIN_RATE_LIMIT,
   standardHeaders: true,
   legacyHeaders: false,
   message: { 
