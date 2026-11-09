@@ -53,9 +53,6 @@ The latency includes REST transfer, JWT and user-cache processing, MongoDB notif
 - One backend process, loopback network, temporary synthetic user accounts, and a uniquely named temporary MongoDB database.
 - The database is dropped and temporary processes are stopped when the script exits, including error exits.
 
-## Interview explanation
-
-> “I load-tested the authenticated Socket.IO notification path with 120 synthetic clients. Each client connected over WebSocket using its own short-lived JWT and joined its server-assigned user room. Across five rounds, I concurrently sent 120 queue-update notifications per round through the notification API. All 600 requests succeeded, and each notification reached the correct client, at about 224 notifications per second. Request-start-to-receipt P95 was about 688 ms. This was a single-machine synthetic test, not a production capacity test.”
 
 ## Limitations and claim boundaries
 
