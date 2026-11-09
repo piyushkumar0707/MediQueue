@@ -289,9 +289,9 @@ const Register = () => {
 // Step Components
 
 const PhoneEmailStep = ({ formData, handleChange, handleSubmit, validationErrors, isLoading, error }) => (
-  <div className="bg-white rounded-2xl shadow-xl p-8">
+  <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
     <div className="text-center mb-6">
-      <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Account</h2>
       <p className="text-gray-600 mt-2">Let's get started with your phone and email</p>
     </div>
 
@@ -384,7 +384,7 @@ const OTPStep = ({ formData, handleChange, handleSubmit, validationErrors, onRes
   };
   
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8">
+    <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
       <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
           <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -435,7 +435,7 @@ const OTPStep = ({ formData, handleChange, handleSubmit, validationErrors, onRes
 };
 
 const RoleSelectionStep = ({ handleRoleSelect }) => (
-  <div className="bg-white rounded-2xl shadow-xl p-8">
+  <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
     <div className="text-center mb-8">
       <h2 className="text-2xl font-bold text-gray-900">Choose Your Role</h2>
       <p className="text-gray-600 mt-2">Select how you'll be using MediQueue</p>
@@ -480,7 +480,7 @@ const RoleSelectionStep = ({ handleRoleSelect }) => (
 );
 
 const PersonalInfoStep = ({ formData, handleChange, handleSubmit, validationErrors }) => (
-  <div className="bg-white rounded-2xl shadow-xl p-8">
+  <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
     <div className="text-center mb-6">
       <h2 className="text-2xl font-bold text-gray-900">Personal Information</h2>
       <p className="text-gray-600 mt-2">Tell us a bit about yourself</p>
@@ -569,7 +569,7 @@ const PersonalInfoStep = ({ formData, handleChange, handleSubmit, validationErro
 );
 
 const PasswordStep = ({ formData, handleChange, handleSubmit, validationErrors, isLoading, error }) => (
-  <div className="bg-white rounded-2xl shadow-xl p-8">
+  <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
     <div className="text-center mb-6">
       <h2 className="text-2xl font-bold text-gray-900">Create Password</h2>
       <p className="text-gray-600 mt-2">Choose a strong password for your account</p>
@@ -642,14 +642,14 @@ const SuccessStep = ({ navigate, role }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+    <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 text-center">
       <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
         <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       </div>
       
-      <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome to MediQueue!</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Welcome to MediQueue!</h2>
       <p className="text-gray-600 mb-8">
         Your account has been created successfully. You're all set to get started.
       </p>

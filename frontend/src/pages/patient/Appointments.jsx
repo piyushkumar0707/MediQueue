@@ -224,9 +224,9 @@ const Appointments = () => {
     <>
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Appointments</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Appointments</h1>
           <p className="text-gray-600 mt-1">View and manage your appointments</p>
         </div>
         <Link
@@ -242,7 +242,7 @@ const Appointments = () => {
 
       {/* Filter Tabs */}
       <div className="bg-white rounded-xl shadow-md p-4">
-        <div className="flex space-x-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-lg font-medium transition ${
@@ -353,7 +353,7 @@ const Appointments = () => {
               
               {/* Actions */}
               {['scheduled', 'confirmed'].includes(appointment.status) && (
-                <div className="mt-4 pt-4 border-t border-gray-200 flex space-x-3">
+                <div className="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-2">
                   <button
                     onClick={() => handleCancelAppointment(appointment._id)}
                     className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium transition"

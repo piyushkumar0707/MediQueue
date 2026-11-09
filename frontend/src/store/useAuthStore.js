@@ -269,15 +269,52 @@ const useAuthStore = create(
        */
       clearError: () => {
         set({ error: null });
+      },
+
+      /**
+       * Initialize auth (silent refresh on load)
+       */
+      initializeAuth: async () => {
+        if (!get().isAuthenticated) return; // persisted flag
+        const { refreshToken: storedRefreshToken, accessToken: storedAccessToken } = get();
+        
+        if (storedAccessToken || storedRefreshToken) {
+          setAuthTokens(storedAccessToken, storedRefreshToken);
+        }
+        
+        set({ isLoading: true });
+        try {
+          const response = await api.post('/auth/refresh-token', {
+            refreshToken: storedRefreshToken
+          });
+          const resData = response.data || response;
+          const data = resData.data || resData;
+          const { accessToken, refreshToken } = data;
+          setAuthTokens(accessToken, refreshToken);
+          set({ accessToken, refreshToken, isLoading: false });
+        } catch (err) {
+          // Only force logout if we have no stored accessToken/refreshToken or if refresh was rejected
+          if (!storedAccessToken && !storedRefreshToken) {
+            get().logout();
+          } else {
+            set({ isLoading: false });
+          }
+        }
       }
     }),
     {
       name: 'auth-storage', // localStorage key
       partialize: (state) => ({
-        // Only persist non-sensitive fields — tokens are kept in memory only
         user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated
-      })
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.accessToken) {
+          setAuthTokens(state.accessToken, state.refreshToken);
+        }
+      }
     }
   )
 );

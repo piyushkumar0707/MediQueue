@@ -318,20 +318,9 @@ export const updateUser = asyncHandler(async (req, res) => {
  */
 export const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
-  
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found'
-    });
-  }
-  
-  // Prevent deleting yourself
+  if (!user) return res.status(404).json({ success: false, message: 'User not found' });
   if (user._id.toString() === req.user.userId) {
-    return res.status(400).json({
-      success: false,
-      message: 'You cannot delete your own account'
-    });
+    return res.status(400).json({ success: false, message: 'You cannot delete your own account' });
   }
   
   const userId = user._id;

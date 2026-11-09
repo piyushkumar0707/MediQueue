@@ -250,7 +250,7 @@ const Analytics = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics & Reports</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Analytics & Reports</h1>
           <p className="text-gray-600 mt-1">Comprehensive system insights and performance metrics</p>
         </div>
         <div className="flex gap-3">
@@ -571,6 +571,7 @@ const Analytics = () => {
               Export Table
             </button>
           </div>
+          <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -635,6 +636,7 @@ const Analytics = () => {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

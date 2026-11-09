@@ -68,7 +68,7 @@ const Help = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">Help & Support</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Help & Support</h1>
         <p className="text-indigo-100">Find answers to common questions or contact our support team</p>
       </div>
 
