@@ -267,25 +267,25 @@ const HealthVault = () => {
     }
   };
 
-  const downloadRecordReport = async (record) => {
+  const downloadRecordFile = async (record, fileIndex = 0) => {
     try {
-      const response = await api.get(`/records/${record._id}/download-report`, {
+      const response = await api.get(`/records/${record._id}/view-file?fileIndex=${fileIndex}&download=true`, {
         responseType: 'blob',
       });
 
-      const blob = new Blob([response], { type: 'application/pdf' });
+      const blob = new Blob([response], { type: response.type || 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `medical-record-${record._id.slice(-8)}-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = record.files?.[fileIndex]?.fileName || `medical-record-${record._id.slice(-8)}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      toast.success('Medical record report downloaded');
+      toast.success('Original medical record file downloaded');
     } catch (error) {
-      toast.error('Failed to download report');
+      toast.error('Failed to download file');
     }
   };
 
@@ -494,10 +494,10 @@ const HealthVault = () => {
                       View
                     </button>
                     <button
-                      onClick={() => downloadRecordReport(record)}
+                      onClick={() => downloadRecordFile(record)}
                       className="px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg font-medium text-sm"
                     >
-                      Download PDF
+                      Download File
                     </button>
                     <button
                       onClick={() => handleDelete(record._id)}

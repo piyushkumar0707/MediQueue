@@ -112,12 +112,13 @@ const PatientRecords = () => {
     }
   };
 
-  const downloadRecord = async (recordId, filename) => {    try {
-      const response = await api.get(`/records/${recordId}/download-report`, {
+  const downloadRecord = async (recordId, filename) => {
+    try {
+      const response = await api.get(`/records/${recordId}/view-file?fileIndex=0&download=true`, {
         responseType: 'blob',
       });
       
-      const blob = new Blob([response], { type: 'application/pdf' });
+      const blob = new Blob([response], { type: response.type || 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -127,7 +128,7 @@ const PatientRecords = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      toast.success('Medical record downloaded');
+      toast.success('Original medical record file downloaded');
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file');
