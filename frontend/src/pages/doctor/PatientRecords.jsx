@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { downloadRecordFile } from '../../utils/downloadRecord';
 
 const PatientRecords = () => {
   const { patientId } = useParams();
@@ -131,7 +132,7 @@ const PatientRecords = () => {
       toast.success('Original medical record file downloaded');
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download file');
+      toast.error('Failed to download file. Please try again.');
     }
   };
 
@@ -350,7 +351,7 @@ const PatientRecords = () => {
                         </button>
                         {record.sharedWith?.find(s => s.canDownload) && (
                           <button
-                            onClick={() => downloadRecord(record._id, record.files[0]?.fileName)}
+                            onClick={() => downloadRecord(record)}
                             className="px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium transition"
                           >
                             Download
