@@ -24,6 +24,6 @@ router.get('/doctors/:id', getDoctorById);
 // Doctor routes - search and get patients (search must be before :id)
 router.get('/patients/search', protect, authorize('doctor'), searchPatients);
 router.get('/patients/:id', protect, authorize('doctor'), getPatientById);
-router.get('/:id', protect, getPatientById); // General user lookup
+router.get('/:id', protect, getPatientById); // General user lookup; access checked in the controller
 
 export default router;

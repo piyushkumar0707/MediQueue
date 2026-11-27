@@ -1,6 +1,8 @@
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { parsePagination } from '../utils/pagination.js';
+import { canViewProfile } from '../services/profileAccessPolicy.js';
 
 // @desc    Get all doctors with optional filters
 // @route   GET /api/users/doctors
@@ -235,12 +237,22 @@ export const searchPatients = asyncHandler(async (req, res) => {
   res.json({ success: true, data: patients });
 });
 
-// @desc    Get patient by ID (for doctors)
-// @route   GET /api/users/patients/:id
-// @access  Private (Doctor)
+// @desc    Get a user's profile by ID
+// @route   GET /api/users/patients/:id and GET /api/users/:id
+// @access  Private (the user, an admin, or a doctor linked to the patient)
 export const getPatientById = asyncHandler(async (req, res) => {
-  const patient = await User.findById(req.params.id)
-    .select('personalInfo professionalInfo medicalInfo email phoneNumber role');
+  const { id } = req.params;
+
+  if (!(await canViewProfile(req.user, id))) {
+    return res.status(403).json({
+      success: false,
+      message: 'You do not have access to this profile'
+    });
+  }
+
+  const patient = mongoose.isValidObjectId(id)
+    ? await User.findById(id).select('personalInfo professionalInfo medicalInfo email phoneNumber role')
+    : null;
 
   if (!patient) {
     return res.status(404).json({

@@ -107,4 +107,7 @@ docs/screens/
 # ── Consolidated/deleted service files ───────────────────────────────────────
 frontend/src/services/apiService.js
 
+# ── Personal study notes (local only) ────────────────────────────────────────
+interview-notes/
+
 
