@@ -5,7 +5,7 @@ import { parsePagination } from '../utils/pagination.js';
 
 // @desc    Create a new notification
 // @route   POST /api/notifications
-// @access  Private
+// @access  Private (admin: any recipient and channel; others: in-app to themselves only)
 export const createNotification = asyncHandler(async (req, res) => {
   const {
     recipient,
@@ -18,6 +18,20 @@ export const createNotification = asyncHandler(async (req, res) => {
     channels,
     metadata
   } = req.body;
+
+  // Application events create notifications through the model, not this route.
+  // The type check stops a list such as [ownId] passing as the sender's own ID.
+  const isSelfInApp = typeof recipient === 'string'
+    && recipient === req.user.userId
+    && !channels?.email
+    && !channels?.sms;
+
+  if (req.user.role !== 'admin' && !isSelfInApp) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not allowed to send this notification'
+    });
+  }
 
   const notification = await Notification.createNotification({
     recipient,
