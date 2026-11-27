@@ -27,6 +27,7 @@ describeIntegration('negative path integration', () => {
       PORT: testPort,
       NODE_ENV: 'test',
       LOG_LEVEL: 'error',
+      TRUST_PROXY: '1', // lets a test choose its client IP through X-Forwarded-For
     });
 
     await waitForHealth(baseUrl);
@@ -99,7 +100,8 @@ describeIntegration('negative path integration', () => {
     for (let i = 0; i < maxRequests + 1; i += 1) {
       const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // Own IP, so login attempts made by other tests don't count against this limit
+        headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '203.0.113.10' },
         body: JSON.stringify({
           phoneOrEmail: 'rate.limit@example.com',
           password: 'Password@123',
