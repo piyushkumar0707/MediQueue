@@ -1,9 +1,7 @@
-import { applyTestEnv } from './helpers/env.js';
+import './helpers/env.js'; // must stay first
 import { clearDatabase, closeDatabaseConnection } from './helpers/database.js';
 import { clearRedis, closeRedisConnection } from './helpers/redis.js';
 import { jest } from '@jest/globals';
-
-applyTestEnv();
 
 jest.setTimeout(30000);
 
