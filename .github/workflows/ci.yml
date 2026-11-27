@@ -237,7 +237,8 @@ jobs:
 
   e2e-smoke:
     name: E2E Smoke (Playwright)
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.58 cannot install Chromium on Ubuntu 26.04 (current ubuntu-latest)
+    runs-on: ubuntu-24.04
     needs: frontend
     defaults:
       run:
