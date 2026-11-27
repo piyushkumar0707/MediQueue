@@ -1,10 +1,13 @@
-export const applyTestEnv = () => {
+// Import this module before anything that reads process.env: src/config/redis.js
+// creates its client at import time.
+const applyTestEnv = () => {
   process.env.NODE_ENV = 'test';
   process.env.TZ = 'UTC';
   process.env.PORT = process.env.PORT || '5055';
 
   process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/mediqueue_test';
-  process.env.REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+  // Database 15, not the default 0: the test cleanup runs FLUSHDB after every test
+  process.env.REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379/15';
   process.env.FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
   process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'test_access_secret_32_chars_minimum';
@@ -20,3 +23,5 @@ export const applyTestEnv = () => {
   process.env.TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || 'ci_placeholder';
   process.env.TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER || '+10000000000';
 };
+
+applyTestEnv();
